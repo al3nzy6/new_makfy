@@ -18,6 +18,7 @@ class Profilepage extends StatefulWidget {
 class _ProfilepageState extends State<Profilepage> {
   bool isLoading = false;
   String? userName;
+  int? userID;
   @override
   void initState() {
     super.initState();
@@ -28,6 +29,7 @@ class _ProfilepageState extends State<Profilepage> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       userName = prefs.getString('user_name') ?? 'غير معروف';
+      userID = prefs.getInt('user_id');
     });
   }
 
@@ -93,6 +95,12 @@ class _ProfilepageState extends State<Profilepage> {
           title: 'طلبات خدماتي',
           icon: Icons.request_page,
           route: '/customer_orders'),
+      boxWidget(
+        title: 'خدماتي',
+        icon: Icons.list,
+        route: '/user_page',
+        data: [userID, userName],
+      ),
     ];
   }
 }

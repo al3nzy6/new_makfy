@@ -58,7 +58,9 @@ class _SubsectionpageState extends State<Subsectionpage> {
     Category category = await ApiConfig.getCategory(id);
     try {
       setState(() {
-        fieldsWidget = category.Fields?.map((field) {
+        fieldsWidget = category.Fields?.where((field) =>
+                    field.type != 'File') // تصفية الحقول التي نوعها ليس 'File'
+                .map((field) {
               final options =
                   field.options?.map((option) => option.toJson()).toList() ??
                       [];

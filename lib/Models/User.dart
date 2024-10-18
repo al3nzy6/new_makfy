@@ -1,22 +1,27 @@
 import 'dart:convert';
 
 import 'package:equatable/equatable.dart';
+import 'package:makfy_new/Models/Service.dart';
 
 class User extends Equatable {
   int id;
   String name;
+  List<Service>? services;
   User({
     required this.id,
     required this.name,
+    this.services,
   });
 
   User copyWith({
     int? id,
     String? name,
+    List<Service>? services,
   }) {
     return User(
       id: id ?? this.id,
       name: name ?? this.name,
+      services: services ?? this.services,
     );
   }
 
@@ -36,10 +41,19 @@ class User extends Equatable {
     );
   }
 
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      id: json['id'],
+      name: json['name'],
+      services: json['services'] != null
+          ? (json['services'] as List)
+              .map((servicesJson) => Service.fromJson(servicesJson))
+              .toList()
+          : [],
+    );
+  }
+
   String toJson() => json.encode(toMap());
-
-  factory User.fromJson(String source) => User.fromMap(json.decode(source));
-
   @override
   String toString() => 'User(id: $id, name: $name)';
 

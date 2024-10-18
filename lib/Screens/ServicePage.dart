@@ -23,6 +23,7 @@ class _ServicePageState extends State<ServicePage> {
   int numbers = 0;
   Service? serviceData;
   bool isLoading = true;
+  int? user_id;
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -39,22 +40,25 @@ class _ServicePageState extends State<ServicePage> {
 
   Future _getService() async {
     Service service = await ApiConfig.getService(id);
+    int? user_idFromApi = await ApiConfig.getUserId();
     try {
+      if (!mounted) return; // تأكد من أن الـ widget ما زالت موجودة
       setState(() {
         serviceData = service;
         isLoading = false;
+        user_id = user_idFromApi;
       });
     } catch (e) {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
       throw Exception(e);
     }
   }
 
   Widget build(BuildContext context) {
-    List<String> sampleImages = [
-      'https://img.freepik.com/free-photo/lovely-woman-vintage-outfit-expressing-interest-outdoor-shot-glamorous-happy-girl-sunglasses_197531-11312.jpg',
-      'https://img.freepik.com/free-photo/shapely-woman-vintage-dress-touching-her-glasses-outdoor-shot-interested-relaxed-girl-brown-outfit_197531-11308.jpg',
-      'https://img.freepik.com/premium-photo/cheerful-lady-brown-outfit-looking-around-outdoor-portrait-fashionable-caucasian-model-with-short-wavy-hairstyle_197531-25791.jpg',
-    ];
     return MainScreenWidget(
       isLoading: isLoading,
       routeArguments: [serviceData?.category?.id, serviceData?.category?.name],
@@ -79,16 +83,24 @@ class _ServicePageState extends State<ServicePage> {
           SizedBox(
             height: 10,
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              H2Text(text: serviceData?.user.name ?? 'non'),
-              RatingWidget(stars: 4, ratingCount: '3'),
-            ],
+          InkWell(
+            onTap: () => Navigator.pushNamed(context, '/user_page',
+                arguments: [serviceData?.user.id, serviceData?.user.name]),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                H2Text(text: serviceData?.user.name ?? 'non'),
+                RatingWidget(stars: 4, ratingCount: '3'),
+              ],
+            ),
           ),
           (serviceData?.imageUrls != null && serviceData!.imageUrls!.isNotEmpty)
               ? FanCarouselImageSlider.sliderType2(
                   imagesLink: serviceData?.imageUrls ?? [],
+                  initalPageIndex: (serviceData?.imageUrls != null &&
+                          serviceData!.imageUrls!.isNotEmpty)
+                      ? 0
+                      : 1,
                   isAssets: false,
                   autoPlay: true,
                   sliderHeight: 300,
@@ -148,22 +160,25 @@ class _ServicePageState extends State<ServicePage> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: serviceData!.customFields!.map((field) {
                     return Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            H2Text(
-                              text: field.showName ?? "error",
-                              size: 22,
-                            ),
-                            H2Text(
-                              text: field.value ?? "error",
-                              size: 22,
-                            ),
-                          ],
-                        ),
-                        Divider(),
-                      ],
+                      children: (field?.type != 'File')
+                          ? [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  H2Text(
+                                    text: field.showName ?? "error",
+                                    size: 22,
+                                  ),
+                                  H2Text(
+                                    text: field.value ?? "error",
+                                    size: 22,
+                                  ),
+                                ],
+                              ),
+                              Divider(),
+                            ]
+                          : [],
                     );
                   }).toList(),
                 )
@@ -171,43 +186,61 @@ class _ServicePageState extends State<ServicePage> {
           SizedBox(
             height: 60,
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              InkWell(
-                onTap: () => _increaseNumbers(),
-                child: Container(
-                  height: 70,
-                  width: 70,
-                  decoration: BoxDecoration(
-                      color: Color(0XFFEF5B2C), shape: BoxShape.circle),
-                  child: Icon(
-                    Icons.add,
-                    color: Colors.white,
-                    size: 50,
+          (serviceData?.user.id != user_id)
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    InkWell(
+                      onTap: () => _increaseNumbers(),
+                      child: Container(
+                        height: 70,
+                        width: 70,
+                        decoration: BoxDecoration(
+                            color: Color(0XFFEF5B2C), shape: BoxShape.circle),
+                        child: Icon(
+                          Icons.add,
+                          color: Colors.white,
+                          size: 50,
+                        ),
+                      ),
+                    ),
+                    H2Text(
+                      text: "${numbers}",
+                      size: 30,
+                    ),
+                    InkWell(
+                      onTap: () => _decreaseNumbers(),
+                      child: Container(
+                        height: 70,
+                        width: 70,
+                        decoration: BoxDecoration(
+                            color: Color(0XFFEF5B2C), shape: BoxShape.circle),
+                        child: Icon(
+                          Icons.remove,
+                          color: Colors.white,
+                          size: 50,
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : InkWell(
+                  onTap: () => print('update'),
+                  child: Container(
+                    alignment: Alignment.center,
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                        color: Color(0XFFEF5B2C),
+                        borderRadius: BorderRadius.circular(30)),
+                    child: Center(
+                        child: Icon(
+                      Icons.edit,
+                      color: Colors.white,
+                      size: 40,
+                    )),
                   ),
                 ),
-              ),
-              H2Text(
-                text: "${numbers}",
-                size: 30,
-              ),
-              InkWell(
-                onTap: () => _decreaseNumbers(),
-                child: Container(
-                  height: 70,
-                  width: 70,
-                  decoration: BoxDecoration(
-                      color: Color(0XFFEF5B2C), shape: BoxShape.circle),
-                  child: Icon(
-                    Icons.remove,
-                    color: Colors.white,
-                    size: 50,
-                  ),
-                ),
-              ),
-            ],
-          ),
           if (numbers > 0)
             Container(
               margin: EdgeInsets.only(top: 60),

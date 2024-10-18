@@ -149,16 +149,6 @@ class _createServicePageState extends State<createServicePage> {
                   fieldResults['description'] = value;
                 },
               ),
-              FieldWidget(
-                id: 2,
-                name: "file",
-                showName: "صورة:",
-                type: "File",
-                required: true,
-                onChanged: (value) {
-                  fieldResults['File'] = value;
-                },
-              ),
               ...fieldsWidget,
               InkWell(
                 onTap: () {

@@ -89,7 +89,7 @@ class _LoginPageState extends State<LoginPage> {
               onTap: () {
                 Navigator.pushNamed(context, '/register');
               },
-              child: const Text("Register"),
+              child: const Text("تسجيل عضوية"),
             ),
           ],
         ),

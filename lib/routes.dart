@@ -7,6 +7,8 @@ import 'package:makfy_new/Screens/ShoppingCertPage.dart';
 import 'package:makfy_new/Screens/createServicePage.dart';
 import 'package:makfy_new/Screens/loginPage.dart';
 import 'package:makfy_new/Screens/mainsectionPage.dart';
+import 'package:makfy_new/Screens/registration_page.dart';
+import 'package:makfy_new/Screens/userServicesPage.dart';
 import 'package:makfy_new/Screens/myordersPage.dart';
 import 'package:makfy_new/Screens/personalProfilePage.dart';
 import 'package:makfy_new/Screens/subsectionPage.dart';
@@ -22,6 +24,7 @@ class AppRoutes {
     '/': (context) => LoadingPage(), // استخدم صفحة تحميل كمؤقت للتحقق
     '/home': (context) => MyHomePage(), // الصفحة الرئيسية
     '/login': (context) => LoginPage(),
+    '/register': (context) => RegistrationPage(),
     '/profile': (context) => Profilepage(),
     '/my_orders': (context) => Myorderspage(),
     '/main_section': (context) => Mainsectionpage(),
@@ -31,6 +34,7 @@ class AppRoutes {
     '/shopping_cert': (context) => ShoppingCertPage(),
     '/customer_orders': (context) => CustomerOrdersPage(),
     '/create_service': (context) => createServicePage(),
+    '/user_page': (context) => userServicesPage(),
   };
 }
 
