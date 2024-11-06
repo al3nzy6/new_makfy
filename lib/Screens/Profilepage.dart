@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:makfy_new/Utilities/ApiConfig.dart';
 
 import 'package:makfy_new/Widget/H1textWidget.dart';
@@ -19,6 +20,7 @@ class _ProfilepageState extends State<Profilepage> {
   bool isLoading = false;
   String? userName;
   int? userID;
+  int? isServiceProvider;
   @override
   void initState() {
     super.initState();
@@ -30,6 +32,7 @@ class _ProfilepageState extends State<Profilepage> {
     setState(() {
       userName = prefs.getString('user_name') ?? 'غير معروف';
       userID = prefs.getInt('user_id');
+      isServiceProvider = prefs.getInt('isServiceProvider');
     });
   }
 
@@ -39,31 +42,34 @@ class _ProfilepageState extends State<Profilepage> {
       isLoading: isLoading,
       start: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              H1text(text: userName ?? 'non'),
-              InkWell(
-                onTap: () {
-                  ApiConfig apiConfig = ApiConfig();
-                  apiConfig.logout();
-                  Navigator.pushReplacementNamed(context, '/');
-                },
-                child: Container(
-                  height: 50,
-                  width: 50,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Color(0XFFEF5B2C),
+          Padding(
+            padding: const EdgeInsets.only(top: 15, right: 5, left: 5),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                H1text(text: userName ?? 'non'),
+                InkWell(
+                  onTap: () {
+                    ApiConfig apiConfig = ApiConfig();
+                    apiConfig.logout();
+                    Navigator.pushReplacementNamed(context, '/');
+                  },
+                  child: Container(
+                    height: 50,
+                    width: 50,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color(0XFFEF5B2C),
+                    ),
+                    child: Icon(
+                      Icons.logout_sharp,
+                      color: Colors.white,
+                      size: 35,
+                    ),
                   ),
-                  child: Icon(
-                    Icons.logout_sharp,
-                    color: Colors.white,
-                    size: 35,
-                  ),
-                ),
-              )
-            ],
+                )
+              ],
+            ),
           ),
           SizedBox(
             height: 50,
@@ -71,14 +77,28 @@ class _ProfilepageState extends State<Profilepage> {
           Wrap(
             spacing: 10,
             runSpacing: 10,
-            children: _profileSections(),
+            children: _NormalUserprofileSections(),
           ),
+          if (isServiceProvider == 1) ...[
+            SizedBox(
+              height: 10,
+            ),
+            H1text(text: "قسم موفري الخدمات"),
+            SizedBox(
+              height: 10,
+            ),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: _serviceProviderProfileSections(),
+            ),
+          ]
         ],
       ),
     );
   }
 
-  List<Widget> _profileSections() {
+  List<Widget> _NormalUserprofileSections() {
     return [
       boxWidget(
         title: 'طلباتي',
@@ -91,6 +111,11 @@ class _ProfilepageState extends State<Profilepage> {
           data: [2]),
       boxWidget(
           title: 'السلة', icon: Icons.shopping_cart, route: '/shopping_cert'),
+    ];
+  }
+
+  List<Widget> _serviceProviderProfileSections() {
+    return [
       boxWidget(
           title: 'طلبات خدماتي',
           icon: Icons.request_page,
@@ -99,6 +124,12 @@ class _ProfilepageState extends State<Profilepage> {
         title: 'خدماتي',
         icon: Icons.list,
         route: '/user_page',
+        data: [userID, userName],
+      ),
+      boxWidget(
+        title: 'الاحياء التي اعمل بها',
+        icon: FontAwesomeIcons.mapLocation,
+        route: '/my_districts',
         data: [userID, userName],
       ),
     ];

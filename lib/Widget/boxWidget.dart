@@ -8,7 +8,7 @@ class boxWidget extends StatelessWidget {
   String title;
   IconData? icon;
   String? image;
-  String route;
+  String? route;
   List<dynamic>? data;
   boxWidget({
     Key? key,
@@ -16,7 +16,7 @@ class boxWidget extends StatelessWidget {
     required this.title,
     this.icon,
     this.image,
-    required this.route,
+    this.route,
     this.data,
   }) : super(key: key);
 
@@ -33,13 +33,15 @@ class boxWidget extends StatelessWidget {
         border: Border.all(color: Color(0XFFEF5B2C).withOpacity(0.2)),
       ),
       child: InkWell(
-        onTap: () {
-          if (data == null) {
-            Navigator.pushNamed(context, route);
-          } else {
-            Navigator.pushNamed(context, route, arguments: data);
-          }
-        },
+        onTap: (route != null)
+            ? () {
+                if (data == null) {
+                  Navigator.pushNamed(context, route ?? "");
+                } else {
+                  Navigator.pushNamed(context, route ?? "", arguments: data);
+                }
+              }
+            : null,
         child: Column(
           children: [
             (icon != null)

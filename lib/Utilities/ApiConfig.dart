@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:makfy_new/Models/Cart.dart';
 import 'package:makfy_new/Models/Category.dart';
+import 'package:makfy_new/Models/City.dart';
 import 'package:makfy_new/Models/Service.dart';
 import 'package:makfy_new/Models/User.dart';
 import 'package:makfy_new/Models/fieldSection.dart';
@@ -12,7 +14,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path/path.dart';
 
 class ApiConfig {
-  static const String apiUrl = 'https://makfy.abdullah-alanazi.sa/api';
+  static const String apiUrl = 'http://makfy.test/api';
+  // static const String apiUrl = 'https://makfy.abdullah-alanazi.sa/api';
   static Future<Map<String, String>> getAuthHeaders() async {
     final token = await ApiConfig().getToken();
     return {
@@ -157,7 +160,7 @@ class ApiConfig {
     }
   }
 
-  static Future<List<Service>> initServices() async {
+  static Future<List<User>> initServices() async {
     final url = Uri.parse("${apiUrl}/service/latest_services");
     final token = await ApiConfig().getToken();
     try {
@@ -165,12 +168,52 @@ class ApiConfig {
       final response = await http.get(url, headers: authHeader);
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        List<Service> services = (jsonResponse['data'] as List)
-            .map((serviceJson) => Service.fromJson(serviceJson))
+        List<User> services = (jsonResponse['data'] as List)
+            .map((serviceJson) => User.fromJson(serviceJson))
             .toList();
         return services;
       } else {
         print(token);
+        return throw Exception(response.statusCode);
+      }
+    } catch (e) {
+      throw Exception("${e}");
+    }
+  }
+
+  static Future<List<Cart>> customerCartList() async {
+    final url = Uri.parse("${apiUrl}/cart/customer/non-paid");
+    final token = await ApiConfig().getToken();
+    try {
+      final authHeader = await ApiConfig.getAuthHeaders();
+      final response = await http.get(url, headers: authHeader);
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        List<Cart> carts = (jsonResponse['data'] as List)
+            .map((cartJson) => Cart.fromJson(cartJson))
+            .toList();
+        return carts;
+      } else {
+        return throw Exception(response.statusCode);
+      }
+    } catch (e) {
+      throw Exception(e);
+    }
+  }
+
+  static Future<List<Cart>> customerPaidCartList() async {
+    final url = Uri.parse("${apiUrl}/cart/customer/paid");
+    final token = await ApiConfig().getToken();
+    try {
+      final authHeader = await ApiConfig.getAuthHeaders();
+      final response = await http.get(url, headers: authHeader);
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        List<Cart> carts = (jsonResponse['data'] as List)
+            .map((cartJson) => Cart.fromJson(cartJson))
+            .toList();
+        return carts;
+      } else {
         return throw Exception(response.statusCode);
       }
     } catch (e) {
@@ -212,6 +255,9 @@ class ApiConfig {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('user_name', userData['name']);
     await prefs.setString('user_email', userData['email']);
+    if (userData['id_number'] != null) {
+      await prefs.setInt('isServiceProvider', 1);
+    }
     await prefs.setInt('user_id', userData['id']);
   }
 
@@ -280,8 +326,17 @@ class ApiConfig {
     }
   }
 
-  Future<List> register(String name, String phone, String email,
-      String password, String passwordConfirmation) async {
+  Future<List> register(
+      String name,
+      String phone,
+      String email,
+      String password,
+      String passwordConfirmation,
+      bool? isServiceProvider,
+      String? idnumber,
+      String? nationality,
+      String? bank,
+      String? iban) async {
     final url = Uri.parse('$apiUrl/register');
     final response = await http.post(
       url,
@@ -292,6 +347,11 @@ class ApiConfig {
         'phone': phone,
         'password_confirmation': passwordConfirmation,
         'password': password,
+        'is_service_provider': isServiceProvider ?? null,
+        'id_number': idnumber ?? null,
+        'nationality': nationality ?? null,
+        'bank': bank ?? null,
+        'iban': iban ?? null,
       }),
     );
 
@@ -308,6 +368,78 @@ class ApiConfig {
       // التسجيل فشل، قم بعرض رسالة خطأ أو معالجة الخطأ
       print('Registration failed: ${response.body}');
       return [false, jsonDecode(response.body)];
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateCart(
+      Map<int, dynamic> data, Cart? cart) async {
+    final url = (cart != null)
+        ? Uri.parse('$apiUrl/cart/update')
+        : Uri.parse('$apiUrl/cart/create');
+    final authHeader = await ApiConfig.getAuthHeaders();
+    final formattedData =
+        data.map((key, value) => MapEntry(key.toString(), value.toString()));
+
+    final response = await http.post(
+      url, // Ensure this endpoint is correct
+      headers: {...authHeader, 'Content-Type': 'application/json'},
+      body: jsonEncode(formattedData),
+    );
+    return jsonDecode(response.body);
+  }
+
+  static Future<Map<String, dynamic>> checkPaymentID(String paymentID) async {
+    final url = Uri.parse('$apiUrl/cart/checkpayment');
+    final authHeader = await ApiConfig.getAuthHeaders();
+    final response = await http.post(url, // Ensure this endpoint is correct
+        headers: {...authHeader, 'Content-Type': 'application/json'},
+        body: jsonEncode({'id': paymentID}));
+    return jsonDecode(response.body);
+  }
+
+  static Future<List<City>> getCities() async {
+    final url = Uri.parse("${apiUrl}/area/cities");
+    final authHeader = await ApiConfig.getAuthHeaders();
+    final response = await http.post(
+      url,
+      headers: {...authHeader, 'Content-Type': 'application/json'},
+    );
+
+    try {
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+
+        // استخراج قائمة المدن من المفتاح "data"
+        List<City> cities = (jsonResponse['data'] as List)
+            .map((cityJson) => City.fromMap(cityJson))
+            .toList();
+
+        return cities;
+      } else {
+        throw Exception("Failed to load cities: ${response.statusCode}");
+      }
+    } catch (e) {
+      throw Exception("Error parsing cities: $e");
+    }
+  }
+
+  static Future<City> getDistricts(int city_id) async {
+    final url = Uri.parse("${apiUrl}/area/districts/${city_id}");
+    final authHeader = await ApiConfig.getAuthHeaders();
+    final response = await http.post(
+      url, // Ensure this endpoint is correct
+      headers: {...authHeader, 'Content-Type': 'application/json'},
+    );
+    try {
+      if (response.statusCode == 200) {
+        City districts = City.fromMap(json.decode(response.body)['data']);
+        print(districts);
+        return districts;
+      } else {
+        return throw Exception(response.statusCode);
+      }
+    } catch (e) {
+      throw Exception(e);
     }
   }
   // static Future<List<FieldSection>> getFieldSections(int category_id) async {

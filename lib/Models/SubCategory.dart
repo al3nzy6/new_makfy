@@ -29,6 +29,14 @@ class SubCategory {
       'icon': icon ?? '',
     };
   }
+
+  factory SubCategory.fromMap(Map<String, dynamic> map) {
+    return SubCategory(
+      id: map['id']?.toInt(),
+      name: map['name'] ?? '',
+      icon: map['icon'] ?? '',
+    );
+  }
 }
 
 // Function to parse the main response that contains a list of categories
@@ -50,5 +58,13 @@ class CategoryResponse {
     return {
       'data': data.map((category) => category.toJson()).toList(),
     };
+  }
+
+  factory CategoryResponse.fromMap(Map<String, dynamic> map) {
+    return CategoryResponse(
+      data: (map['data'] as List)
+          .map((categoryMap) => Category.fromMap(categoryMap))
+          .toList(),
+    );
   }
 }

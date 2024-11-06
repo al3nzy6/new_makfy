@@ -8,6 +8,7 @@ import 'package:makfy_new/Models/fieldSection.dart';
 import 'package:makfy_new/Utilities/ApiConfig.dart';
 import 'package:makfy_new/Widget/FieldWidget.dart';
 import 'package:makfy_new/Widget/MainScreenWidget.dart';
+import 'package:makfy_new/Widget/serviceProviderWidget.dart';
 import 'package:makfy_new/Widget/shimmerLoadingWidget.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:shimmer/shimmer.dart';
@@ -33,6 +34,7 @@ class _SubsectionpageState extends State<Subsectionpage> {
   String? date;
   String? time;
   List<Widget> services = [];
+  List<Widget> serviceProviders = [];
   bool isLoading = true;
   List<fieldSection>? fields = [];
   List<Widget> fieldsWidget = [];
@@ -83,8 +85,18 @@ class _SubsectionpageState extends State<Subsectionpage> {
                 serviceProvider: service.user.name,
                 price: service.price,
                 id: service.id,
+                count: 0,
                 date: date ?? null,
                 time: time ?? null,
+              );
+            }).toList() ??
+            [];
+        serviceProviders = category.service_providers?.map((service_provider) {
+              return serviceProviderWidget(
+                title: service_provider.name,
+                id: service_provider.id,
+                averageRating: service_provider.averageRating,
+                countRating: service_provider.countRating,
               );
             }).toList() ??
             [];
@@ -130,7 +142,7 @@ class _SubsectionpageState extends State<Subsectionpage> {
             height: 10,
           ),
           ExpansionTile(
-            title: H1text(text: 'تصفية الخدمات'),
+            title: H1text(text: 'تصفية مقدمي الخدمات'),
             collapsedShape: RoundedRectangleBorder(
               borderRadius: BorderRadius.zero,
               side: BorderSide.none, // إزالة الخط عند إغلاق العنصر
@@ -187,12 +199,13 @@ class _SubsectionpageState extends State<Subsectionpage> {
           SizedBox(
             height: 10,
           ),
-          H1text(text: "الخدمات"),
+          H1text(text: "مقدمي الخدمات"),
           SizedBox(
             height: 20,
           ),
           Wrap(spacing: 10, runSpacing: 10, children: [
-            ...services,
+            ...serviceProviders,
+            // ...services,
           ]),
         ],
       ),

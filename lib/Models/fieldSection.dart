@@ -44,4 +44,19 @@ class fieldSection {
       'options': options?.map((option) => option.toJson()).toList() ?? [],
     };
   }
+
+  factory fieldSection.fromMap(Map<String, dynamic> map) {
+    return fieldSection(
+      id: map['id']?.toInt() ?? 0,
+      name: map['name'] ?? '',
+      showName: map['showName'] ?? '',
+      type: map['type'] ?? '',
+      required: map['required'] ?? false,
+      options: map['options'] != null
+          ? (map['options'] as List)
+              .map((optionMap) => Option.fromMap(optionMap))
+              .toList()
+          : [],
+    );
+  }
 }

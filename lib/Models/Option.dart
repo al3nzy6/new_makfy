@@ -22,4 +22,11 @@ class Option {
       'name': name,
     };
   }
+
+  factory Option.fromMap(Map<String, dynamic> map) {
+    return Option(
+      id: map['id']?.toInt() ?? 0,
+      name: map['name'] ?? '',
+    );
+  }
 }

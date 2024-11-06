@@ -28,7 +28,7 @@ class _LoginPageState extends State<LoginPage> {
     final password = passwordController.text.trim();
 
     // Replace this print statement with actual login logic
-    print('Email: $email, Password: $password');
+    // print('Email: $email, Password: $password');
 
     // Example login call
     final success = await apiService.login(email, password);

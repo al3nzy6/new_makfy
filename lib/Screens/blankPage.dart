@@ -4,11 +4,7 @@ import 'package:makfy_new/Widget/MainScreenWidget.dart';
 import 'package:makfy_new/Widget/appHeadWidget.dart';
 
 class Blankpage extends StatefulWidget {
-  Widget page;
-  Blankpage({
-    Key? key,
-    required this.page,
-  }) : super(key: key);
+  Blankpage({Key? key}) : super(key: key);
 
   @override
   State<Blankpage> createState() => _BlankpageState();

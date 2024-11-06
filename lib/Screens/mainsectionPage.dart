@@ -8,6 +8,7 @@ import 'package:makfy_new/Widget/MainScreenWidget.dart';
 import 'package:makfy_new/Widget/ServiceAddedWidget.dart';
 import 'package:makfy_new/Widget/appHeadWidget.dart';
 import 'package:makfy_new/Widget/boxWidget.dart';
+import 'package:makfy_new/Widget/serviceProviderWidget.dart';
 
 class Mainsectionpage extends StatefulWidget {
   Mainsectionpage({super.key});
@@ -22,6 +23,7 @@ class _MainsectionpageState extends State<Mainsectionpage> {
   bool isLoading = true;
   List<SubCategory> categories = [];
   List<Widget> categoryWidgets = [];
+  List<Widget> serviceProviders = [];
   List<Widget> services = [];
 
   Future<void> _getTheCategory() async {
@@ -43,7 +45,13 @@ class _MainsectionpageState extends State<Mainsectionpage> {
                 serviceProvider: service.user.name,
                 price: service.price,
                 id: service.id,
+                count: 0,
               );
+            }).toList() ??
+            [];
+        serviceProviders = category.service_providers?.map((service_provider) {
+              return serviceProviderWidget(
+                  title: service_provider.name, id: service_provider.id);
             }).toList() ??
             [];
         isLoading = false;
@@ -86,7 +94,7 @@ class _MainsectionpageState extends State<Mainsectionpage> {
           SizedBox(
             height: 40,
           ),
-          H1text(text: "احدث الخدمات"),
+          // H1text(text: "قريباً"),
           SizedBox(
             height: 20,
           ),
@@ -94,48 +102,12 @@ class _MainsectionpageState extends State<Mainsectionpage> {
             spacing: 10,
             runSpacing: 10,
             children: [
-              ...services,
+              // ...serviceProviders,
+              // ...services,
             ],
           )
         ],
       ),
     );
   }
-}
-
-Widget _latestServiceAdded() {
-  return Column(
-    mainAxisSize: MainAxisSize.max,
-    crossAxisAlignment: CrossAxisAlignment.center,
-    children: [
-      ServiceAddedWidget(
-          title: "title",
-          fields: ['ملح فقط', 'بهارات'],
-          serviceProvider: "حلبي",
-          price: '300.50',
-          id: 12),
-      SizedBox(height: 15),
-      ServiceAddedWidget(
-          title: "ذبيحه كاملة مقطعه انصاص وانصاص",
-          fields: ['ملح فقط', 'بهارات'],
-          serviceProvider: "حلبي",
-          price: '300.50',
-          id: 12),
-      SizedBox(height: 15),
-      ServiceAddedWidget(
-          title: "title",
-          fields: ['ملح فقط', 'بهارات'],
-          serviceProvider: "حلبي",
-          price: '300.50',
-          id: 12),
-      SizedBox(height: 15),
-      ServiceAddedWidget(
-          title: "title",
-          fields: ['ملح فقط', 'بهارات'],
-          serviceProvider: "حلبي",
-          price: '300.50',
-          id: 12),
-      SizedBox(height: 15),
-    ],
-  );
 }

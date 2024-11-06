@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:makfy_new/Models/Category.dart';
 import 'package:makfy_new/Models/Service.dart';
+import 'package:makfy_new/Models/User.dart';
 import 'package:makfy_new/Utilities/ApiConfig.dart';
 import 'package:makfy_new/Widget/H1textWidget.dart';
 import 'package:makfy_new/Widget/MainScreenWidget.dart';
@@ -8,6 +9,7 @@ import 'package:makfy_new/Widget/ServiceAddedWidget.dart';
 import 'package:makfy_new/Widget/appHeadWidget.dart';
 import 'package:makfy_new/Widget/boxWidget.dart';
 import 'package:makfy_new/Widget/fontIcon.dart';
+import 'package:makfy_new/Widget/serviceProviderWidget.dart';
 import 'package:makfy_new/Widget/shimmerLoadingWidget.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -55,16 +57,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _fetchServices() async {
     try {
-      List<Service> listServices = await ApiConfig.initServices();
+      List<User> listServices = await ApiConfig.initServices();
       setState(() {
         services = listServices.map((service) {
-              return ServiceAddedWidget(
-                title: service.title,
-                fields: service.insertedValues?.split(','),
-                serviceProvider: service.user.name,
-                price: service.price,
-                id: service.id,
-              );
+              return serviceProviderWidget(title: service.name, id: service.id);
             }).toList() ??
             [];
       });
@@ -80,7 +76,7 @@ class _MyHomePageState extends State<MyHomePage> {
       start: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          H1text(text: 'الخدمات'),
+          H1text(text: 'الاقسام'),
           const SizedBox(height: 10),
           Wrap(
             spacing: 10,
@@ -88,7 +84,7 @@ class _MyHomePageState extends State<MyHomePage> {
             children: categoryWidgets,
           ),
           const SizedBox(height: 30),
-          H1text(text: "أحدث الخدمات المضافة"),
+          H1text(text: "قريبا ستتوفر المزيد من الخدمات"),
           SizedBox(
             height: 10,
           ),
@@ -96,7 +92,12 @@ class _MyHomePageState extends State<MyHomePage> {
             spacing: 10,
             runSpacing: 10,
             children: [
-              ...services,
+              // ...services,
+              boxWidget(title: "قريبا"),
+              boxWidget(title: "قريبا"),
+              boxWidget(title: "قريبا"),
+              boxWidget(title: "قريبا"),
+              boxWidget(title: "قريبا"),
             ],
           )
         ],
@@ -159,42 +160,5 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       boxWidget(title: 'iiii', route: '/'),
     ];
-  }
-
-  Widget _latestServiceAdded() {
-    return Column(
-      mainAxisSize: MainAxisSize.max,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        ServiceAddedWidget(
-            title: "title",
-            fields: ['ملح فقط', 'بهارات'],
-            serviceProvider: "حلبي",
-            price: '300.50',
-            id: 12),
-        SizedBox(height: 15),
-        ServiceAddedWidget(
-            title: "ذبيحه كاملة مقطعه انصاص وانصاص",
-            fields: ['ملح فقط', 'بهارات'],
-            serviceProvider: "حلبي",
-            price: '300.50',
-            id: 12),
-        SizedBox(height: 15),
-        ServiceAddedWidget(
-            title: "title",
-            fields: ['ملح فقط', 'بهارات'],
-            serviceProvider: "حلبي",
-            price: '300.50',
-            id: 12),
-        SizedBox(height: 15),
-        ServiceAddedWidget(
-            title: "title",
-            fields: ['ملح فقط', 'بهارات'],
-            serviceProvider: "حلبي",
-            price: '300.50',
-            id: 12),
-        SizedBox(height: 15),
-      ],
-    );
   }
 }

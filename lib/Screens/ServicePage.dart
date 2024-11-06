@@ -90,7 +90,11 @@ class _ServicePageState extends State<ServicePage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 H2Text(text: serviceData?.user.name ?? 'non'),
-                RatingWidget(stars: 4, ratingCount: '3'),
+                RatingWidget(
+                  stars: serviceData?.user.averageRating ?? 0,
+                  ratingCount: "${serviceData?.user.countRating ?? 0}",
+                  userId: serviceData?.user.id ?? 0,
+                ),
               ],
             ),
           ),
@@ -130,29 +134,15 @@ class _ServicePageState extends State<ServicePage> {
             lines: 2,
           ),
           SizedBox(
-            height: 10,
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              H2Text(
-                text: 'نسبة التوفر  للاسبوع ',
-                // size: 22,
-              ),
-              H2Text(
-                text: '10%',
-                // size: 19,
-                lines: 1,
-              ),
-            ],
-          ),
-          SizedBox(
             height: 20,
           ),
-          FieldWidget(id: 11, name: "date", showName: "التاريخ", type: 'Date'),
-          Divider(),
-          FieldWidget(id: 11, name: "time", showName: "الوقت", type: 'Time'),
-          Divider(),
+          if (user_id != null && user_id != serviceData?.user.id) ...[
+            FieldWidget(
+                id: 11, name: "date", showName: "التاريخ", type: 'Date'),
+            Divider(),
+            FieldWidget(id: 11, name: "time", showName: "الوقت", type: 'Time'),
+            Divider(),
+          ],
           (serviceData != null &&
                   serviceData!.customFields != null &&
                   serviceData!.customFields!.isNotEmpty)

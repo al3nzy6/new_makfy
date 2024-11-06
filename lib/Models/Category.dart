@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:makfy_new/Models/Service.dart';
+import 'package:makfy_new/Models/User.dart';
 import 'package:makfy_new/Models/fieldSection.dart';
 import 'package:makfy_new/Models/SubCategory.dart';
 import 'package:makfy_new/Screens/subsectionPage.dart';
@@ -15,17 +16,18 @@ class Category {
   final List<fieldSection>? Fields;
   final List<SubCategory>? categories;
   final List<Service>? services;
-  Category({
-    required this.id,
-    required this.name,
-    this.description,
-    this.icon,
-    this.percentage,
-    required this.serviceType,
-    this.categories,
-    this.Fields,
-    this.services,
-  });
+  final List<User>? service_providers;
+  Category(
+      {required this.id,
+      required this.name,
+      this.description,
+      this.icon,
+      this.percentage,
+      required this.serviceType,
+      this.categories,
+      this.Fields,
+      this.services,
+      this.service_providers});
 
   // Factory constructor to create a Category from JSON
   factory Category.fromJson(Map<String, dynamic> json) {
@@ -53,6 +55,11 @@ class Category {
               .map((servicesJson) => Service.fromJson(servicesJson))
               .toList()
           : [], // Can be null or another type
+      service_providers: json['service_providers'] != null
+          ? (json['service_providers'] as List)
+              .map((userJson) => User.fromJson(userJson))
+              .toList()
+          : [], // Can be null or another type
     );
   }
 
@@ -70,6 +77,41 @@ class Category {
       'Fields':
           Fields?.map((fiedSection) => fiedSection.toJson()).toList() ?? [],
       'services': services?.map((service) => service.toJson()).toList() ?? [],
+      'service_providers': service_providers
+              ?.map((service_provider) => service_provider.toJson())
+              .toList() ??
+          [],
     };
+  }
+
+  factory Category.fromMap(Map<String, dynamic> map) {
+    return Category(
+      id: map['id']?.toInt() ?? 0,
+      name: map['name'] ?? '',
+      description: map['description']?.toString(),
+      icon: map['icon']?.toString(),
+      percentage: map['percentage']?.toString(),
+      serviceType: map['service_type']?.toInt() ?? 0,
+      categories: map['categories'] != null
+          ? (map['categories'] as List)
+              .map((subCategoryMap) => SubCategory.fromMap(subCategoryMap))
+              .toList()
+          : [],
+      Fields: map['Fields'] != null
+          ? (map['Fields'] as List)
+              .map((fieldMap) => fieldSection.fromMap(fieldMap))
+              .toList()
+          : [],
+      services: map['services'] != null
+          ? (map['services'] as List)
+              .map((serviceMap) => Service.fromMap(serviceMap))
+              .toList()
+          : [],
+      service_providers: map['service_providers'] != null
+          ? (map['service_providers'] as List)
+              .map((userMap) => User.fromMap(userMap))
+              .toList()
+          : [],
+    );
   }
 }

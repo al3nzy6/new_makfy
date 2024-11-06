@@ -44,4 +44,17 @@ class CustomField {
       'options': options?.map((option) => option.toJson()).toList(),
     };
   }
+
+  factory CustomField.fromMap(Map<String, dynamic> map) {
+    return CustomField(
+      showName: map['showName'] ?? '',
+      name: map['name'] ?? '',
+      type: map['type'] ?? '',
+      value: map['value'] ?? '',
+      insertedValue: map['inserted_value'] ?? '',
+      options: map['options'] != null
+          ? List<Option>.from(map['options']?.map((x) => Option.fromMap(x)))
+          : null,
+    );
+  }
 }

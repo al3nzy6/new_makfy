@@ -5,12 +5,19 @@ class H2Text extends StatelessWidget {
   final Color? textColor;
   final double? size;
   final int? lines;
+  final String? aligment;
 
-  H2Text({required this.text, this.textColor, this.size, this.lines});
+  H2Text(
+      {required this.text,
+      this.textColor,
+      this.size,
+      this.lines,
+      this.aligment});
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      alignment: (aligment == "center") ? Alignment.center : null,
       margin: const EdgeInsets.only(top: 10, right: 10, left: 10),
       child: Text(
         text,

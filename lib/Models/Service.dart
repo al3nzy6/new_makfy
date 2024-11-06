@@ -12,6 +12,7 @@ class Service {
   final String? insertedValues;
   final User user;
   final SubCategory? category;
+  final int? quantity; // الحقل الجديد، يمكن أن يكون null
 
   Service({
     required this.id,
@@ -23,30 +24,33 @@ class Service {
     this.insertedValues,
     required this.user,
     this.category,
+    this.quantity, // إضافة الحقل كخيار اختياري
   });
 
   // Factory constructor لتحويل JSON إلى Service
   factory Service.fromJson(Map<String, dynamic> json) {
     return Service(
-        id: json['id'],
-        title: json['title'],
-        description: json['description'],
-        price: json['price'],
-        insertedValues: json['insertedValues'],
-        imageUrls: List<String>.from(
-            json['image_urls'] ?? []), // تحويل image_urls إلى قائمة
-        customFields: json['custom_fields'] != null
-            ? (json['custom_fields'] as List)
-                .map((field) => CustomField.fromJson(field))
-                .toList()
-            : [], // تعيين null إذا كانت custom_fields غير موجودة
-        user: json['user'] != null
-            ? User.fromMap(json['user']) // تأكد من وجود `user` قبل التحويل
-            : User(id: 0, name: "غير معروف"), // تعيين قيم افتراضية عند الحاجة
-        category: json['category'] != null
-            ? SubCategory.fromJson(json['category'])
-            : null);
+      id: json['id'],
+      title: json['title'],
+      description: json['description'],
+      price: json['price'],
+      insertedValues: json['insertedValues'],
+      imageUrls: List<String>.from(json['image_urls'] ?? []),
+      customFields: json['custom_fields'] != null
+          ? (json['custom_fields'] as List)
+              .map((field) => CustomField.fromJson(field))
+              .toList()
+          : [],
+      user: json['user'] != null
+          ? User.fromMap(json['user'])
+          : User(id: 0, name: "غير معروف"),
+      category: json['category'] != null
+          ? SubCategory.fromJson(json['category'])
+          : null,
+      quantity: json['quantity'], // جلب quantity فقط إذا كان موجودًا
+    );
   }
+
   // تحويل Service إلى Map
   Map<String, dynamic> toMap() {
     return {
@@ -60,22 +64,45 @@ class Service {
           customFields?.map((field) => field.toJson()).toList() ?? [],
       'user': user.toMap(),
       'category': category ?? [],
+      'quantity': quantity, // تضمين quantity إذا كان غير null
     };
   }
 
-  // تحويل Service إلى Map
+  // تحويل Service إلى JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'title': title,
-      'description': description ?? '',
+      'description': description,
       'price': price,
       'insertedValues': insertedValues,
       'image_urls': imageUrls ?? [],
       'custom_fields':
           customFields?.map((field) => field.toJson()).toList() ?? [],
-      'user': user.toMap(), // تحويل كائن user إلى Map
+      'user': user.toMap(),
       'category': category ?? [],
+      'quantity': quantity, // تضمين quantity إذا كان غير null
     };
+  }
+
+  factory Service.fromMap(Map<String, dynamic> map) {
+    return Service(
+      id: map['id']?.toInt() ?? 0,
+      title: map['title'] ?? '',
+      description: map['description'] ?? '',
+      price: map['price'] ?? '',
+      imageUrls: map['image_urls'] != null
+          ? List<String>.from(map['image_urls'])
+          : null,
+      customFields: map['custom_fields'] != null
+          ? List<CustomField>.from(
+              map['custom_fields']?.map((x) => CustomField.fromMap(x)))
+          : null,
+      insertedValues: map['insertedValues'],
+      user: User.fromMap(map['user']),
+      category:
+          map['category'] != null ? SubCategory.fromMap(map['category']) : null,
+      quantity: map['quantity']?.toInt(),
+    );
   }
 }
