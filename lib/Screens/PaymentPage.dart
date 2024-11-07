@@ -5,9 +5,7 @@ import 'package:moyasar/moyasar.dart';
 import 'package:makfy_new/Widget/MainScreenWidget.dart';
 
 class PaymentPage extends StatefulWidget {
-  PaymentPage({
-    Key? key,
-  }) : super(key: key);
+  PaymentPage({Key? key}) : super(key: key);
 
   @override
   State<PaymentPage> createState() => _PaymentPageState();
@@ -16,16 +14,18 @@ class PaymentPage extends StatefulWidget {
 class _PaymentPageState extends State<PaymentPage> {
   late int cart_id;
   late double price;
-  bool isLoading = false;
   bool isInitialized = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!isInitialized) {
       final arguments = ModalRoute.of(context)?.settings.arguments;
-      if (arguments is List) {
+      if (arguments is List && arguments.length >= 2) {
         cart_id = arguments[0];
         price = arguments[1];
+      } else {
+        print("Invalid arguments passed to PaymentPage.");
       }
       isInitialized = true;
     }
@@ -35,8 +35,7 @@ class _PaymentPageState extends State<PaymentPage> {
   Widget build(BuildContext context) {
     return Localizations.override(
       context: context,
-      locale:
-          const Locale('en', 'US'), // تحديد اللغة الإنجليزية فقط لهذه الصفحة
+      locale: const Locale('en'), // تحديد اللغة الإنجليزية فقط لهذه الصفحة
       child: PaymentWidget(cart_id: cart_id, price: price),
     );
   }
@@ -45,6 +44,7 @@ class _PaymentPageState extends State<PaymentPage> {
 class PaymentWidget extends StatefulWidget {
   final int cart_id;
   final double price;
+
   PaymentWidget({
     Key? key,
     required this.cart_id,
@@ -57,6 +57,10 @@ class PaymentWidget extends StatefulWidget {
 
 class _PaymentWidgetState extends State<PaymentWidget> {
   Future<PaymentConfig>? paymentConfigFuture;
+  final GlobalKey applePayKey = GlobalKey();
+  final GlobalKey creditCardKey = GlobalKey();
+  bool isApplePayVisible = true;
+  bool isCreditCardVisible = true;
 
   @override
   void initState() {
@@ -66,6 +70,9 @@ class _PaymentWidgetState extends State<PaymentWidget> {
 
   Future<PaymentConfig> initializePaymentConfig() async {
     try {
+      if (widget.price <= 0) {
+        throw Exception("Price must be greater than 0.");
+      }
       return PaymentConfig(
         publishableApiKey: 'pk_test_awoFqrQ77zViZGzvo1NiH7cjiGffpVN7Dx4TfzMQ',
         amount: (widget.price * 100).toInt(), // تحويل المبلغ إلى هللات
@@ -81,40 +88,59 @@ class _PaymentWidgetState extends State<PaymentWidget> {
           manual: false,
         ),
       );
-    } catch (e) {
+    } catch (e, stacktrace) {
       print("Error initializing PaymentConfig: $e");
+      print("Stacktrace: $stacktrace");
       throw Exception("Failed to initialize payment config: $e");
     }
   }
 
   void onPaymentResult(result) {
     if (result is PaymentResponse) {
-      showToast(context, result.status.name);
+      showToast(context, "Payment Status: ${result.status.name}");
       switch (result.status) {
         case PaymentStatus.paid:
-          print(result.id);
+          print("Payment successful. ID: ${result.id}");
           checkPayment(result.id);
           break;
         case PaymentStatus.failed:
-          // handle failure.
+          print("Payment failed.");
           break;
         case PaymentStatus.authorized:
-          // handle authorized.
+          print("Payment authorized, awaiting capture.");
           break;
         default:
+          print("Unknown payment status.");
       }
       return;
     }
 
-    // handle failures.
-    if (result is ApiError) {}
-    if (result is AuthError) {}
-    if (result is ValidationError) {}
-    if (result is PaymentCanceledError) {}
-    if (result is UnprocessableTokenError) {}
-    if (result is TimeoutError) {}
-    if (result is NetworkError) {}
-    if (result is UnspecifiedError) {}
+    // handle various errors
+    if (result is ApiError) {
+      print("API Error occurred.");
+      showToast(context, "API Error occurred.");
+    } else if (result is AuthError) {
+      print("Authorization error.");
+      showToast(context, "Authorization error.");
+    } else if (result is ValidationError) {
+      print("Validation error.");
+      showToast(context, "Validation error.");
+    } else if (result is PaymentCanceledError) {
+      print("Payment was canceled.");
+      showToast(context, "Payment was canceled.");
+    } else if (result is UnprocessableTokenError) {
+      print("Token error occurred.");
+      showToast(context, "Token error occurred.");
+    } else if (result is TimeoutError) {
+      print("Timeout error occurred.");
+      showToast(context, "Timeout error occurred.");
+    } else if (result is NetworkError) {
+      print("Network error occurred.");
+      showToast(context, "Network error occurred.");
+    } else if (result is UnspecifiedError) {
+      print("An unspecified error occurred.");
+      showToast(context, "An unspecified error occurred.");
+    }
   }
 
   @override
@@ -124,6 +150,10 @@ class _PaymentWidgetState extends State<PaymentWidget> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(child: Text("Error: ${snapshot.error}"));
         }
 
         if (!snapshot.hasData) {
@@ -144,41 +174,43 @@ class _PaymentWidgetState extends State<PaymentWidget> {
                     'images/logo.png', // تأكد من وجود الصورة في assets
                     height: 300,
                   ),
-                  ApplePay(
-                    config: paymentConfig,
-                    onPaymentResult: onPaymentResult,
+                  Offstage(
+                    offstage: !isApplePayVisible,
+                    child: ApplePay(
+                      key: applePayKey, // استخدام GlobalKey لمنع إعادة الإنشاء
+                      config: paymentConfig,
+                      onPaymentResult: onPaymentResult,
+                    ),
                   ),
-                  const SizedBox(
-                    height: 20,
+                  const SizedBox(height: 20),
+                  const Divider(height: 10),
+                  const SizedBox(height: 20),
+                  Offstage(
+                    offstage: !isCreditCardVisible,
+                    child: CreditCard(
+                      key:
+                          creditCardKey, // استخدام GlobalKey لمنع إعادة الإنشاء
+                      locale: const Localization.en(),
+                      config: paymentConfig,
+                      onPaymentResult: onPaymentResult,
+                    ),
                   ),
-                  const Divider(
-                    height: 10,
-                  ),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                  CreditCard(
-                    config: paymentConfig,
-                    onPaymentResult: onPaymentResult,
-                  ),
-                  SizedBox(
-                    height: 30,
-                  ),
+                  const SizedBox(height: 30),
                   InkWell(
                     onTap: () {
                       Navigator.pop(context);
                     },
                     child: Container(
                       alignment: Alignment.center,
-                      padding: EdgeInsets.only(top: 10, bottom: 10),
+                      padding: const EdgeInsets.only(top: 10, bottom: 10),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Color(0XFFEF5B2C),
+                          color: const Color(0XFFEF5B2C),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         height: 50,
                         width: double.infinity,
-                        child: Text(
+                        child: const Text(
                           "إلغاء عملية الدفع",
                           textAlign: TextAlign.center,
                           style: TextStyle(fontSize: 30, color: Colors.white),
@@ -195,24 +227,25 @@ class _PaymentWidgetState extends State<PaymentWidget> {
     );
   }
 
-  Future<void> checkPayment(uuid) async {
-    Map<String, dynamic> result = await ApiConfig.checkPaymentID(uuid);
+  Future<void> checkPayment(String uuid) async {
     try {
+      Map<String, dynamic> result = await ApiConfig.checkPaymentID(uuid);
       if (result['data']['message'] == 'success') {
-        print('invoice Has been paid');
+        print('Invoice has been paid');
         Navigator.pushReplacementNamed(context, '/my_orders');
       }
     } catch (e) {
       print("Error in payment verification: $e");
+      showToast(context, "Error verifying payment");
     }
   }
 }
 
-void showToast(BuildContext context, String status) {
+void showToast(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text(
-        "حالة الفاتورة: تم دفعها",
+        message,
         style: const TextStyle(fontSize: 20),
       ),
     ),

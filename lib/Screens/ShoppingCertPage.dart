@@ -21,6 +21,7 @@ class _ShoppingCertPageState extends State<ShoppingCertPage> {
   late String name;
   bool isLoading = true;
   bool isPaidCart = false;
+  bool isServiceProviderCart = false;
   List<Widget> cartsWidget = [];
   double totalSum = 0.0; // متغير لتخزين المجموع
   @override
@@ -31,13 +32,19 @@ class _ShoppingCertPageState extends State<ShoppingCertPage> {
     isLoading = false;
     isPaidCart =
         (ModalRoute.of(context)?.settings.name == '/my_orders') ? true : false;
+    isServiceProviderCart =
+        (ModalRoute.of(context)?.settings.name == '/customer_orders')
+            ? true
+            : false;
     _getCustomerCarts();
   }
 
   Future<void> _getCustomerCarts() async {
     List<Cart> carts = (isPaidCart)
         ? await ApiConfig.customerPaidCartList()
-        : await ApiConfig.customerCartList();
+        : (isServiceProviderCart)
+            ? await ApiConfig.serviceProviderCartList()
+            : await ApiConfig.customerCartList();
     try {
       setState(() {
         totalSum = 0.0; // Reset totalSum before calculating
@@ -46,7 +53,9 @@ class _ShoppingCertPageState extends State<ShoppingCertPage> {
               double cartTotal = cart.total;
               totalSum += cartTotal;
               return serviceProviderWidget(
-                title: cart.service_provider.name,
+                title: (isServiceProviderCart)
+                    ? cart.customer.name
+                    : cart.service_provider.name,
                 id: cart.service_provider.id,
                 averageRating: cart.service_provider.averageRating,
                 countRating: cart.service_provider.countRating,

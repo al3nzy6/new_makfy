@@ -10,6 +10,9 @@ class boxWidget extends StatelessWidget {
   String? image;
   String? route;
   List<dynamic>? data;
+  String? TextAsLogo;
+  double? TextAsLogoSize;
+  double? width;
   boxWidget({
     Key? key,
     this.color,
@@ -18,6 +21,9 @@ class boxWidget extends StatelessWidget {
     this.image,
     this.route,
     this.data,
+    this.width,
+    this.TextAsLogo,
+    this.TextAsLogoSize,
   }) : super(key: key);
 
   @override
@@ -55,10 +61,21 @@ class boxWidget extends StatelessWidget {
                         image ?? 'images/logo.png',
                         height: screenWidth * 0.20,
                       ) // عرض الصورة إذا كانت غير null
-                    : Image.asset(
-                        'images/logo.png',
-                        height: screenWidth * 0.20,
-                      ),
+                    : (TextAsLogo != null)
+                        ? Padding(
+                            padding: const EdgeInsets.only(top: 8, bottom: 10),
+                            child: Text(
+                              TextAsLogo ?? '',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: TextAsLogoSize ?? 50,
+                              ),
+                            ),
+                          )
+                        : Image.asset(
+                            'images/logo.png',
+                            height: screenWidth * 0.20,
+                          ),
             H2Text(text: title),
           ],
         ),

@@ -34,7 +34,7 @@ class AppRoutes {
     '/personal_profile': (context) => PersonalProfilePage(),
     '/shopping_cert': (context) => ShoppingCertPage(),
     '/my_orders': (context) => ShoppingCertPage(),
-    '/customer_orders': (context) => CustomerOrdersPage(),
+    '/customer_orders': (context) => ShoppingCertPage(),
     '/create_service': (context) => createServicePage(),
     '/user_page': (context) => userServicesPage(),
     '/payment_page': (context) => PaymentPage(),

@@ -10,6 +10,7 @@ class Cart extends Equatable {
   User customer;
   User service_provider;
   int status;
+  int? otp;
   double price;
   double total;
   String payment_id;
@@ -20,6 +21,7 @@ class Cart extends Equatable {
     required this.customer,
     required this.service_provider,
     required this.status,
+    this.otp,
     required this.price,
     required this.total,
     required this.payment_id,
@@ -32,6 +34,7 @@ class Cart extends Equatable {
     User? customer,
     User? service_provider,
     int? status,
+    int? otp,
     double? price,
     double? total,
     String? payment_id,
@@ -43,6 +46,7 @@ class Cart extends Equatable {
       customer: customer ?? this.customer,
       service_provider: service_provider ?? this.service_provider,
       status: status ?? this.status,
+      otp: otp ?? this.otp,
       price: price ?? this.price,
       total: total ?? this.total,
       payment_id: payment_id ?? this.payment_id,
@@ -58,6 +62,7 @@ class Cart extends Equatable {
     result.addAll({'customer': customer.toMap()});
     result.addAll({'service_provider': service_provider.toMap()});
     result.addAll({'status': status});
+    result.addAll({'otp': otp});
     result.addAll({'price': price});
     result.addAll({'total': total});
     result.addAll({'payment_id': payment_id});
@@ -75,6 +80,7 @@ class Cart extends Equatable {
       customer: User.fromMap(map['customer']),
       service_provider: User.fromMap(map['service_provider']),
       status: map['status']?.toInt() ?? 0,
+      otp: map['otp']?.toInt() ?? 0,
       price: map['price'] ?? '',
       total: map['total'] ?? '',
       payment_id: map['payment_id'] ?? '',
@@ -93,6 +99,7 @@ class Cart extends Equatable {
       customer: User.fromJson(json['customer']),
       service_provider: User.fromJson(json['service_provider']),
       status: json['status'],
+      otp: json['otp'],
       price: json['price'] != null
           ? double.parse(json['price'].replaceAll(',', ''))
           : 0.0,

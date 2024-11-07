@@ -13,6 +13,7 @@ class ServiceAddedWidget extends StatefulWidget {
   final String? time;
   final bool? currentUserIsTheProvider;
   int? count;
+  bool? isPaid;
   final Function(dynamic)? onChanged;
 
   ServiceAddedWidget(
@@ -23,6 +24,7 @@ class ServiceAddedWidget extends StatefulWidget {
       required this.id,
       this.date,
       this.time,
+      this.isPaid,
       this.count = 0, // تأكيد أن count يبدأ بـ 0
       this.onChanged,
       this.currentUserIsTheProvider});
@@ -38,7 +40,9 @@ class _ServiceAddedWidgetState extends State<ServiceAddedWidget> {
       height: (widget.currentUserIsTheProvider != null &&
               widget.currentUserIsTheProvider == false)
           ? 140
-          : 90,
+          : (widget.isPaid != null && widget.isPaid == true)
+              ? 140
+              : 90,
       child: Column(
         children: [
           InkWell(
@@ -83,28 +87,31 @@ class _ServiceAddedWidgetState extends State<ServiceAddedWidget> {
               ],
             ),
           ),
-          if (widget.currentUserIsTheProvider != true) ...[
+          if (widget.currentUserIsTheProvider != true ||
+              widget.isPaid == true) ...[
             const Divider(
               height: 10,
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                InkWell(
-                  onTap: () {
-                    setState(() {
-                      (widget.count != null)
-                          ? widget.count = widget.count! + 1
-                          : widget.count = 1;
-                      widget.onChanged?.call(widget.count);
-                    });
-                  },
-                  child: Icon(
-                    Icons.add,
-                    size: 40,
-                    color: Color(0XFFEF5B2C),
+                if (widget.isPaid == null || widget.isPaid == false) ...[
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        (widget.count != null)
+                            ? widget.count = widget.count! + 1
+                            : widget.count = 1;
+                        widget.onChanged?.call(widget.count);
+                      });
+                    },
+                    child: Icon(
+                      Icons.add,
+                      size: 40,
+                      color: Color(0XFFEF5B2C),
+                    ),
                   ),
-                ),
+                ],
                 Container(
                   width: 100,
                   color: Color(0XFFEF5B2C),
@@ -118,21 +125,23 @@ class _ServiceAddedWidgetState extends State<ServiceAddedWidget> {
                     ),
                   ),
                 ),
-                InkWell(
-                  onTap: () {
-                    setState(() {
-                      (widget.count != null && widget.count != 0)
-                          ? widget.count = widget.count! - 1
-                          : widget.count = 0;
-                      widget.onChanged?.call(widget.count);
-                    });
-                  },
-                  child: Icon(
-                    Icons.remove,
-                    size: 40,
-                    color: Color(0XFFEF5B2C),
+                if (widget.isPaid == null || widget.isPaid == false) ...[
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        (widget.count != null && widget.count != 0)
+                            ? widget.count = widget.count! - 1
+                            : widget.count = 0;
+                        widget.onChanged?.call(widget.count);
+                      });
+                    },
+                    child: Icon(
+                      Icons.remove,
+                      size: 40,
+                      color: Color(0XFFEF5B2C),
+                    ),
                   ),
-                ),
+                ],
               ],
             )
           ],

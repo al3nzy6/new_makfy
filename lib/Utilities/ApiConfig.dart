@@ -201,6 +201,26 @@ class ApiConfig {
     }
   }
 
+  static Future<List<Cart>> serviceProviderCartList() async {
+    final url = Uri.parse("${apiUrl}/cart/service_provider");
+    final token = await ApiConfig().getToken();
+    try {
+      final authHeader = await ApiConfig.getAuthHeaders();
+      final response = await http.get(url, headers: authHeader);
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        List<Cart> carts = (jsonResponse['data'] as List)
+            .map((cartJson) => Cart.fromJson(cartJson))
+            .toList();
+        return carts;
+      } else {
+        return throw Exception(response.statusCode);
+      }
+    } catch (e) {
+      throw Exception(e);
+    }
+  }
+
   static Future<List<Cart>> customerPaidCartList() async {
     final url = Uri.parse("${apiUrl}/cart/customer/paid");
     final token = await ApiConfig().getToken();
@@ -442,6 +462,60 @@ class ApiConfig {
       throw Exception(e);
     }
   }
+
+  static Future<Map<String, dynamic>> rate(int cart, double rating) async {
+    final url = Uri.parse('$apiUrl/cart/rate/$cart');
+    final authHeader = await ApiConfig.getAuthHeaders();
+    final response = await http.post(
+      url, // Ensure this endpoint is correct
+      headers: {...authHeader, 'Content-Type': 'application/json'},
+      body: jsonEncode({'rating': rating}),
+    );
+    print(response.body);
+    return jsonDecode(response.body);
+  }
+
+  static Future<Map<String, dynamic>> makeCartOnProgress(
+      int cartId, int otp) async {
+    final url = Uri.parse('$apiUrl/cart/makeCartOnProgress/$cartId');
+    final authHeader =
+        await ApiConfig.getAuthHeaders(); // جلب الـ headers للتوثيق
+
+    final response = await http.post(
+      url,
+      headers: {
+        ...authHeader,
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'otp': otp}),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body); // يعيد الاستجابة كـ Map
+    } else {
+      throw Exception(
+          'Failed to make cart on progress'); // إذا فشلت العملية، يتم إطلاق خطأ
+    }
+  }
+
+  static Future<Map<String, dynamic>> makeCartComplete(int cartId) async {
+    final url = Uri.parse('$apiUrl/cart/makeCartComplete/$cartId');
+    final authHeader =
+        await ApiConfig.getAuthHeaders(); // جلب الـ headers للتوثيق
+
+    final response = await http.post(url, headers: {
+      ...authHeader,
+      'Content-Type': 'application/json',
+    });
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body); // يعيد الاستجابة كـ Map
+    } else {
+      throw Exception(
+          'Failed to make cart on progress'); // إذا فشلت العملية، يتم إطلاق خطأ
+    }
+  }
+
   // static Future<List<FieldSection>> getFieldSections(int category_id) async {
   //   final url = Uri.parse("${apiUrl}/category/${category_id}");
   //   try {

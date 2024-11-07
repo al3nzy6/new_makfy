@@ -1,4 +1,5 @@
 {
     "java.configuration.updateBuildConfiguration": "interactive",
-    "cmake.sourceDirectory": "/Applications/MAMP/htdocs/flutter/makfy_new/linux"
+    "cmake.sourceDirectory": "/Applications/MAMP/htdocs/flutter/makfy_new/linux",
+    "cmake.ignoreCMakeListsMissing": true
 }
