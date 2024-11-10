@@ -44,6 +44,8 @@ class _ServiceAddedWidgetState extends State<ServiceAddedWidget> {
               ? 140
               : 90,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           InkWell(
             onTap: () {
@@ -53,38 +55,48 @@ class _ServiceAddedWidgetState extends State<ServiceAddedWidget> {
                 widget.time ?? null
               ]);
             },
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                Container(
-                  width: 320,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      H2Text(text: widget.title, size: 20),
-                      if (widget.fields != null)
-                        Padding(
-                          padding: const EdgeInsets.only(
-                              top: 8, left: 10, right: 10),
-                          child: Text(
-                            widget.fields!.join(' '),
-                            style: TextStyle(
-                              color: Color(0XFFEF5B2C),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  Container(
+                    // width: double.infinity ,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // استخدام FittedBox لضبط النص داخل الشاشة وتجنب الخروج
+                        Text(
+                          widget.title,
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1, // يمنع النص من التوسع لأكثر من سطر
+                        ),
+                        if (widget.fields != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 1),
+                            child: Text(
+                              widget.fields!.join(' '),
+                              style: TextStyle(
+                                color: Color(0XFFEF5B2C),
+                              ),
                             ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                Text(
-                  '${widget.price}',
-                  style: const TextStyle(
-                    fontSize: 19,
-                    color: Color(0XFFEF5B2C),
+                  Text(
+                    '${widget.price}',
+                    style: const TextStyle(
+                      fontSize: 19,
+                      color: Color(0XFFEF5B2C),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           if (widget.currentUserIsTheProvider != true ||
