@@ -175,12 +175,7 @@ class _userServicesPageState extends State<userServicesPage> {
                               : "لم تكتمل",
                   TextAsLogoSize: 30,
                 ),
-                if (isServiceProvider != true && cart!.otp != null) ...[
-                  boxWidget(
-                    width: 160,
-                    title: "رقم التوثيق",
-                    TextAsLogo: "${cart!.otp}",
-                  ),
+                if (isServiceProvider != true) ...[
                   InkWell(
                     onTap:
                         isPaid == true ? () => _openRatingModal(context) : null,
@@ -189,6 +184,13 @@ class _userServicesPageState extends State<userServicesPage> {
                       icon: Icons.star,
                       title: "تقيم الخدمة",
                     ),
+                  ),
+                ],
+                if (isServiceProvider != true && cart!.otp != null) ...[
+                  boxWidget(
+                    width: 160,
+                    title: "رقم التوثيق",
+                    TextAsLogo: "${cart!.otp}",
                   ),
                 ],
                 if (isServiceProvider == true) ...[
@@ -213,7 +215,7 @@ class _userServicesPageState extends State<userServicesPage> {
                         title: "اكمال الخدمة",
                       ),
                     ),
-                  ]
+                  ],
                 ]
               ],
             )
@@ -281,7 +283,7 @@ class _userServicesPageState extends State<userServicesPage> {
     Map<String, dynamic> result =
         await ApiConfig.updateCart(finalresults, cart);
     try {
-      print(result['data']['total']);
+      print(double.tryParse(result['data']['total']));
       if (OnlySaveAsCart == false) {
         Navigator.pushNamed(context, '/payment_page', arguments: [
           result['data']['id'],

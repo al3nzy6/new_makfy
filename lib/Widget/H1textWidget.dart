@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 
 class H1text extends StatelessWidget {
   String text;
+  Color? textColor;
   H1text({
     super.key,
     required this.text,
+    this.textColor,
   });
 
   @override
@@ -13,9 +15,10 @@ class H1text extends StatelessWidget {
       alignment: Alignment.centerRight,
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontWeight: FontWeight.w800,
           fontSize: 25,
+          color: textColor ?? Colors.black,
         ),
       ),
     );

@@ -95,9 +95,6 @@ class _MyHomePageState extends State<MyHomePage> {
               // ...services,
               boxWidget(title: "قريبا"),
               boxWidget(title: "قريبا"),
-              boxWidget(title: "قريبا"),
-              boxWidget(title: "قريبا"),
-              boxWidget(title: "قريبا"),
             ],
           )
         ],

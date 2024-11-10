@@ -278,6 +278,9 @@ class ApiConfig {
     if (userData['id_number'] != null) {
       await prefs.setInt('isServiceProvider', 1);
     }
+    if (userData['id_number'] == null) {
+      await prefs.setInt('isServiceProvider', 0);
+    }
     await prefs.setInt('user_id', userData['id']);
   }
 
@@ -340,6 +343,48 @@ class ApiConfig {
         return [id, 'تم إنشاء الخدمة'];
       } else {
         return [null, 'يوجد خلل لم يتم إنشاء الخدمة ${response.statusCode}'];
+      }
+    } catch (e) {
+      throw Exception("خطأ أثناء إرسال البيانات: $e");
+    }
+  }
+
+  Future<List> updateService(Map<String, dynamic> data, int serviceId) async {
+    final url = Uri.parse("${apiUrl}/service/$serviceId/update");
+    final authHeader = await ApiConfig.getAuthHeaders();
+
+    final request = http.MultipartRequest('POST', url)
+      ..headers.addAll(authHeader);
+
+    data.forEach((key, value) {
+      if (value is! File) {
+        request.fields[key] = value.toString();
+      }
+    });
+
+    for (var entry in data.entries) {
+      if (entry.value is File) {
+        final file = entry.value as File;
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            entry.key,
+            file.path,
+            filename: basename(file.path),
+          ),
+        );
+      }
+    }
+
+    try {
+      final response = await request.send();
+      if (response.statusCode == 200) {
+        final responseBody = await response.stream.bytesToString();
+        return [
+          json.decode(responseBody)['data']['id'],
+          'تم تحديث الخدمة بنجاح'
+        ];
+      } else {
+        return [null, 'يوجد خلل لم يتم تحديث الخدمة ${response.statusCode}'];
       }
     } catch (e) {
       throw Exception("خطأ أثناء إرسال البيانات: $e");

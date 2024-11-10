@@ -12,6 +12,7 @@ class FieldWidget extends StatefulWidget {
   final String type;
   final bool? required;
   final Function(dynamic)? onChanged;
+  final dynamic initialValue;
 
   FieldWidget({
     Key? key,
@@ -22,6 +23,7 @@ class FieldWidget extends StatefulWidget {
     required this.type,
     this.required = false,
     this.onChanged,
+    this.initialValue,
   }) : super(key: key);
 
   @override
@@ -33,17 +35,76 @@ class _FieldWidgetState extends State<FieldWidget> {
   TimeOfDay selectedTime = TimeOfDay.now();
   List<int> _selectedIds = [];
   List<String> _selectedValues = [];
-  File? _selectedImage; // لتخزين الصورة المختارة
+  File? _selectedImage;
+  Option? selectedOption; // متغير الحالة للحفاظ على الخيار المحدد
 
-  final ImagePicker _picker = ImagePicker(); // مكتبة لالتقاط الصور
+  final ImagePicker _picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeDefaultValues();
+    _initializeSelectedOption(
+        widget.initialValue); // تعيين القيمة الأولية للخيار
+  }
+
+  void _initializeDefaultValues() {
+    if (widget.initialValue != null) {
+      switch (widget.type) {
+        case 'String':
+          _selectedValues = [widget.initialValue.toString()];
+          break;
+        case 'Date':
+          selectedDate = DateTime.parse(widget.initialValue);
+          break;
+        case 'Time':
+          selectedTime = TimeOfDay(
+              hour: int.parse(widget.initialValue.split(":")[0]),
+              minute: int.parse(widget.initialValue.split(":")[1]));
+          break;
+        case 'File':
+          _selectedImage = null;
+          break;
+      }
+      widget.onChanged?.call(widget.initialValue);
+    }
+  }
+
+  void _initializeSelectedOption(dynamic initalValue) {
+    final optionsList = widget.options != null
+        ? widget.options!.map((map) => Option.fromJson(map)).toList()
+        : [];
+
+    // تعيين القيمة الابتدائية إذا كانت متوفرة وتتطابق مع عنصر في optionsList
+    void _initializeSelectedOption() {
+      final optionsList = widget.options != null
+          ? widget.options!.map((map) => Option.fromJson(map)).toList()
+          : [];
+
+      // إذا كانت optionsList غير فارغة، حاول مطابقة selectedOption بناءً على initialValue
+      if (optionsList.isNotEmpty) {
+        selectedOption = (widget.initialValue != null)
+            ? optionsList.firstWhere(
+                (option) => option.id == widget.initialValue,
+                orElse: () =>
+                    optionsList.first) // استخدم الخيار الأول كخيار افتراضي
+            : optionsList.first;
+
+        // التأكد من أن selectedOption يتطابق مع عنصر في optionsList
+        if (!optionsList.contains(selectedOption)) {
+          selectedOption =
+              optionsList.first; // تعيين الخيار الأول إذا لم يكن هناك تطابق
+        }
+      }
+    }
+  }
 
   Future<void> _pickImage(ImageSource source) async {
-    final pickedFile =
-        await _picker.pickImage(source: source); // استخدم المدخل source
+    final pickedFile = await _picker.pickImage(source: source);
     if (pickedFile != null) {
       setState(() {
-        _selectedImage = File(pickedFile.path); // تعيين الصورة
-        widget.onChanged?.call(_selectedImage); // تمرير الصورة
+        _selectedImage = File(pickedFile.path);
+        widget.onChanged?.call(_selectedImage);
       });
     }
   }
@@ -52,8 +113,7 @@ class _FieldWidgetState extends State<FieldWidget> {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: selectedDate,
-      firstDate: DateTime(
-          DateTime.now().year, DateTime.now().month, DateTime.now().day),
+      firstDate: DateTime.now(),
       lastDate: DateTime(2101),
     );
     if (picked != null && picked != selectedDate) {
@@ -73,8 +133,7 @@ class _FieldWidgetState extends State<FieldWidget> {
     if (pickedTime != null && pickedTime != selectedTime) {
       setState(() {
         selectedTime = pickedTime;
-        widget.onChanged
-            ?.call(selectedTime.format(context)); // Passing the new time
+        widget.onChanged?.call(selectedTime.format(context));
       });
     }
   }
@@ -111,7 +170,7 @@ class _FieldWidgetState extends State<FieldWidget> {
         return (ModalRoute.of(context)?.settings.name == '/create_service')
             ? _buildValidatedSingleSelect()
             : _buildValidatedMultiSelect();
-      case 'File': // النوع الجديد لاختيار الصورة
+      case 'File':
         return _buildImagePicker(screenWidth);
       default:
         return Text('Invalid field type');
@@ -119,83 +178,35 @@ class _FieldWidgetState extends State<FieldWidget> {
   }
 
   Widget _buildValidatedTextField() {
-    return FormField<String>(
-      validator: (value) {
-        if (widget.required == true && (value == null || value.isEmpty)) {
-          return "الرجاء ادخال قيمة بهذا الحقل";
-        }
-        return null;
-      },
-      builder: (FormFieldState<String> state) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextFormField(
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: widget.showName,
-              ),
-              onChanged: (value) {
-                state.didChange(value); // Update FormField state
-                widget.onChanged?.call(value);
-              },
-            ),
-            if (state.hasError) ...[
-              SizedBox(height: 5),
-              Text(
-                state.errorText ?? '',
-                style: TextStyle(color: Colors.red),
-              ),
-            ],
-          ],
-        );
+    return TextFormField(
+      decoration: InputDecoration(
+        border: OutlineInputBorder(),
+        labelText: widget.showName,
+      ),
+      initialValue: widget.initialValue?.toString(),
+      onChanged: (value) {
+        widget.onChanged?.call(value);
       },
     );
   }
 
   Widget _buildValidatedDatePicker(double screenWidth) {
-    return FormField<DateTime>(
-      validator: (value) {
-        if (widget.required == true && value == null) {
-          return 'الرجاء اختيار قيمة';
-        }
-        return null;
-      },
-      builder: (FormFieldState<DateTime> state) {
-        return InkWell(
-          onTap: () async {
-            await _selectDate(context);
-            state.didChange(selectedDate); // Update FormField state
-          },
-          child: _buildCustomContainer(
-            screenWidth: screenWidth,
-            text: "${selectedDate.toLocal()}".split(' ')[0],
-          ),
-        );
-      },
+    return InkWell(
+      onTap: () => _selectDate(context),
+      child: _buildCustomContainer(
+        screenWidth: screenWidth,
+        text: "${selectedDate.toLocal()}".split(' ')[0],
+      ),
     );
   }
 
   Widget _buildValidatedTimePicker(double screenWidth) {
-    return FormField<TimeOfDay>(
-      validator: (value) {
-        if (widget.required == true && value == null) {
-          return 'Please select a time';
-        }
-        return null;
-      },
-      builder: (FormFieldState<TimeOfDay> state) {
-        return InkWell(
-          onTap: () async {
-            await _selectTime(context);
-            state.didChange(selectedTime); // Update FormField state
-          },
-          child: _buildCustomContainer(
-            screenWidth: screenWidth,
-            text: "${selectedTime.format(context)}",
-          ),
-        );
-      },
+    return InkWell(
+      onTap: () => _selectTime(context),
+      child: _buildCustomContainer(
+        screenWidth: screenWidth,
+        text: selectedTime.format(context),
+      ),
     );
   }
 
@@ -204,67 +215,28 @@ class _FieldWidgetState extends State<FieldWidget> {
         ? widget.options!.map((map) => Option.fromJson(map)).toList()
         : [];
 
-    return FormField<Option>(
-      validator: (value) {
-        if (widget.required == true && (value == null || value.name.isEmpty)) {
-          return 'Please select a value';
-        }
-        return null;
-      },
-      builder: (FormFieldState<Option> state) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: DropdownButton<Option>(
-                    isExpanded: true,
-                    value: _selectedValues.isNotEmpty
-                        ? optionsList.firstWhere(
-                            (option) => option.name == _selectedValues.first)
-                        : null,
-                    items: optionsList.map((option) {
-                      return DropdownMenuItem<Option>(
-                        value: option,
-                        child: Text(option.name),
-                      );
-                    }).toList(),
-                    onChanged: (selectedOption) {
-                      setState(() {
-                        _selectedValues = [selectedOption!.name];
-                        _selectedIds = [selectedOption.id];
-                        widget.onChanged?.call(_selectedIds.first.toString());
-                        state.didChange(
-                            selectedOption); // Update FormField state
-                      });
-                    },
-                  ),
-                ),
-                // Add Clear Button
-                IconButton(
-                  icon: Icon(Icons.clear),
-                  onPressed: () {
-                    setState(() {
-                      _selectedValues.clear();
-                      _selectedIds.clear();
-                      state.didChange(null); // Clear the state
-                      widget.onChanged?.call(null); // Notify parent widget
-                    });
-                  },
-                ),
-              ],
-            ),
-            if (state.hasError)
-              Padding(
-                padding: const EdgeInsets.only(top: 5),
-                child: Text(
-                  state.errorText ?? '',
-                  style: TextStyle(color: Colors.red, fontSize: 12),
-                ),
-              ),
-          ],
+    // تحقق من أن selectedOption متطابقة مع أحد الخيارات في DropdownMenuItem
+    if (!optionsList.contains(selectedOption)) {
+      selectedOption = null; // اجعلها null إذا لم يكن هناك تطابق
+    }
+
+    return DropdownButton<Option>(
+      isExpanded: true,
+      value: selectedOption,
+      hint: Text('اختر'),
+      items: optionsList.map((option) {
+        return DropdownMenuItem<Option>(
+          value: option,
+          child: Text(option.name),
         );
+      }).toList(),
+      onChanged: (newOption) {
+        setState(() {
+          selectedOption = newOption;
+          _selectedValues = [newOption!.name];
+          _selectedIds = [newOption.id];
+          widget.onChanged?.call(_selectedIds.first.toString());
+        });
       },
     );
   }
@@ -274,79 +246,31 @@ class _FieldWidgetState extends State<FieldWidget> {
         ? widget.options!.map((map) => Option.fromJson(map)).toList()
         : [];
 
-    return FormField<List<Option>>(
-      validator: (value) {
-        if (widget.required == true && (value == null || value.isEmpty)) {
-          return 'Please select at least one item';
-        }
-        return null;
-      },
-      builder: (FormFieldState<List<Option>> state) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: MultiSelectDialogField<Option>(
-                    searchable: true,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.blue, width: 1.5),
-                      borderRadius: BorderRadius.circular(10),
-                      color: Colors.white,
-                    ),
-                    buttonText: Text(
-                      _selectedValues.isNotEmpty
-                          ? 'Selected values: ${_selectedValues.join(', ')}'
-                          : 'Choose items',
-                      style: TextStyle(fontSize: 16, color: Colors.black),
-                    ),
-                    initialValue: optionsList
-                        .where(
-                            (option) => _selectedValues.contains(option.name))
-                        .toList(),
-                    items: optionsList
-                        .map((option) =>
-                            MultiSelectItem<Option>(option, option.name))
-                        .toList(),
-                    title: Text(widget.showName),
-                    selectedColor: Color(0XFFEF5B2C),
-                    onConfirm: (List<Option> results) {
-                      setState(() {
-                        _selectedIds =
-                            results.map((option) => option.id).toList();
-                        _selectedValues =
-                            results.map((option) => option.name).toList();
-                        state.didChange(results); // Update FormField state
-                        widget.onChanged?.call(_selectedIds.join(', '));
-                      });
-                    },
-                  ),
-                ),
-                // Add Clear Button
-                IconButton(
-                  icon: Icon(Icons.clear),
-                  onPressed: () {
-                    setState(() {
-                      _selectedValues.clear();
-                      _selectedIds.clear();
-                      state.didChange([]); // Clear the state
-                      widget.onChanged?.call(null); // Notify parent widget
-                    });
-                  },
-                ),
-              ],
-            ),
-            if (state.hasError)
-              Padding(
-                padding: const EdgeInsets.only(top: 5),
-                child: Text(
-                  state.errorText ?? '',
-                  style: TextStyle(color: Colors.red, fontSize: 12),
-                ),
-              ),
-          ],
-        );
+    return MultiSelectDialogField<Option>(
+      searchable: true,
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.blue, width: 1.5),
+        borderRadius: BorderRadius.circular(10),
+        color: Colors.white,
+      ),
+      buttonText: Text(
+        _selectedValues.isNotEmpty
+            ? 'Selected values: ${_selectedValues.join(', ')}'
+            : 'Choose items',
+        style: TextStyle(fontSize: 16, color: Colors.black),
+      ),
+      initialValue: optionsList
+          .where((option) => _selectedValues.contains(option.name))
+          .toList(),
+      items: optionsList
+          .map((option) => MultiSelectItem<Option>(option, option.name))
+          .toList(),
+      onConfirm: (results) {
+        setState(() {
+          _selectedIds = results.map((option) => option.id).toList();
+          _selectedValues = results.map((option) => option.name).toList();
+          widget.onChanged?.call(_selectedIds.join(', '));
+        });
       },
     );
   }
@@ -396,22 +320,19 @@ class _FieldWidgetState extends State<FieldWidget> {
         Row(
           children: [
             ElevatedButton.icon(
-              onPressed: () =>
-                  _pickImage(ImageSource.gallery), // اختيار من المعرض
+              onPressed: () => _pickImage(ImageSource.gallery),
               icon: Icon(Icons.photo_library),
               label: Text('اختر من المعرض'),
             ),
             SizedBox(width: 10),
             ElevatedButton.icon(
-              onPressed: () =>
-                  _pickImage(ImageSource.camera), // التقاط صورة بالكاميرا
+              onPressed: () => _pickImage(ImageSource.camera),
               icon: Icon(Icons.camera),
               label: Text('التقاط صورة'),
             ),
           ],
         ),
-        if (widget.required == true &&
-            _selectedImage == null) // التحقق من الصورة إذا كانت مطلوبة
+        if (widget.required == true && _selectedImage == null)
           Padding(
             padding: const EdgeInsets.only(top: 5),
             child: Text(

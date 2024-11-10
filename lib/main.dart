@@ -24,8 +24,8 @@ class MyApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate, // لدعم واجهات iOS
       ],
-      // locale: const Locale('en'),
-      // supportedLocales: const [Locale('en', 'US'), Locale('ar')],
+      locale: const Locale('ar'),
+      supportedLocales: const [Locale('en', 'US'), Locale('ar')],
       routes: AppRoutes.routes,
     );
   }

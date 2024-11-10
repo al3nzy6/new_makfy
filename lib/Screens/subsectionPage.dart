@@ -17,6 +17,7 @@ import 'package:makfy_new/Widget/H2Text.dart';
 import 'package:makfy_new/Widget/ServiceAddedWidget.dart';
 import 'package:makfy_new/Widget/appHeadWidget.dart';
 import 'package:makfy_new/Widget/boxWidget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Subsectionpage extends StatefulWidget {
   Subsectionpage({super.key});
@@ -40,6 +41,8 @@ class _SubsectionpageState extends State<Subsectionpage> {
   List<Widget> fieldsWidget = [];
   // القائمة الخاصة بالعناصر
   Map<String, dynamic> fieldResults = {};
+  bool isServiceProvider = false;
+  late SharedPreferences prefs;
 
   @override
   void didChangeDependencies() {
@@ -58,6 +61,8 @@ class _SubsectionpageState extends State<Subsectionpage> {
 
   Future<void> _getTheCategory() async {
     Category category = await ApiConfig.getCategory(id);
+    prefs = await SharedPreferences.getInstance();
+    isServiceProvider = (prefs.getInt('isServiceProvider') == 1) ? true : false;
     try {
       setState(() {
         fieldsWidget = category.Fields?.where((field) =>
@@ -112,10 +117,9 @@ class _SubsectionpageState extends State<Subsectionpage> {
       onPressed: () {
         Navigator.pushNamed(context, '/create_service', arguments: [id, name]);
       },
-      label: Icon(
-        Icons.add,
-        size: 50,
-        color: Colors.white,
+      label: H1text(
+        text: 'اضافة خدمة +',
+        textColor: Colors.white,
       ),
       backgroundColor: Colors.orange[900],
     );
@@ -125,29 +129,29 @@ class _SubsectionpageState extends State<Subsectionpage> {
     return MainScreenWidget(
       isLoading: isLoading,
       onRefresh: _getTheCategory,
-      floatingFunction: _floatingButton(),
+      floatingFunction: (isServiceProvider == true) ? _floatingButton() : null,
       start: Column(
         children: [
-          SizedBox(
+          const SizedBox(
             height: 10,
           ),
           H1text(text: name),
-          SizedBox(
+          const SizedBox(
             height: 20,
           ),
           Divider(
             color: Color(0XFFEF5B2C).withOpacity(0.3),
           ),
-          SizedBox(
+          const SizedBox(
             height: 10,
           ),
           ExpansionTile(
             title: H1text(text: 'تصفية مقدمي الخدمات'),
-            collapsedShape: RoundedRectangleBorder(
+            collapsedShape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.zero,
               side: BorderSide.none, // إزالة الخط عند إغلاق العنصر
             ),
-            shape: RoundedRectangleBorder(
+            shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.zero,
               side: BorderSide.none, // إزالة الخط عند فتح العنصر
             ),
@@ -196,11 +200,11 @@ class _SubsectionpageState extends State<Subsectionpage> {
               ),
             ],
           ),
-          SizedBox(
+          const SizedBox(
             height: 10,
           ),
           H1text(text: "مقدمي الخدمات"),
-          SizedBox(
+          const SizedBox(
             height: 20,
           ),
           Wrap(spacing: 10, runSpacing: 10, children: [
