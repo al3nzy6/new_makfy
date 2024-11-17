@@ -311,10 +311,16 @@ class _FieldWidgetState extends State<FieldWidget> {
                   fit: BoxFit.cover,
                   width: double.infinity,
                 )
-              : Text(
-                  'اختر صورة',
-                  style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                ),
+              : widget.initialValue != null && widget.initialValue is String
+                  ? Image.network(
+                      widget.initialValue, // عرض الصورة من الرابط الافتراضي
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                    )
+                  : Text(
+                      'اختر صورة',
+                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                    ),
         ),
         SizedBox(height: 10),
         Row(
@@ -322,17 +328,21 @@ class _FieldWidgetState extends State<FieldWidget> {
             ElevatedButton.icon(
               onPressed: () => _pickImage(ImageSource.gallery),
               icon: Icon(Icons.photo_library),
-              label: Text('اختر من المعرض'),
+              label: Text(
+                  _selectedImage == null ? 'اختر من المعرض' : 'تغيير الصورة'),
             ),
             SizedBox(width: 10),
             ElevatedButton.icon(
               onPressed: () => _pickImage(ImageSource.camera),
               icon: Icon(Icons.camera),
-              label: Text('التقاط صورة'),
+              label:
+                  Text(_selectedImage == null ? 'التقاط صورة' : 'التقاط جديدة'),
             ),
           ],
         ),
-        if (widget.required == true && _selectedImage == null)
+        if (widget.required == true &&
+            _selectedImage == null &&
+            widget.initialValue == null)
           Padding(
             padding: const EdgeInsets.only(top: 5),
             child: Text(

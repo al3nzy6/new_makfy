@@ -1,29 +1,56 @@
 import 'package:flutter/material.dart';
+import 'package:makfy_new/Utilities/ApiConfig.dart';
 import 'package:makfy_new/Widget/MainScreenWidget.dart';
 
-import 'package:makfy_new/Widget/appHeadWidget.dart';
-
-class PersonalProfilePage extends StatefulWidget {
-  PersonalProfilePage({Key? key});
+class myDuesPage extends StatefulWidget {
+  myDuesPage({Key? key}) : super(key: key);
 
   @override
-  State<PersonalProfilePage> createState() => _PersonalProfilePageState();
+  State<myDuesPage> createState() => _myDuesPageState();
 }
 
-class _PersonalProfilePageState extends State<PersonalProfilePage> {
-  late int id;
-  late String name;
+class _myDuesPageState extends State<myDuesPage> {
   bool isLoading = true;
+  String? dues;
+
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // استلام البيانات الممررة من خلال ModalRoute
-    final arguments = ModalRoute.of(context)?.settings.arguments;
-    isLoading = false;
+  void initState() {
+    super.initState();
+    _fetchDues();
   }
 
+  Future<void> _fetchDues() async {
+    try {
+      final fetchedDues = await ApiConfig.getUserDues();
+      setState(() {
+        dues = fetchedDues;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching dues: $e')),
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return MainScreenWidget(
-        isLoading: isLoading, start: Text("Persoanl Profile Page"));
+      isLoading: isLoading,
+      start: Center(
+        child: dues != null
+            ? Text(
+                "مستحقاتك لدى مكفي: $dues ريال",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              )
+            : Text(
+                "لا يوجد مستحقات حالياً.",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+      ),
+    );
   }
 }

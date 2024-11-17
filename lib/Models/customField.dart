@@ -5,18 +5,18 @@ class CustomField {
   final String showName;
   final String name;
   final String type;
-  final String value;
-  final String insertedValue;
+  final String? value; // يمكن أن يكون String أو List
+  final String? insertedValue;
   final bool required;
-  final List<Option>? options; // يمكن أن تكون nullable
+  final List<Option>? options;
 
   CustomField({
     required this.id,
     required this.showName,
     required this.name,
     required this.type,
-    required this.value,
-    required this.insertedValue,
+    this.value,
+    this.insertedValue,
     required this.required,
     this.options,
   });
@@ -28,18 +28,32 @@ class CustomField {
       showName: json['showName'] ?? '',
       name: json['name'] ?? '',
       type: json['type'] ?? '',
-      value: json['value'] ?? '',
+      value: json['value'] ?? '', // احتفظنا بقيمة `value` كما هي بدون تحويل
       insertedValue: json['inserted_value'] ?? '',
       required: json['required'] ?? false,
       options: json['options'] != null
           ? (json['options'] as List)
               .map((option) => Option.fromJson(option))
               .toList()
-          : null, // تعيين null إذا كانت options غير موجودة
+          : null,
     );
   }
 
   // تحويل CustomField إلى Map
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'showName': showName,
+      'name': name,
+      'type': type,
+      'value': value,
+      'inserted_value': insertedValue,
+      'required': required,
+      'options': options?.map((option) => option.toMap()).toList(),
+    };
+  }
+
+  // تحويل CustomField إلى JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -59,7 +73,7 @@ class CustomField {
       showName: map['showName'] ?? '',
       name: map['name'] ?? '',
       type: map['type'] ?? '',
-      value: map['value'] ?? '',
+      value: map['value'] ?? '', // احتفظنا بـ `value` بدون تعديل
       insertedValue: map['inserted_value'] ?? '',
       required: map['required'] ?? false,
       options: map['options'] != null

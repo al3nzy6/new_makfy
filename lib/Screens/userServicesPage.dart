@@ -150,28 +150,29 @@ class _userServicesPageState extends State<userServicesPage> {
           if (isPaid != null && isPaid == true) ...[
             Wrap(
               spacing: 10,
+              runSpacing: 10,
               children: [
                 boxWidget(
-                  width: 210,
+                  // width: 210,
                   title: (isServiceProvider == true)
                       ? "${cart!.customer.phone}"
                       : "${cart!.service_provider.phone}",
                   icon: Icons.phone,
                 ),
                 boxWidget(
-                  width: 210,
+                  // width: 210,
                   icon: Icons.price_check_rounded,
                   title: "${cart!.total}",
                 ),
                 boxWidget(
-                  width: 160,
+                  width: double.infinity,
                   title: "حالة الخدمة",
                   TextAsLogo: (cart!.status == 2)
-                      ? "جديد"
+                      ? "قيد التنفيذ"
                       : (cart!.status == 3)
                           ? "قيد التنفيذ"
                           : (cart!.status == 4)
-                              ? "منتهيه"
+                              ? "مكتملة"
                               : "لم تكتمل",
                   TextAsLogoSize: 30,
                 ),
@@ -180,7 +181,7 @@ class _userServicesPageState extends State<userServicesPage> {
                     onTap:
                         isPaid == true ? () => _openRatingModal(context) : null,
                     child: boxWidget(
-                      width: 210,
+                      width: double.infinity,
                       icon: Icons.star,
                       title: "تقيم الخدمة",
                     ),
@@ -188,8 +189,8 @@ class _userServicesPageState extends State<userServicesPage> {
                 ],
                 if (isServiceProvider != true && cart!.otp != null) ...[
                   boxWidget(
-                    width: 160,
-                    title: "رقم التوثيق",
+                    width: double.infinity,
+                    title: "كود الخدمة",
                     TextAsLogo: "${cart!.otp}",
                   ),
                 ],
@@ -199,9 +200,9 @@ class _userServicesPageState extends State<userServicesPage> {
                       onTap:
                           isPaid == true ? () => _addOtpNumber(context) : null,
                       child: boxWidget(
-                        width: 210,
+                        width: double.infinity,
                         icon: Icons.settings,
-                        title: "إضافة رمز بداية الخدمة",
+                        title: "كود الخدمة",
                       ),
                     ),
                   ],
@@ -343,8 +344,9 @@ class _userServicesPageState extends State<userServicesPage> {
         }
 
         return Container(
+          height: MediaQuery.of(context).size.height * 0.7,
           margin:
-              EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.25),
+              EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.1),
           padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -357,7 +359,7 @@ class _userServicesPageState extends State<userServicesPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                "إضافة رمز بداية الخدمة",
+                "ادخال الكود المرسل للعميل",
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 20),
@@ -365,7 +367,7 @@ class _userServicesPageState extends State<userServicesPage> {
                 controller: otpController,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
-                  labelText: "أدخل رمز OTP",
+                  labelText: "ادخل كود الخدمة",
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -410,7 +412,7 @@ class _userServicesPageState extends State<userServicesPage> {
                   } else {
                     ScaffoldMessenger.of(Navigator.of(context).overlay!.context)
                         .showSnackBar(
-                      SnackBar(content: Text('يرجى إدخال رمز OTP')),
+                      SnackBar(content: Text('يرجى ادخال كود الخدمة')),
                     );
                   }
                 },

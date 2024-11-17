@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_holo_date_picker/flutter_holo_date_picker.dart';
@@ -57,6 +59,70 @@ class _SubsectionpageState extends State<Subsectionpage> {
       name = arguments[1];
     }
     _getTheCategory();
+  }
+
+  Future<void> _searchServices() async {
+    try {
+      setState(() {
+        isLoading = true;
+      });
+
+      final filters = {
+        'category_id': id, // التصنيف المحدد
+        ...fieldResults, // البيانات المجمعة من الحقول
+      };
+
+      final category = await ApiConfig.searchServices(filters);
+
+      setState(() {
+        fieldsWidget = category.Fields?.where((field) =>
+                    field.type != 'File') // تصفية الحقول التي نوعها ليس 'File'
+                .map((field) {
+              final options =
+                  field.options?.map((option) => option.toJson()).toList() ??
+                      [];
+              return FieldWidget(
+                id: field.id,
+                name: field.name,
+                showName: field.showName,
+                type: field.type,
+                onChanged: (value) {
+                  fieldResults[field.name] = value;
+                },
+                options: options,
+              );
+            }).toList() ??
+            [];
+        services = category.services?.map((service) {
+              return ServiceAddedWidget(
+                title: service.title,
+                fields: service.insertedValues?.split(','),
+                serviceProvider: service.user.name,
+                price: service.price,
+                id: service.id,
+                count: 0,
+                date: date ?? null,
+                time: time ?? null,
+              );
+            }).toList() ??
+            [];
+        serviceProviders = category.service_providers?.map((service_provider) {
+              return serviceProviderWidget(
+                title: service_provider.name,
+                id: service_provider.id,
+                averageRating: service_provider.averageRating,
+                countRating: service_provider.countRating,
+              );
+            }).toList() ??
+            [];
+        isLoading = false;
+      });
+    } catch (e) {
+      print("Error while searching services: $e");
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   Future<void> _getTheCategory() async {
@@ -178,6 +244,7 @@ class _SubsectionpageState extends State<Subsectionpage> {
               InkWell(
                 onTap: () {
                   fieldResults['category_id'] = id;
+                  _searchServices();
                   print(fieldResults);
                 },
                 child: Container(

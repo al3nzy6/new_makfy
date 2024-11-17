@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:makfy_new/Models/City.dart';
 import 'package:makfy_new/Models/District.dart';
 import 'package:makfy_new/Utilities/ApiConfig.dart';
@@ -24,40 +23,42 @@ class _MyDistrictsPageState extends State<MyDistrictsPage> {
   City? selectedCity;
   Future<List<District>>? districtsFuture;
   List<District> filteredDistricts = [];
+  List<District> userDistricts = [];
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final arguments = ModalRoute.of(context)?.settings.arguments;
-    if (arguments is int) {
-      id = arguments;
-    }
-    if (arguments is List) {
-      id = arguments[0];
-      name = arguments[1];
-    }
-    getCities();
+  void initState() {
+    super.initState();
+    Future.delayed(Duration.zero, () {
+      fetchUserDistricts();
+      getCities();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return MainScreenWidget(isLoading: isLoading, start: DistrictWidget());
+    return MainScreenWidget(
+      isLoading: isLoading,
+      start: SingleChildScrollView(
+        child: DistrictWidget(),
+      ),
+    );
   }
 
   Widget DistrictWidget() {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        H1text(text: 'الاحياء'),
-        H2Text(
-          text: ' اضافة الاحياء التي يمكنك تقديم الخدمات فيها',
-        ),
-        SizedBox(height: 40),
+        H1text(text: 'الأحياء'),
+        H2Text(text: 'إضافة الأحياء التي يمكنك تقديم الخدمات فيها'),
+        SizedBox(height: 20),
         Wrap(
           children: [
             GestureDetector(
               onTap: () => _showCityPicker(context),
               child: Container(
+                width: double.infinity,
                 padding: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+                margin: EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.grey),
                   borderRadius: BorderRadius.circular(8),
@@ -65,10 +66,10 @@ class _MyDistrictsPageState extends State<MyDistrictsPage> {
                 child: Text(selectedCity?.name ?? 'اختر المدينة'),
               ),
             ),
-            SizedBox(height: 20),
             GestureDetector(
               onTap: () {
                 if (selectedCity != null) {
+                  _loadDistricts(selectedCity!.id);
                   _showDistrictPicker(context);
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -78,6 +79,8 @@ class _MyDistrictsPageState extends State<MyDistrictsPage> {
               },
               child: Container(
                 padding: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+                width: double.infinity,
+                margin: EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.grey),
                   borderRadius: BorderRadius.circular(8),
@@ -87,33 +90,166 @@ class _MyDistrictsPageState extends State<MyDistrictsPage> {
             ),
           ],
         ),
+        SizedBox(height: 20),
         if (selectedCity != null && selectedDistrict != null)
-          SizedBox(
-            height: 20,
+          InkWell(
+            onTap: () => _addDistrict(),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(5),
+                color: Color(0XFFEF5B2C),
+              ),
+              height: 60,
+              width: double.infinity,
+              child: H2Text(
+                text: "إضافة الحي",
+                textColor: Colors.white,
+                size: 30,
+              ),
+            ),
           ),
-        Container(
-          height: 70,
-          width: double.infinity,
-          color: Color(0XFFEF5B2C),
-          child: H2Text(
-            text: "اضافة الحي",
-            textColor: Colors.white,
-            size: 30,
+        SizedBox(height: 20),
+        Flexible(
+          fit: FlexFit.loose,
+          child: ListView.builder(
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            itemCount: userDistricts.length,
+            itemBuilder: (context, index) {
+              final district = userDistricts[index];
+              return Card(
+                margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                child: ListTile(
+                  title: Text(district.name),
+                  subtitle: Text("المدينة: ${district.city?.name ?? ''}"),
+                  trailing: IconButton(
+                    icon: Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => _deleteDistrict(district.id),
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ],
     );
   }
 
+  Future<void> _loadDistricts(int cityId) async {
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      List<District> districts = await getDistricts(cityId);
+      setState(() {
+        filteredDistricts = districts;
+      });
+    } catch (e) {
+      print("Error fetching districts: $e");
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<List<District>> getDistricts(int cityId) async {
+    try {
+      City cityFromApi = await ApiConfig.getDistricts(cityId);
+      return cityFromApi.districts ?? [];
+    } catch (e) {
+      print("Error fetching districts: $e");
+      return [];
+    }
+  }
+
+  Future<void> getCities() async {
+    try {
+      List<City> citiesFromApi = await ApiConfig.getCities();
+      setState(() {
+        cities = citiesFromApi;
+        filteredCities = citiesFromApi;
+      });
+    } catch (e) {
+      print("Error fetching cities: $e");
+    }
+  }
+
+  Future<void> fetchUserDistricts() async {
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      List<District> districts = await ApiConfig.getUserDistricts();
+      setState(() {
+        userDistricts = districts;
+      });
+    } catch (e) {
+      print("Error fetching user districts: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("فشل في جلب الأحياء")),
+      );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _addDistrict() async {
+    if (selectedDistrict != null) {
+      setState(() {
+        isLoading = true;
+      });
+
+      bool success = await ApiConfig.addDistrict(selectedDistrict!.id);
+
+      setState(() {
+        isLoading = false;
+      });
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("تمت إضافة الحي بنجاح")),
+        );
+        selectedDistrict = null;
+        selectedCity = null;
+        fetchUserDistricts();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("فشل في إضافة الحي")),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("يرجى اختيار حي لإضافته")),
+      );
+    }
+  }
+
+  Future<void> _deleteDistrict(int districtId) async {
+    bool success = await ApiConfig.deleteUserDistrict(districtId);
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("تم حذف الحي بنجاح")),
+      );
+      fetchUserDistricts();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("فشل في حذف الحي")),
+      );
+    }
+  }
+
   Future<void> _showCityPicker(BuildContext context) async {
-    filteredCities = cities; // ابدأ بفلترة المدن كلها عند فتح القائمة
+    filteredCities = cities;
     await showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
             return Container(
-              height: 400,
+              height: MediaQuery.of(context).size.height / 2,
               child: Column(
                 children: [
                   Padding(
@@ -141,9 +277,8 @@ class _MyDistrictsPageState extends State<MyDistrictsPage> {
                           onTap: () {
                             setState(() {
                               selectedCity = filteredCities[index];
-                              print(selectedCity?.id);
                               selectedDistrict = null;
-                              districtsFuture = getDistricts(selectedCity!.id);
+                              _loadDistricts(selectedCity!.id);
                             });
                             Navigator.pop(context);
                           },
@@ -161,14 +296,13 @@ class _MyDistrictsPageState extends State<MyDistrictsPage> {
   }
 
   Future<void> _showDistrictPicker(BuildContext context) async {
-    filteredDistricts = await districtsFuture ?? [];
     await showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
             return Container(
-              height: 400,
+              height: MediaQuery.of(context).size.height / 2,
               child: Column(
                 children: [
                   Padding(
@@ -180,14 +314,10 @@ class _MyDistrictsPageState extends State<MyDistrictsPage> {
                       ),
                       onChanged: (value) {
                         setState(() {
-                          filteredDistricts =
-                              (districtsFuture as Future<List<District>>)
-                                  .asStream()
-                                  .first
-                                  .then((districts) => districts
-                                      .where((district) =>
-                                          district.name.contains(value))
-                                      .toList()) as List<District>;
+                          filteredDistricts = filteredDistricts
+                              .where(
+                                  (district) => district.name.contains(value))
+                              .toList();
                         });
                       },
                     ),
@@ -203,6 +333,10 @@ class _MyDistrictsPageState extends State<MyDistrictsPage> {
                               selectedDistrict = filteredDistricts[index];
                             });
                             Navigator.pop(context);
+                            Future.delayed(Duration(milliseconds: 100), () {
+                              setState(
+                                  () {}); // تأكيد التحديث بعد إغلاق القائمة
+                            });
                           },
                         );
                       },
@@ -215,28 +349,5 @@ class _MyDistrictsPageState extends State<MyDistrictsPage> {
         );
       },
     );
-  }
-
-  Future<void> getCities() async {
-    try {
-      List<City> citiesFromApi = await ApiConfig.getCities();
-      setState(() {
-        cities = citiesFromApi;
-        filteredCities = citiesFromApi;
-        isLoading = false;
-      });
-    } catch (e) {
-      print("Error fetching cities: $e");
-    }
-  }
-
-  Future<List<District>> getDistricts(int cityId) async {
-    try {
-      City cityFromApi = await ApiConfig.getDistricts(cityId);
-      return cityFromApi.districts ?? [];
-    } catch (e) {
-      print("Error fetching districts: $e");
-      return [];
-    }
   }
 }

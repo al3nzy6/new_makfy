@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:redacted/redacted.dart';
-
 import 'package:makfy_new/Widget/appHeadWidget.dart';
 
 class MainScreenWidget extends StatefulWidget {
@@ -10,6 +8,7 @@ class MainScreenWidget extends StatefulWidget {
   final Widget? floatingFunction;
   final List? bodyData;
   final List? routeArguments;
+
   MainScreenWidget({
     Key? key,
     required this.start,
@@ -27,26 +26,46 @@ class MainScreenWidget extends StatefulWidget {
 class _MainScreenWidgetState extends State<MainScreenWidget> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        backgroundColor: const Color(0XFFEF5B2C),
-        floatingActionButton:
-            widget.floatingFunction != null ? widget.floatingFunction : null,
-        body: SafeArea(
-          bottom: false,
-          child: (widget.onRefresh != null)
-              ? RefreshIndicator(
-                  onRefresh: widget.onRefresh!,
-                  child: _body(
+    return WillPopScope(
+      onWillPop: () async {
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+          return false;
+        }
+        return true;
+      },
+      child: GestureDetector(
+        onHorizontalDragUpdate: (details) {
+          if (details.delta.dx > 10) {
+            // إذا كانت الإيماءة سحب لليمين
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            }
+          }
+        },
+        child: Scaffold(
+          backgroundColor: const Color(0XFFEF5B2C),
+          floatingActionButton:
+              widget.floatingFunction != null ? widget.floatingFunction : null,
+          body: SafeArea(
+            bottom: false,
+            child: (widget.onRefresh != null)
+                ? RefreshIndicator(
+                    onRefresh: widget.onRefresh!,
+                    child: _body(
+                      start: widget.start,
+                      isLoading: widget.isLoading,
+                    ),
+                  )
+                : _body(
                     start: widget.start,
                     isLoading: widget.isLoading,
+                    routeArguments: widget.routeArguments,
                   ),
-                )
-              : _body(
-                  start: widget.start,
-                  isLoading: widget.isLoading,
-                  routeArguments: widget.routeArguments,
-                ),
-        ));
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -54,6 +73,7 @@ class _body extends StatefulWidget {
   Widget start;
   bool isLoading = true;
   List? routeArguments;
+
   _body({
     Key? key,
     required this.start,
@@ -70,14 +90,12 @@ class __bodyState extends State<_body> {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.only(bottom: 20),
-      // margin: const EdgeInsets.only(top: 55),
       width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.only(topLeft: Radius.circular(40)),
       ),
       child: Column(
-        // mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           Container(
             margin: const EdgeInsets.only(
@@ -112,7 +130,6 @@ class __bodyState extends State<_body> {
                   : widget.start,
             ),
           ),
-          // here Add your page
         ],
       ),
     );

@@ -6,14 +6,25 @@ import 'package:makfy_new/Models/Service.dart';
 class User extends Equatable {
   int id;
   String name;
+  String? email;
   int? averageRating;
   String? phone;
+  String? nationality;
+  String? bank;
+  String? iban;
+  String? id_number;
   String? countRating;
+
   List<Service>? services;
   User({
     required this.id,
     required this.name,
+    this.email,
     this.phone,
+    this.nationality,
+    this.bank,
+    this.iban,
+    this.id_number,
     this.averageRating,
     this.countRating,
     this.services,
@@ -28,7 +39,12 @@ class User extends Equatable {
     return User(
       id: id ?? this.id,
       name: name ?? this.name,
+      email: email ?? this.email,
       phone: phone ?? this.phone,
+      nationality: nationality ?? this.nationality,
+      bank: bank ?? this.bank,
+      iban: iban ?? this.iban,
+      id_number: id_number ?? this.id_number,
       averageRating: averageRating ?? this.averageRating,
       countRating: countRating ?? this.countRating,
       services: services ?? this.services,
@@ -40,7 +56,12 @@ class User extends Equatable {
 
     result.addAll({'id': id});
     result.addAll({'name': name});
+    result.addAll({'email': email});
     result.addAll({'phone': phone});
+    result.addAll({'nationality': nationality});
+    result.addAll({'bank': bank});
+    result.addAll({'iban': iban});
+    result.addAll({'id_number': id_number});
     result.addAll({'averageRating': averageRating});
     result.addAll({'countRating': countRating});
 
@@ -52,6 +73,11 @@ class User extends Equatable {
       id: map['id']?.toInt() ?? 0,
       name: map['name'] ?? '',
       phone: map['phone'] ?? '',
+      email: map['email'] ?? '',
+      nationality: map['nationality'] ?? '',
+      bank: map['bank'] ?? '',
+      iban: map['iban'] ?? '',
+      id_number: map['id_number'] ?? '',
       averageRating: map['averageRating']?.toInt() ?? 0,
       countRating: map['countRating'] ?? '',
     );
@@ -61,7 +87,12 @@ class User extends Equatable {
     return User(
       id: json['id'],
       name: json['name'],
+      email: json['email'],
       phone: json['phone'],
+      nationality: json['nationality'],
+      bank: json['bank'],
+      iban: json['iban'],
+      id_number: json['id_number'],
       averageRating: json['averageRating'],
       countRating: json['countRating'],
       services: json['services'] != null

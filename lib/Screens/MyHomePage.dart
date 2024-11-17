@@ -83,20 +83,6 @@ class _MyHomePageState extends State<MyHomePage> {
             runSpacing: 10,
             children: categoryWidgets,
           ),
-          const SizedBox(height: 30),
-          H1text(text: "قريبا ستتوفر المزيد من الخدمات"),
-          SizedBox(
-            height: 10,
-          ),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              // ...services,
-              boxWidget(title: "قريبا"),
-              boxWidget(title: "قريبا"),
-            ],
-          )
         ],
       ),
       isLoading: isLoading,

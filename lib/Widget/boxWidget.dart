@@ -32,7 +32,7 @@ class boxWidget extends StatelessWidget {
     final screenHeight = MediaQuery.of(context).size.height;
     return Container(
       height: math.min(135, screenHeight * 0.15),
-      width: math.min(190, screenWidth * 0.5),
+      width: (width == null) ? math.min(190, screenWidth * 0.4) : width,
       decoration: BoxDecoration(
         // color: Colors.black,
         borderRadius: BorderRadius.circular(20),

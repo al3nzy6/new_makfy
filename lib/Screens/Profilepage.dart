@@ -132,6 +132,12 @@ class _ProfilepageState extends State<Profilepage> {
         route: '/my_districts',
         data: [userID, userName],
       ),
+      boxWidget(
+        title: 'مستحقاتي',
+        icon: FontAwesomeIcons.moneyCheck,
+        route: '/my_dues',
+        data: [userID, userName],
+      ),
     ];
   }
 }

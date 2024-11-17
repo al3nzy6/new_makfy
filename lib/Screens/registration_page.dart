@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:makfy_new/Models/User.dart';
 import 'package:makfy_new/Utilities/ApiConfig.dart';
 import 'package:makfy_new/Widget/H1textWidget.dart';
+import 'package:makfy_new/Widget/H2Text.dart';
 import 'package:makfy_new/Widget/MainScreenWidget.dart';
 import 'package:makfy_new/Widget/boxWidget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class RegistrationPage extends StatefulWidget {
   const RegistrationPage({super.key});
@@ -43,9 +46,93 @@ class _RegistrationPageState extends State<RegistrationPage> {
   ];
   final ApiConfig apiService = ApiConfig();
   bool? isServiceProvider;
-
-  bool isLoading = false;
+  bool? isEdit;
+  User? user;
+  bool isLoading = true;
   Map<String, dynamic>? errorMessage;
+  @override
+  void initState() {
+    super.initState();
+    _initUser();
+  }
+
+  Future<void> _initUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    try {
+      final user_id =
+          (prefs.getInt('user_id') != null) ? prefs.getInt('user_id') : 0;
+      if (user_id != null && user_id != 0) {
+        user = await ApiConfig.getUserProfile(user_id!);
+        setState(() {
+          isEdit = true;
+          isServiceProvider =
+              (prefs.getInt('isServiceProvider') == 1) ? true : false;
+
+          // تعيين القيم الافتراضية في الحقول في حال كان isEdit == true
+          nameController.text = user?.name ?? '';
+          phoneController.text = user?.phone ?? '';
+          emailController.text = user?.email ?? '';
+          nationality = user?.nationality;
+          bankController = user?.bank;
+          ibanController.text = user?.iban ?? '';
+
+          // إذا كان المستخدم مزود خدمات، يتم جلب رقم الهوية
+          if (isServiceProvider == true) {
+            idnumberController.text = user?.id_number.toString() ?? '';
+          }
+
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          isLoading = false;
+          isEdit = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+        isEdit = false;
+      });
+      print("Error loading user data: $e");
+    }
+  }
+
+  Future<void> _update() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        isLoading = true;
+        errorMessage;
+      });
+
+      final name = nameController.text.trim();
+      final phone = phoneController.text.trim();
+      final email = emailController.text.trim();
+
+      final idnumber = idnumberController.text.trim();
+      final iban = ibanController.text.trim();
+      final success = await apiService.updateProfile(name, phone, email,
+          isServiceProvider, idnumber, nationality, bankController, iban);
+
+      setState(() {
+        isLoading = false;
+      });
+
+      if (success[0]) {
+        // عرض رسالة نجاح أو الانتقال إلى صفحة أخرى
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تم التعديل بنجاح!')),
+        );
+        // يمكن الانتقال إلى صفحة أخرى إذا لزم الأمر
+        Navigator.pushReplacementNamed(context, '/');
+      } else {
+        // عرض رسالة خطأ إذا فشل التعديل
+        setState(() {
+          errorMessage = Map<String, dynamic>.from(success[1]);
+        });
+      }
+    }
+  }
 
   Future<void> _register() async {
     if (_formKey.currentState!.validate()) {
@@ -121,7 +208,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   'images/logo.png', // Ensure default image exists in assets
                   height: 200,
                 ),
-                if (isServiceProvider == null) ...[
+                if (isEdit == false && isServiceProvider == null) ...[
                   Column(
                     children: [
                       H1text(text: "الرجاء اختيار نوع العضوية"),
@@ -129,6 +216,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         height: 10,
                       ),
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           InkWell(
                             onTap: () => setState(() {
@@ -146,6 +234,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
                           ),
                         ],
                       ),
+                      H2Text(
+                          lines: 5,
+                          text:
+                              "باكمالك التسجيل تفيد بموافقتك على الشروط والسياسات وتتعهد بالتزامك بها")
                     ],
                   )
                 ],
@@ -199,43 +291,47 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     },
                   ),
                   const SizedBox(height: 20),
-                  TextFormField(
-                    controller: passwordController,
-                    decoration: const InputDecoration(
-                      labelText: 'كلمة المرور',
-                      border: OutlineInputBorder(),
+                  if (isEdit == false) ...[
+                    TextFormField(
+                      controller: passwordController,
+                      decoration: const InputDecoration(
+                        labelText: 'كلمة المرور',
+                        border: OutlineInputBorder(),
+                      ),
+                      obscureText: true,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'يرجى إدخال كلمة المرور';
+                        } else if (value.length < 6) {
+                          return 'يجب أن تكون كلمة المرور 6 أحرف على الأقل';
+                        }
+                        return null;
+                      },
                     ),
-                    obscureText: true,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'يرجى إدخال كلمة المرور';
-                      } else if (value.length < 6) {
-                        return 'يجب أن تكون كلمة المرور 6 أحرف على الأقل';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  TextFormField(
-                    controller: passwordConfirmationController,
-                    decoration: const InputDecoration(
-                      labelText: 'تاكيد كلمة المرور',
-                      border: OutlineInputBorder(),
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: passwordConfirmationController,
+                      decoration: const InputDecoration(
+                        labelText: 'تاكيد كلمة المرور',
+                        border: OutlineInputBorder(),
+                      ),
+                      obscureText: true,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'يرجى إدخال كلمة المرور';
+                        } else if (value.length < 6) {
+                          return 'يجب أن تكون كلمة المرور 6 أحرف على الأقل';
+                        }
+                        return null;
+                      },
                     ),
-                    obscureText: true,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'يرجى إدخال كلمة المرور';
-                      } else if (value.length < 6) {
-                        return 'يجب أن تكون كلمة المرور 6 أحرف على الأقل';
-                      }
-                      return null;
-                    },
-                  ),
+                  ],
                   const SizedBox(height: 20),
                   if (isServiceProvider == true) ...[
                     TextFormField(
                       controller: idnumberController,
+                      readOnly:
+                          (isEdit != null && isEdit == true) ? true : false,
                       decoration: const InputDecoration(
                         labelText: 'رقم الهوية/الاقامة',
                         border: OutlineInputBorder(),
@@ -333,14 +429,17 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         );
                       }).toList(),
                     ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
+                  if (isEdit == true && isServiceProvider == true)
+                    H2Text(text: "لتعديل رقم الهوية الرجاء مراجعة الدعم الفني"),
                   isLoading
                       ? const CircularProgressIndicator()
                       : ElevatedButton(
-                          onPressed: _register,
-                          child: const Text('تسجيل'),
+                          onPressed: (isEdit == false) ? _register : _update,
+                          child:
+                              (isEdit == false) ? Text('تسجيل') : Text('تعديل'),
                         ),
-                ]
+                ],
               ],
             ),
           ),

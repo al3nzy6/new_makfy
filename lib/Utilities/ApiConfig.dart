@@ -1,15 +1,13 @@
 import 'dart:convert';
-import 'dart:ffi';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:makfy_new/Models/Cart.dart';
 import 'package:makfy_new/Models/Category.dart';
 import 'package:makfy_new/Models/City.dart';
+import 'package:makfy_new/Models/District.dart';
 import 'package:makfy_new/Models/Service.dart';
 import 'package:makfy_new/Models/User.dart';
-import 'package:makfy_new/Models/fieldSection.dart';
 import 'package:makfy_new/Models/SubCategory.dart';
-import 'package:makfy_new/Screens/subsectionPage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path/path.dart';
 
@@ -436,6 +434,46 @@ class ApiConfig {
     }
   }
 
+  Future<List> updateProfile(
+      String name,
+      String phone,
+      String email,
+      bool? isServiceProvider,
+      String? idnumber,
+      String? nationality,
+      String? bank,
+      String? iban) async {
+    final url = Uri.parse('$apiUrl/profile/update');
+    final response = await http.put(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${await getToken()}' // جلب التوكن للمصادقة
+      },
+      body: jsonEncode({
+        'name': name,
+        'email': email,
+        'phone': phone,
+        'is_service_provider': isServiceProvider,
+        'id_number': idnumber,
+        'nationality': nationality,
+        'bank': bank,
+        'iban': iban,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      // التحديث ناجح، معالجة الاستجابة حسب الحاجة
+      final data = jsonDecode(response.body);
+      await saveUserData(data['user']); // تحديث بيانات المستخدم
+      return [true, 'Profile updated successfully'];
+    } else {
+      // فشل التحديث، عرض رسالة خطأ
+      print('Profile update failed: ${response.body}');
+      return [false, jsonDecode(response.body)];
+    }
+  }
+
   static Future<Map<String, dynamic>> updateCart(
       Map<int, dynamic> data, Cart? cart) async {
     final url = (cart != null)
@@ -498,7 +536,6 @@ class ApiConfig {
     try {
       if (response.statusCode == 200) {
         City districts = City.fromMap(json.decode(response.body)['data']);
-        print(districts);
         return districts;
       } else {
         return throw Exception(response.statusCode);
@@ -558,6 +595,187 @@ class ApiConfig {
     } else {
       throw Exception(
           'Failed to make cart on progress'); // إذا فشلت العملية، يتم إطلاق خطأ
+    }
+  }
+
+  static Future<bool> addDistrict(int districtId) async {
+    final url = Uri.parse("${apiUrl}/area/add/$districtId");
+    final authHeader = await ApiConfig.getAuthHeaders();
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {...authHeader, 'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        return true; // إذا تمت إضافة الحي بنجاح
+      } else {
+        print("Failed to add district. Status code: ${response.statusCode}");
+        return false;
+      }
+    } catch (e) {
+      print("Error adding district: $e");
+      return false;
+    }
+  }
+
+  static Future<List<District>> getUserDistricts() async {
+    final url = Uri.parse("${apiUrl}/user/districts");
+    final authHeader = await ApiConfig.getAuthHeaders();
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {...authHeader, 'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        // تأكد من أن الاستجابة يتم فك تشفيرها بشكل صحيح
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+
+        // تحويل البيانات إلى قائمة من الكائنات District
+        List<District> districts = (jsonResponse['data'] as List)
+            .map((districtJson) => District.fromMap(districtJson))
+            .toList();
+
+        return districts;
+      } else {
+        throw Exception(
+            "Failed to load user districts. Status code: ${response.statusCode}");
+      }
+    } catch (e) {
+      throw Exception("Error fetching user districts: $e");
+    }
+  }
+
+// دالة لحذف حي معين من الأحياء الخاصة بالمستخدم
+  static Future<bool> deleteUserDistrict(int districtId) async {
+    final url = Uri.parse("${apiUrl}/user/districts/$districtId");
+    final authHeader = await ApiConfig.getAuthHeaders();
+
+    try {
+      final response = await http.delete(
+        url,
+        headers: {...authHeader, 'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        return true; // حذف الحي بنجاح
+      } else {
+        print("Failed to delete district. Status code: ${response.statusCode}");
+        return false;
+      }
+    } catch (e) {
+      print("Error deleting district: $e");
+      return false;
+    }
+  }
+
+  static Future<bool> changeServiceAvailability(int serviceId) async {
+    final url = Uri.parse("${apiUrl}/service/availablity/$serviceId");
+    try {
+      // احصل على الهيدر الخاص بالمصادقة
+      final authHeader = await ApiConfig.getAuthHeaders();
+
+      // أرسل الطلب
+      final response = await http.post(
+        url,
+        headers: authHeader,
+      );
+
+      // تحقق من نجاح العملية
+      if (response.statusCode == 200) {
+        print("Service availability updated successfully.");
+        return true; // إذا نجحت العملية
+      } else if (response.statusCode == 403) {
+        print("Permission denied to change availability.");
+        return false; // إذا كان المستخدم لا يملك الصلاحية
+      } else {
+        print(
+            "Failed to update availability. Status code: ${response.statusCode}");
+        return false; // فشل العملية لأي سبب آخر
+      }
+    } catch (e) {
+      print("Error changing service availability: $e");
+      return false; // حدث خطأ أثناء الاتصال
+    }
+  }
+
+  static Future<String> getUserDues() async {
+    final url = Uri.parse('$apiUrl/user/dues');
+    final headers = await getAuthHeaders();
+
+    try {
+      final response = await http.get(url, headers: headers);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['data']['dues'];
+      } else {
+        throw Exception(
+            'Failed to fetch dues. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching dues: $e');
+    }
+  }
+
+  static Future<Category> searchServices(Map<String, dynamic> filters) async {
+    final url = Uri.parse("${apiUrl}/category/filter");
+    try {
+      final authHeader = await ApiConfig.getAuthHeaders();
+      final response = await http.post(
+        url,
+        headers: {
+          ...authHeader,
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(filters),
+      );
+      print(jsonEncode(filters));
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+
+        // التحقق من أن 'data' موجودة وليست null
+        if (jsonResponse.containsKey('data') && jsonResponse['data'] != null) {
+          // التحقق من أن jsonResponse['data'] هو Map
+          if (jsonResponse['data'] is Map<String, dynamic>) {
+            Category category = Category.fromJson(jsonResponse['data']);
+            return category;
+          } else {
+            throw Exception(
+                'Invalid data type: ${jsonResponse['data'].runtimeType}');
+          }
+        } else {
+          throw Exception(
+              'Invalid response format: Missing "data" field or is null');
+        }
+      } else {
+        print("HTTP Error: ${response.body}");
+        throw Exception(
+            'Failed to filter services. Status code: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Failed to filter services. Error: $e');
+    }
+  }
+
+  static Future<List<dynamic>> filterServiceProviders(
+      Map<String, dynamic> filters) async {
+    final url = Uri.parse("$apiUrl/category/filter");
+    final authHeader = await ApiConfig.getAuthHeaders();
+    final response = await http.post(
+      url,
+      headers: {...authHeader, 'Content-Type': 'application/json'},
+      body: jsonEncode(filters),
+    );
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(response.body);
+      return jsonResponse['data'];
+    } else {
+      throw Exception(
+          "Failed to filter service providers: ${response.statusCode}");
     }
   }
 

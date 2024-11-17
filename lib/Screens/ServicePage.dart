@@ -19,7 +19,6 @@ class _ServicePageState extends State<ServicePage> {
   late int id;
   String? date;
   String? time;
-  int numbers = 0;
   Service? serviceData;
   bool isLoading = true;
   int? user_id;
@@ -38,9 +37,9 @@ class _ServicePageState extends State<ServicePage> {
   }
 
   Future _getService() async {
-    Service service = await ApiConfig.getService(id);
-    int? user_idFromApi = await ApiConfig.getUserId();
     try {
+      Service service = await ApiConfig.getService(id);
+      int? user_idFromApi = await ApiConfig.getUserId();
       if (!mounted) return;
       setState(() {
         serviceData = service;
@@ -125,12 +124,6 @@ class _ServicePageState extends State<ServicePage> {
           lines: 2,
         ),
         SizedBox(height: 20),
-        if (user_id != null && user_id != serviceData?.user.id) ...[
-          FieldWidget(id: 11, name: "date", showName: "التاريخ", type: 'Date'),
-          Divider(),
-          FieldWidget(id: 11, name: "time", showName: "الوقت", type: 'Time'),
-          Divider(),
-        ],
         if (serviceData?.customFields != null &&
             serviceData!.customFields!.isNotEmpty)
           Column(
@@ -163,36 +156,75 @@ class _ServicePageState extends State<ServicePage> {
         SizedBox(height: 60),
         if (user_id != null && user_id == serviceData?.user.id)
           Center(
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.pushNamed(
-                  context,
-                  '/create_service',
-                  arguments: [
-                    serviceData?.category?.id,
-                    serviceData?.category?.name,
-                    serviceData?.id
-                  ],
-                );
-              },
-              child: Text("تعديل الخدمة"),
+            child: Column(
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushNamed(
+                      context,
+                      '/create_service',
+                      arguments: [
+                        serviceData?.category?.id,
+                        serviceData?.category?.name,
+                        serviceData?.id
+                      ],
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    padding: EdgeInsets.symmetric(horizontal: 25, vertical: 12),
+                    textStyle: TextStyle(fontSize: 16),
+                  ),
+                  child: Text(
+                    "تعديل الخدمة",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+                SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (serviceData != null) {
+                      final result = await ApiConfig.changeServiceAvailability(
+                          serviceData!.id);
+
+                      if (result) {
+                        await _getService();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(serviceData!.is_available!
+                                ? "تم جعل الخدمة متوفرة"
+                                : "تم جعل الخدمة غير متوفرة"),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("حدث خطأ أثناء تحديث حالة التوفر"),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: serviceData?.is_available == true
+                        ? Colors.red
+                        : Colors.green,
+                    padding: EdgeInsets.symmetric(horizontal: 25, vertical: 12),
+                    textStyle: TextStyle(fontSize: 16),
+                  ),
+                  child: Text(
+                    serviceData?.is_available == true
+                        ? "اجعل الخدمة غير متوفرة"
+                        : "اجعل الخدمة متوفرة",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
             ),
           ),
       ]),
     );
-  }
-
-  _increaseNumbers() {
-    setState(() {
-      numbers += 1;
-    });
-  }
-
-  _decreaseNumbers() {
-    if (numbers > 0) {
-      setState(() {
-        numbers -= 1;
-      });
-    }
   }
 }

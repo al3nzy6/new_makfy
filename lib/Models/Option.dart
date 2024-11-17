@@ -23,6 +23,14 @@ class Option {
     };
   }
 
+  // Convert Option object to Map
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+    };
+  }
+
   factory Option.fromMap(Map<String, dynamic> map) {
     return Option(
       id: map['id']?.toInt() ?? 0,

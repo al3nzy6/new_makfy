@@ -54,10 +54,14 @@ class _LoginPageState extends State<LoginPage> {
         start: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Image.asset(
+              'images/logo.png', // Ensure default image exists in assets
+              height: 200,
+            ),
             TextField(
               controller: emailController,
               decoration: const InputDecoration(
-                labelText: 'Email',
+                labelText: 'البريد الالكتروني',
                 border: OutlineInputBorder(),
               ),
               keyboardType: TextInputType.emailAddress,
@@ -66,7 +70,7 @@ class _LoginPageState extends State<LoginPage> {
             TextField(
               controller: passwordController,
               decoration: const InputDecoration(
-                labelText: 'Password',
+                labelText: 'كلمة المرور',
                 border: OutlineInputBorder(),
               ),
               obscureText: true,
@@ -82,7 +86,7 @@ class _LoginPageState extends State<LoginPage> {
                 ? const CircularProgressIndicator()
                 : ElevatedButton(
                     onPressed: _login,
-                    child: const Text('Login'),
+                    child: const Text('تسجيل الدخول'),
                   ),
             const SizedBox(height: 20),
             InkWell(

@@ -11,6 +11,7 @@ class Service {
   final List<CustomField>? customFields; // يمكن أن تكون nullable
   final String? insertedValues;
   final User user;
+  final bool is_available;
   final SubCategory? category;
   final int? quantity; // الحقل الجديد، يمكن أن يكون null
 
@@ -19,6 +20,7 @@ class Service {
     required this.title,
     required this.description,
     required this.price,
+    required this.is_available,
     this.imageUrls,
     this.customFields,
     this.insertedValues,
@@ -34,6 +36,7 @@ class Service {
       title: json['title'],
       description: json['description'],
       price: json['price'],
+      is_available: json['is_available'],
       insertedValues: json['insertedValues'],
       imageUrls: List<String>.from(json['image_urls'] ?? []),
       customFields: json['custom_fields'] != null
@@ -58,6 +61,7 @@ class Service {
       'title': title,
       'description': description,
       'price': price,
+      'is_available': is_available,
       'insertedValues': insertedValues,
       'image_urls': imageUrls ?? [],
       'custom_fields':
@@ -75,6 +79,7 @@ class Service {
       'title': title,
       'description': description,
       'price': price,
+      'is_available': is_available,
       'insertedValues': insertedValues,
       'image_urls': imageUrls ?? [],
       'custom_fields':
@@ -91,6 +96,7 @@ class Service {
       title: map['title'] ?? '',
       description: map['description'] ?? '',
       price: map['price'] ?? '',
+      is_available: map['is_available'] ?? '',
       imageUrls: map['image_urls'] != null
           ? List<String>.from(map['image_urls'])
           : null,

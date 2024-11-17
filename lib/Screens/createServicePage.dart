@@ -70,6 +70,7 @@ class _createServicePageState extends State<createServicePage> {
   Future<void> _getServiceData(int serviceId) async {
     try {
       final fetchedServiceData = await ApiConfig.getService(serviceId);
+      if (!mounted) return; // تأكد من أن الواجهة لا تزال نشطة
       setState(() {
         serviceData = {
           'title': fetchedServiceData.title,
@@ -113,6 +114,7 @@ class _createServicePageState extends State<createServicePage> {
   Future<void> _getTheCategory() async {
     Category category = await ApiConfig.getCategory(id);
     try {
+      if (!mounted) return; // تأكد من أن الواجهة لا تزال نشطة
       setState(() {
         fieldsWidget = category.Fields?.map((field) {
               final options =
@@ -157,7 +159,7 @@ class _createServicePageState extends State<createServicePage> {
             H2Text(
               lines: 3,
               text:
-                  "الرجاء التأكد من اختيار القسم المناسب للوصول لعملائك بشكل صحيح, بامكانك العودة واختيار القسم المناسب",
+                  "عزيزي مقدم الخدمه ان لم يكن التوصيل مجانا من قبلكم .. رجاءً اضف قيمة سعر التوصيل لديكم كصنف من اصناف الخدمه المقدمه من قبلكم ليتم دفعها من قبل العميل ويجب ان تكون اول خدمه تقوم باضافتها",
             ),
             SizedBox(height: 20),
             FieldWidget(

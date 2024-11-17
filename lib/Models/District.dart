@@ -1,38 +1,43 @@
 import 'dart:convert';
-
 import 'package:equatable/equatable.dart';
+import 'package:makfy_new/Models/City.dart';
 
 class District extends Equatable {
-  int id;
-  String name;
+  final int id;
+  final String name;
+  final City? city; // المدينة المرتبطة بالحي
+
   District({
     required this.id,
     required this.name,
+    this.city,
   });
 
   District copyWith({
     int? id,
     String? name,
+    City? city,
   }) {
     return District(
       id: id ?? this.id,
       name: name ?? this.name,
+      city: city ?? this.city,
     );
   }
 
   Map<String, dynamic> toMap() {
-    final result = <String, dynamic>{};
-
-    result.addAll({'id': id});
-    result.addAll({'name': name});
-
-    return result;
+    return {
+      'id': id,
+      'name': name,
+      'city': city?.toMap(), // تحويل كائن City إلى Map إذا كان غير null
+    };
   }
 
   factory District.fromMap(Map<String, dynamic> map) {
     return District(
-      id: map['id']?.toInt() ?? 0,
+      id: map['id'] ?? 0,
       name: map['name'] ?? '',
+      city: map.containsKey('city') ? City.fromMap(map['city']) : null,
     );
   }
 
@@ -45,5 +50,5 @@ class District extends Equatable {
   String toString() => 'District(id: $id, name: $name)';
 
   @override
-  List<Object> get props => [id, name];
+  List<Object?> get props => [id, name, city];
 }

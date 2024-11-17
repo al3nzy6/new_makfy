@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:makfy_new/Screens/CustomerOrdersPage.dart';
 import 'package:makfy_new/Screens/MyHomePage.dart';
 import 'package:makfy_new/Screens/PaymentPage.dart';
 import 'package:makfy_new/Screens/ProfilePage.dart';
@@ -11,7 +10,6 @@ import 'package:makfy_new/Screens/mainsectionPage.dart';
 import 'package:makfy_new/Screens/myDistrictsPage.dart';
 import 'package:makfy_new/Screens/registration_page.dart';
 import 'package:makfy_new/Screens/userServicesPage.dart';
-import 'package:makfy_new/Screens/myordersPage.dart';
 import 'package:makfy_new/Screens/personalProfilePage.dart';
 import 'package:makfy_new/Screens/subsectionPage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -31,7 +29,7 @@ class AppRoutes {
     '/main_section': (context) => Mainsectionpage(),
     '/sub_section': (context) => Subsectionpage(),
     '/service_page': (context) => ServicePage(),
-    '/personal_profile': (context) => PersonalProfilePage(),
+    '/personal_profile': (context) => RegistrationPage(),
     '/shopping_cert': (context) => ShoppingCertPage(),
     '/my_orders': (context) => ShoppingCertPage(),
     '/customer_orders': (context) => ShoppingCertPage(),
@@ -39,6 +37,7 @@ class AppRoutes {
     '/user_page': (context) => userServicesPage(),
     '/payment_page': (context) => PaymentPage(),
     '/my_districts': (context) => MyDistrictsPage(),
+    '/my_dues': (context) => myDuesPage(),
   };
 }
 
