@@ -12,8 +12,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path/path.dart';
 
 class ApiConfig {
-  static const String apiUrl = 'http://makfy.test/api';
-  // static const String apiUrl = 'https://makfy.abdullah-alanazi.sa/api';
+  // static const String apiUrl = 'http://makfy.test/api';
+  static const String apiUrl = 'https://makfy.abdullah-alanazi.sa/api';
   static Future<Map<String, String>> getAuthHeaders() async {
     final token = await ApiConfig().getToken();
     return {
@@ -776,6 +776,32 @@ class ApiConfig {
     } else {
       throw Exception(
           "Failed to filter service providers: ${response.statusCode}");
+    }
+  }
+
+  // جلب بيانات الكارت المحدثة
+  static Future<Cart> getCart(int cartId) async {
+    final url = Uri.parse(
+        '$apiUrl/cart/show/$cartId'); // استبدل المسار حسب API الخاص بك
+    final headers = await getAuthHeaders();
+
+    try {
+      final response = await http.get(url, headers: headers);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+
+        if (jsonResponse.containsKey('data') && jsonResponse['data'] != null) {
+          return Cart.fromJson(jsonResponse['data']);
+        } else {
+          throw Exception("Invalid response format or no data found");
+        }
+      } else {
+        throw Exception(
+            "Failed to fetch updated cart. Status code: ${response.statusCode}");
+      }
+    } catch (e) {
+      throw Exception("Error fetching updated cart: $e");
     }
   }
 

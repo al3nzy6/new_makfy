@@ -44,6 +44,7 @@ class _myDuesPageState extends State<myDuesPage> {
         child: dues != null
             ? Text(
                 "مستحقاتك لدى مكفي: $dues ريال",
+                maxLines: 10,
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               )
             : Text(

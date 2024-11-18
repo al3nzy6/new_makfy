@@ -1,16 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:makfy_new/Models/Category.dart';
-import 'package:makfy_new/Models/Service.dart';
 import 'package:makfy_new/Models/User.dart';
 import 'package:makfy_new/Utilities/ApiConfig.dart';
 import 'package:makfy_new/Widget/H1textWidget.dart';
 import 'package:makfy_new/Widget/MainScreenWidget.dart';
-import 'package:makfy_new/Widget/ServiceAddedWidget.dart';
-import 'package:makfy_new/Widget/appHeadWidget.dart';
 import 'package:makfy_new/Widget/boxWidget.dart';
-import 'package:makfy_new/Widget/fontIcon.dart';
 import 'package:makfy_new/Widget/serviceProviderWidget.dart';
-import 'package:makfy_new/Widget/shimmerLoadingWidget.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});

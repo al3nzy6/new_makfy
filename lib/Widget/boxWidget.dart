@@ -13,6 +13,7 @@ class boxWidget extends StatelessWidget {
   String? TextAsLogo;
   double? TextAsLogoSize;
   double? width;
+  double? height;
   boxWidget({
     Key? key,
     this.color,
@@ -22,6 +23,7 @@ class boxWidget extends StatelessWidget {
     this.route,
     this.data,
     this.width,
+    this.height,
     this.TextAsLogo,
     this.TextAsLogoSize,
   }) : super(key: key);
@@ -31,7 +33,7 @@ class boxWidget extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     return Container(
-      height: math.min(135, screenHeight * 0.15),
+      height: (height == null) ? math.min(135, screenHeight * 0.15) : height,
       width: (width == null) ? math.min(190, screenWidth * 0.4) : width,
       decoration: BoxDecoration(
         // color: Colors.black,
@@ -76,7 +78,10 @@ class boxWidget extends StatelessWidget {
                             'images/logo.png',
                             height: screenWidth * 0.20,
                           ),
-            H2Text(text: title),
+            H2Text(
+              text: title,
+              lines: 5,
+            ),
           ],
         ),
       ),

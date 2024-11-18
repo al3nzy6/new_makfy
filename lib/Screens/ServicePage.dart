@@ -2,7 +2,6 @@ import 'package:fan_carousel_image_slider/fan_carousel_image_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:makfy_new/Models/Service.dart';
 import 'package:makfy_new/Utilities/ApiConfig.dart';
-import 'package:makfy_new/Widget/FieldWidget.dart';
 import 'package:makfy_new/Widget/H1textWidget.dart';
 import 'package:makfy_new/Widget/H2Text.dart';
 import 'package:makfy_new/Widget/MainScreenWidget.dart';

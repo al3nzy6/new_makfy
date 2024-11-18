@@ -41,6 +41,7 @@ class _userServicesPageState extends State<userServicesPage> {
   bool isLoading = true;
   bool? isPaid;
   bool? isServiceProvider;
+  String? resultOfOtp;
 
   @override
   void didChangeDependencies() {
@@ -146,12 +147,37 @@ class _userServicesPageState extends State<userServicesPage> {
               ]
             ],
           ),
-          H2Text(text: "${services.length} خدمة"),
+          if (cart != null && isPaid != true) ...[
+            SizedBox(
+              height: 30,
+            ),
+            H1text(text: "عزيزي العميل يرجى مراجعة السلة قبل عملية الدفع")
+          ],
+          // H2Text(text: "${services.length} خدمة"),
           if (isPaid != null && isPaid == true) ...[
             Wrap(
               spacing: 10,
               runSpacing: 10,
+              alignment: WrapAlignment.center,
               children: [
+                if (isServiceProvider != true) ...[
+                  InkWell(
+                    onTap:
+                        isPaid == true ? () => _openRatingModal(context) : null,
+                    child: boxWidget(
+                      // width: double.infinity,
+                      icon: Icons.star,
+                      title: "تقيم الخدمة",
+                    ),
+                  ),
+                ],
+                boxWidget(
+                  // height: 90,
+                  // width: double.infinity,
+                  TextAsLogo: "رقم الطلب #",
+                  TextAsLogoSize: 20,
+                  title: "${cart!.id}",
+                ),
                 boxWidget(
                   // width: 210,
                   title: (isServiceProvider == true)
@@ -160,8 +186,8 @@ class _userServicesPageState extends State<userServicesPage> {
                   icon: Icons.phone,
                 ),
                 boxWidget(
-                  // width: 210,
-                  icon: Icons.price_check_rounded,
+                  TextAsLogo: "اجمالي مبلغ الفاتورة",
+                  TextAsLogoSize: 20,
                   title: "${cart!.total}",
                 ),
                 boxWidget(
@@ -176,21 +202,12 @@ class _userServicesPageState extends State<userServicesPage> {
                               : "لم تكتمل",
                   TextAsLogoSize: 30,
                 ),
-                if (isServiceProvider != true) ...[
-                  InkWell(
-                    onTap:
-                        isPaid == true ? () => _openRatingModal(context) : null,
-                    child: boxWidget(
-                      width: double.infinity,
-                      icon: Icons.star,
-                      title: "تقيم الخدمة",
-                    ),
-                  ),
-                ],
                 if (isServiceProvider != true && cart!.otp != null) ...[
                   boxWidget(
+                    height: 160,
                     width: double.infinity,
-                    title: "كود الخدمة",
+                    title:
+                        "رجاء اعطي هذا الكود لمقدم الخدمة عند وصول الطلب او إتمام الخدمة",
                     TextAsLogo: "${cart!.otp}",
                   ),
                 ],
@@ -200,9 +217,11 @@ class _userServicesPageState extends State<userServicesPage> {
                       onTap:
                           isPaid == true ? () => _addOtpNumber(context) : null,
                       child: boxWidget(
+                        height: 180,
                         width: double.infinity,
                         icon: Icons.settings,
-                        title: "كود الخدمة",
+                        title:
+                            "لحفظ مستحقاتكم الماليه، رجاءً اطلب من العميل تزويدكم بالكود المرسل اليه وادخاله هنا عند وصول الخدمة او الطلب للعميل",
                       ),
                     ),
                   ],
@@ -291,14 +310,12 @@ class _userServicesPageState extends State<userServicesPage> {
           double.tryParse(result['data']['total']) ?? 0.0
         ]);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "تم حفظه بالسلة",
-              style: const TextStyle(fontSize: 20),
-            ),
-          ),
-        );
+        Cart cart = Cart.fromJson(result['data']);
+        Navigator.pushReplacementNamed(context, '/user_page', arguments: {
+          "id": cart.service_provider.id,
+          "title": cart.service_provider.name,
+          "cart": cart,
+        });
       }
     } catch (e) {}
   }
@@ -317,10 +334,13 @@ class _userServicesPageState extends State<userServicesPage> {
 
   void _addOtpNumber(BuildContext context) {
     final TextEditingController otpController = TextEditingController();
+    bool modalClosed = false; // متغير لتتبع حالة الـ modal
+    String? localResultOfOtp;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent, // خلفية شفافة لإبراز التأثير
+      backgroundColor: Colors.transparent,
       builder: (BuildContext context) {
         String convertArabicToEnglishNumbers(String input) {
           const arabicToEnglishMap = {
@@ -336,93 +356,138 @@ class _userServicesPageState extends State<userServicesPage> {
             '٩': '9',
           };
 
-          // تحويل كل رقم عربي في النص إلى رقمه الإنجليزي
           return input
               .split('')
               .map((char) => arabicToEnglishMap[char] ?? char)
               .join('');
         }
 
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.7,
-          margin:
-              EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.1),
-          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "ادخال الكود المرسل للعميل",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 20),
-              TextField(
-                controller: otpController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: "ادخل كود الخدمة",
-                  border: OutlineInputBorder(),
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            return WillPopScope(
+              onWillPop: () async {
+                modalClosed = true; // تعيين modalClosed عند إغلاق الـ modal
+                return true;
+              },
+              child: Container(
+                height: MediaQuery.of(context).size.height * 0.7,
+                margin: EdgeInsets.only(
+                    top: MediaQuery.of(context).size.height * 0.1),
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "إدخال الكود المرسل للعميل",
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 20),
+                    TextField(
+                      controller: otpController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: "أدخل كود الخدمة",
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    if (localResultOfOtp != null)
+                      Text(
+                        localResultOfOtp!,
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ElevatedButton(
+                      onPressed: () async {
+                        if (otpController.text.isNotEmpty) {
+                          final otpNumber = int.parse(
+                              convertArabicToEnglishNumbers(
+                                  otpController.text));
+                          final cartId = cart!.id;
+
+                          try {
+                            if (!modalClosed) {
+                              setModalState(() {
+                                localResultOfOtp = "جاري معالجة الطلب...";
+                              });
+                            }
+
+                            final response = await ApiConfig.makeCartOnProgress(
+                                cartId, otpNumber);
+
+                            if (response['data']['message'] == 'success') {
+                              if (!modalClosed) {
+                                Navigator.pop(context); // إغلاق الـ modal
+                              }
+
+                              // تحديث الشاشة بعد الإغلاق
+                              if (mounted) {
+                                setState(() {
+                                  isLoading = true;
+                                });
+                                cart = await ApiConfig.getCart(cartId);
+                                print(cart!.status);
+                                Navigator.pushReplacementNamed(
+                                    context, '/user_page',
+                                    arguments: {
+                                      "id": cart!.service_provider.id,
+                                      "title": cart!.customer.name,
+                                      "cart": cart,
+                                    });
+
+                                setState(() {
+                                  isLoading = false;
+                                });
+                              }
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                      'تم تحويل الطلب إلى حالة قيد التنفيذ بنجاح'),
+                                ),
+                              );
+                            } else {
+                              if (!modalClosed) {
+                                setModalState(() {
+                                  localResultOfOtp =
+                                      "الكود غير صحيح، الرجاء التحقق من موفر الخدمة";
+                                });
+                              }
+                            }
+                          } catch (e) {
+                            if (!modalClosed) {
+                              setModalState(() {
+                                localResultOfOtp = "حدث خطأ أثناء العملية: $e";
+                              });
+                            }
+                          }
+                        } else {
+                          if (!modalClosed) {
+                            setModalState(() {
+                              localResultOfOtp = "يرجى إدخال كود الخدمة";
+                            });
+                          }
+                        }
+                      },
+                      child: Text("إرسال"),
+                    ),
+                  ],
                 ),
               ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () async {
-                  if (otpController.text.isNotEmpty) {
-                    final otpNumber = int.parse(
-                        convertArabicToEnglishNumbers(otpController.text));
-
-                    final cartId = cart!.id;
-
-                    try {
-                      final response =
-                          await ApiConfig.makeCartOnProgress(cartId, otpNumber);
-
-                      if (response['data']['message'] == 'success') {
-                        ScaffoldMessenger.of(
-                                Navigator.of(context).overlay!.context)
-                            .showSnackBar(
-                          SnackBar(
-                              content: Text(
-                                  'تم تحويل الطلب إلى حالة قيد التنفيذ بنجاح')),
-                        );
-                        Navigator.pop(context); // إغلاق الـ modal
-                      } else {
-                        ScaffoldMessenger.of(
-                                Navigator.of(context).overlay!.context)
-                            .showSnackBar(
-                          SnackBar(
-                              content: Text(
-                                  'فشل في تحويل الطلب إلى حالة قيد التنفيذ')),
-                        );
-                      }
-                    } catch (e) {
-                      ScaffoldMessenger.of(
-                              Navigator.of(context).overlay!.context)
-                          .showSnackBar(
-                        SnackBar(content: Text('حدث خطأ أثناء العملية')),
-                      );
-                    }
-                  } else {
-                    ScaffoldMessenger.of(Navigator.of(context).overlay!.context)
-                        .showSnackBar(
-                      SnackBar(content: Text('يرجى ادخال كود الخدمة')),
-                    );
-                  }
-                },
-                child: Text("إرسال"),
-              ),
-            ],
-          ),
+            );
+          },
         );
       },
-    );
+    ).whenComplete(() {
+      modalClosed = true; // تعيين modalClosed عند إغلاق الـ modal
+    });
   }
 
   Future<void> _completeCart(cartID) async {
