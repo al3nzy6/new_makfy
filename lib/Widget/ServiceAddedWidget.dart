@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:makfy_new/Models/Service.dart';
 import 'package:makfy_new/Models/User.dart';
 import 'package:makfy_new/Widget/H2Text.dart';
 import 'package:makfy_new/Widget/ShadowBoxWidget.dart';
@@ -12,6 +13,8 @@ class ServiceAddedWidget extends StatefulWidget {
   final String? date;
   final String? time;
   final bool? currentUserIsTheProvider;
+  final List? imageUrl;
+  final Service? service;
   int? count;
   bool? isPaid;
   final Function(dynamic)? onChanged;
@@ -22,6 +25,8 @@ class ServiceAddedWidget extends StatefulWidget {
       required this.serviceProvider,
       required this.price,
       required this.id,
+      this.imageUrl,
+      this.service,
       this.date,
       this.time,
       this.isPaid,
@@ -36,13 +41,15 @@ class ServiceAddedWidget extends StatefulWidget {
 class _ServiceAddedWidgetState extends State<ServiceAddedWidget> {
   @override
   Widget build(BuildContext context) {
+    final double imageHeight = (widget.imageUrl!.isNotEmpty) ? 150 : 0;
+    // print(widget.service?.is_available);
     return ShadowBoxWidget(
       height: (widget.currentUserIsTheProvider != null &&
               widget.currentUserIsTheProvider == false)
-          ? 140
+          ? 140 + imageHeight
           : (widget.isPaid != null && widget.isPaid == true)
-              ? 140
-              : 90,
+              ? 140 + imageHeight
+              : 90 + imageHeight,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -57,43 +64,83 @@ class _ServiceAddedWidgetState extends State<ServiceAddedWidget> {
             },
             child: Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                mainAxisSize: MainAxisSize.max,
+              child: Column(
                 children: [
-                  Container(
-                    // width: double.infinity ,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // استخدام FittedBox لضبط النص داخل الشاشة وتجنب الخروج
-                        Text(
-                          widget.title,
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          maxLines: 1, // يمنع النص من التوسع لأكثر من سطر
-                        ),
-                        if (widget.fields != null)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 1),
-                            child: Text(
-                              widget.fields!.join(' '),
-                              style: TextStyle(
-                                color: Color(0XFFEF5B2C),
-                              ),
+                  if (widget.imageUrl!.isNotEmpty)
+                    Stack(children: [
+                      Image.network(
+                        widget.imageUrl!.last,
+                        width: MediaQuery.of(context).size.width,
+                        height: imageHeight,
+                        fit: BoxFit.cover,
+                      ),
+                      if (widget.currentUserIsTheProvider != null &&
+                          widget.currentUserIsTheProvider == true) ...[
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Container(
+                            height: 40,
+                            width: 90,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              color: (widget.service?.is_available == true)
+                                  ? Colors.green.withOpacity(0.8)
+                                  : Colors.red.withOpacity(0.8),
                             ),
+                            child: (widget.service?.is_available == true)
+                                ? H2Text(
+                                    text: "متوفر",
+                                    textColor: Colors.white,
+                                  )
+                                : H2Text(
+                                    text: "غير متوفر",
+                                    textColor: Colors.white,
+                                  ),
                           ),
+                        )
                       ],
-                    ),
-                  ),
-                  Text(
-                    '${widget.price}',
-                    style: const TextStyle(
-                      fontSize: 19,
-                      color: Color(0XFFEF5B2C),
-                    ),
+                    ]),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      Container(
+                        // width: double.infinity ,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              (widget.imageUrl!.isEmpty &&
+                                      widget.service!.is_available == false)
+                                  ? "${widget.title} (غير متوفر)"
+                                  : "${widget.title}",
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1, // يمنع النص من التوسع لأكثر من سطر
+                            ),
+                            if (widget.fields != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 1),
+                                child: Text(
+                                  widget.fields!.join(' '),
+                                  style: TextStyle(
+                                    color: Color(0XFFEF5B2C),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        '${widget.price} SAR',
+                        style: const TextStyle(
+                          fontSize: 19,
+                          color: Color(0XFFEF5B2C),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

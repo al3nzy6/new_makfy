@@ -33,6 +33,13 @@ class City extends Equatable {
     };
   }
 
+  Map<String, dynamic> toMapForOption() {
+    return {
+      'id': id,
+      'name': name,
+    };
+  }
+
   factory City.fromMap(Map<String, dynamic> map) {
     return City(
       id: map['id']?.toInt() ?? 0,
@@ -47,6 +54,13 @@ class City extends Equatable {
   String toJson() => json.encode(toMap());
 
   factory City.fromJson(String source) => City.fromMap(json.decode(source));
+  factory City.fromJsonOption(String source) {
+    final map = json.decode(source) as Map<String, dynamic>;
+    return City(
+      id: map['id']?.toInt() ?? 0,
+      name: map['name'] ?? '',
+    );
+  }
 
   @override
   String toString() => 'City(id: $id, name: $name)';

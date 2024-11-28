@@ -10,13 +10,15 @@ import 'package:makfy_new/Models/User.dart';
 import 'package:makfy_new/Models/SubCategory.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path/path.dart';
+import 'package:geolocator/geolocator.dart';
 
 class ApiConfig {
   // static const String apiUrl = 'http://makfy.test/api';
-  static const String apiUrl = 'https://makfy.abdullah-alanazi.sa/api';
+  static const String apiUrl = 'https://makfy.sa/api';
   static Future<Map<String, String>> getAuthHeaders() async {
     final token = await ApiConfig().getToken();
     return {
+      'Content-Type': 'application/json',
       'Accept': 'application/json', // Set the Accept header to expect JSON
       'Authorization': "Bearer ${token}",
     };
@@ -171,7 +173,7 @@ class ApiConfig {
             .toList();
         return services;
       } else {
-        print(token);
+        // print(token);
         return throw Exception(response.statusCode);
       }
     } catch (e) {
@@ -273,7 +275,7 @@ class ApiConfig {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('user_name', userData['name']);
     await prefs.setString('user_email', userData['email']);
-    if (userData['id_number'] != null) {
+    if (userData['id_number'] != null || userData['id_number'] != '') {
       await prefs.setInt('isServiceProvider', 1);
     }
     if (userData['id_number'] == null) {
@@ -297,6 +299,7 @@ class ApiConfig {
     await prefs.remove('auth_token');
     await prefs.remove('user_name');
     await prefs.remove('user_email');
+    await prefs.remove('isServiceProvider');
     await prefs.remove('user_id');
   }
 
@@ -475,14 +478,14 @@ class ApiConfig {
   }
 
   static Future<Map<String, dynamic>> updateCart(
-      Map<int, dynamic> data, Cart? cart) async {
+      Map<int, dynamic> data, Cart? cart, String datatimestamp) async {
     final url = (cart != null)
         ? Uri.parse('$apiUrl/cart/update')
         : Uri.parse('$apiUrl/cart/create');
     final authHeader = await ApiConfig.getAuthHeaders();
     final formattedData =
         data.map((key, value) => MapEntry(key.toString(), value.toString()));
-
+    formattedData['service_datetime'] = datatimestamp;
     final response = await http.post(
       url, // Ensure this endpoint is correct
       headers: {...authHeader, 'Content-Type': 'application/json'},
@@ -553,7 +556,7 @@ class ApiConfig {
       headers: {...authHeader, 'Content-Type': 'application/json'},
       body: jsonEncode({'rating': rating}),
     );
-    print(response.body);
+    // print(response.body);
     return jsonDecode(response.body);
   }
 
@@ -733,7 +736,7 @@ class ApiConfig {
         },
         body: jsonEncode(filters),
       );
-      print(jsonEncode(filters));
+      // print(jsonEncode(filters));
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
 
@@ -803,6 +806,117 @@ class ApiConfig {
     } catch (e) {
       throw Exception("Error fetching updated cart: $e");
     }
+  }
+
+  static Future<String> checkAvailableTime(
+      int userID, String date, String time) async {
+    final url = Uri.parse(
+        '$apiUrl/user/checkTime/$userID'); // استبدل المسار حسب API الخاص بك
+    final headers = await getAuthHeaders();
+    try {
+      final response = await http.post(url,
+          headers: headers, body: jsonEncode({"date": date, "time": time}));
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+
+        if (jsonResponse.containsKey('data') && jsonResponse['data'] != null) {
+          print(jsonResponse['data']['datetimestamp']);
+          return jsonResponse['data']['datetimestamp'];
+        } else {
+          throw Exception("Invalid response format or no data found");
+        }
+      } else {
+        throw Exception(
+            "Failed to fetch updated cart. Status code: ${response.statusCode}");
+      }
+    } catch (e) {
+      throw Exception("Error fetching updated cart: $e");
+    }
+  }
+
+  static Future<bool> deleteCart(int cartId) async {
+    final url = Uri.parse("$apiUrl/cart/delete/$cartId");
+    final authHeader = await ApiConfig.getAuthHeaders();
+
+    try {
+      final response = await http.delete(
+        url,
+        headers: {
+          ...authHeader,
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // السلة تم حذفها بنجاح
+        return true;
+      } else {
+        // فشل حذف السلة، عرض رسالة أو معالجة الخطأ
+        print("Failed to delete cart. Status code: ${response.statusCode}");
+        return false;
+      }
+    } catch (e) {
+      // حدث خطأ أثناء الاتصال بالـ API
+      print("Error deleting cart: $e");
+      return false;
+    }
+  }
+
+  static Future<bool> sendResetPasswordEmail(String email) async {
+    final url = Uri.parse("$apiUrl/password/email");
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          'email': email,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print("Reset password link sent successfully.");
+        return true; // إذا تم إرسال الرابط بنجاح
+      } else {
+        print(
+            "Failed to send reset password link. Status code: ${response.statusCode}");
+        return false;
+      }
+    } catch (e) {
+      print("Error sending reset password link: $e");
+      return false;
+    }
+  }
+
+  Future<Position> getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // تحقق من أن خدمات الموقع مفعلة
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      throw Exception('خدمات الموقع معطلة.');
+    }
+
+    // تحقق من أذونات الموقع
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        throw Exception('تم رفض أذونات الموقع.');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      throw Exception('تم رفض أذونات الموقع بشكل دائم.');
+    }
+
+    // احصل على الموقع الحالي
+    return await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
   }
 
   // static Future<List<FieldSection>> getFieldSections(int category_id) async {

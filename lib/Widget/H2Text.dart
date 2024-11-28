@@ -18,7 +18,8 @@ class H2Text extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       alignment: (aligment == "center") ? Alignment.center : null,
-      margin: const EdgeInsets.only(top: 10, right: 10, left: 10),
+      padding: const EdgeInsets.all(8),
+      margin: const EdgeInsets.only(top: 2, right: 2, left: 2),
       child: Text(
         text,
         maxLines: (lines != null) ? lines : 1,

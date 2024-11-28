@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_holo_date_picker/flutter_holo_date_picker.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:makfy_new/Models/Cart.dart';
 import 'package:makfy_new/Models/Category.dart';
+import 'package:makfy_new/Models/City.dart';
+import 'package:makfy_new/Models/District.dart';
 import 'package:makfy_new/Models/Option.dart';
 import 'package:makfy_new/Models/Service.dart';
 import 'package:makfy_new/Models/User.dart';
@@ -20,6 +23,7 @@ import 'package:makfy_new/Widget/H2Text.dart';
 import 'package:makfy_new/Widget/ServiceAddedWidget.dart';
 import 'package:makfy_new/Widget/appHeadWidget.dart';
 import 'package:makfy_new/Widget/boxWidget.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class userServicesPage extends StatefulWidget {
   userServicesPage({super.key});
@@ -32,8 +36,9 @@ class _userServicesPageState extends State<userServicesPage> {
   late int id;
   late String name;
   late Cart? cart;
-  late String? date;
-  late String? time;
+  late String? submitType;
+  late String? date = DateTime.now().toLocal().toString().split(' ')[0];
+  late String? time = TimeOfDay.now().format(context).toString();
   List<Widget> services = [];
   Map<int, dynamic> finalresults = {};
   User? user;
@@ -42,6 +47,13 @@ class _userServicesPageState extends State<userServicesPage> {
   bool? isPaid;
   bool? isServiceProvider;
   String? resultOfOtp;
+  bool? timeIsAvailable = false;
+  bool? checkTimePressed = false;
+  String? dateTimeStamp;
+  String? choosenDate;
+  String? choosenTime;
+  String? timeisNotAvailableText;
+  bool _hasBeenLoaded = false;
 
   @override
   void didChangeDependencies() {
@@ -53,8 +65,7 @@ class _userServicesPageState extends State<userServicesPage> {
       id = arguments["id"];
       name = arguments["title"];
       cart = arguments["cart"];
-      date = arguments["date"];
-      time = arguments["time"];
+      submitType = arguments['submitType'];
 
       // استخدام البيانات المستخرجة حسب الحاجة
     } else if (arguments is List) {
@@ -62,10 +73,30 @@ class _userServicesPageState extends State<userServicesPage> {
       id = arguments[0];
       name = arguments[1];
       cart = null;
-      date = null;
-      time = null;
     }
-    _getUserServices();
+    if (_hasBeenLoaded == false) {
+      _getUserServices();
+    }
+  }
+
+  void _showSaveDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("تم الحفظ بنجاح"),
+          content: Text("تم حفظ وتحديث السلة بنجاح."),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // إغلاق المودال
+              },
+              child: Text("موافق"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _getUserServices() async {
@@ -74,8 +105,19 @@ class _userServicesPageState extends State<userServicesPage> {
     try {
       if (!mounted) return; // تأكد من أن الـ widget ما زالت موجودة
       setState(() {
+        _hasBeenLoaded = true;
+        if (submitType == 'update') {
+          submitType = null;
+          _showSaveDialog(context); // إظهار المودال عند نجاح الحفظ
+        }
         finalresults[0] = id;
         isPaid = (cart != null && cart?.status != 1) ? true : false;
+        if (cart != null) {
+          dateTimeStamp = cart!.service_time;
+          timeIsAvailable = true;
+          date = null;
+          time = null;
+        }
         isServiceProvider =
             (cart != null && cart?.service_provider.id == current_user)
                 ? true
@@ -89,6 +131,8 @@ class _userServicesPageState extends State<userServicesPage> {
                     serviceProvider: service.user.name,
                     price: service.price,
                     id: service.id,
+                    service: service,
+                    imageUrl: service.imageUrls,
                     isPaid: isPaid,
                     currentUserIsTheProvider:
                         (user?.id == current_user) ? true : false,
@@ -108,6 +152,8 @@ class _userServicesPageState extends State<userServicesPage> {
                     serviceProvider: service.user.name,
                     price: service.price,
                     id: service.id,
+                    service: service,
+                    imageUrl: service.imageUrls,
                     currentUserIsTheProvider:
                         (user?.id == current_user) ? true : false,
                     onChanged: (value) {
@@ -126,12 +172,109 @@ class _userServicesPageState extends State<userServicesPage> {
     }
   }
 
+  Future<void> checkTime(
+      int serviceProviderID, String date, String time) async {
+    String response =
+        await ApiConfig.checkAvailableTime(serviceProviderID, date, time);
+    try {
+      setState(() {
+        if (response != 'Not Available') {
+          timeIsAvailable = true;
+          dateTimeStamp = response;
+          checkTimePressed = false;
+        } else {
+          timeIsAvailable = false;
+          checkTimePressed = false;
+          timeisNotAvailableText = "الوقت الذي اخترته غير متاح";
+        }
+      });
+    } catch (e) {}
+  }
+
   Widget build(BuildContext context) {
+    print(cart?.choosenTime);
     return MainScreenWidget(
       isLoading: isLoading,
       onRefresh: _getUserServices,
       start: Column(
         children: [
+          if (isPaid == null || isPaid == false && cart != null) ...[
+            Align(
+              alignment: Alignment.topLeft,
+              child: InkWell(
+                onTap: () async {
+                  final shouldDelete = await showDialog<bool>(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: Text("تأكيد الحذف"),
+                        content: Text("هل أنت متأكد من حذف السلة؟"),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context, false); // لا تحذف
+                            },
+                            child: Text("إلغاء"),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context, true); // تأكيد الحذف
+                            },
+                            child: Text("حذف",
+                                style: TextStyle(color: Colors.red)),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+
+                  if (shouldDelete == true) {
+                    if (mounted) {
+                      setState(() {
+                        isLoading = true;
+                      });
+
+                      try {
+                        // استدعاء دالة حذف السلة
+                        bool isDeleted = await ApiConfig.deleteCart(cart!.id);
+
+                        if (isDeleted) {
+                          // الرجوع إلى الصفحة السابقة مع رسالة نجاح
+                          if (mounted) {
+                            Navigator.pop(context, "تم حذف السلة بنجاح");
+                          }
+                        } else {
+                          // عرض رسالة فشل
+                          print("Failed to delete the cart.");
+                        }
+                      } catch (e) {
+                        // التعامل مع أي أخطاء
+                        print("Error while deleting the cart: $e");
+                      } finally {
+                        // إيقاف حالة التحميل
+                        if (mounted) {
+                          setState(() {
+                            isLoading = false;
+                          });
+                        }
+                      }
+                    }
+                  }
+                },
+                child: boxWidget(
+                  title: "حذف السلة",
+                  icon: Icons.delete,
+                  iconSize: 20,
+                  width: 100,
+                  height: 80,
+                  titleColor: Colors.red,
+                ),
+              ),
+            ),
+            SizedBox(
+              height: 20,
+            ),
+          ],
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -147,6 +290,125 @@ class _userServicesPageState extends State<userServicesPage> {
               ]
             ],
           ),
+          SizedBox(
+            height: 20,
+          ),
+          if (user?.id != current_user &&
+              (isPaid == false || isPaid == null)) ...[
+            const SizedBox(
+              height: 20,
+            ),
+            H2Text(
+              lines: 4,
+              text: (dateTimeStamp == null)
+                  ? 'الرجاء اختيار التاريخ والوقت المطلوب لاستلام الخدمات والتحقق منه عبر الزر اسفل الوقت'
+                  : 'وقت الخدمة متاح',
+              textColor: (dateTimeStamp == null) ? Colors.red : Colors.blue,
+            ),
+            const SizedBox(
+              height: 10,
+            ),
+            if ((timeIsAvailable == null || timeIsAvailable == false)) ...[
+              FieldWidget(
+                id: 1,
+                name: "date",
+                showName: (cart?.choosenDate == null)
+                    ? "اختر التاريخ"
+                    : "التاريخ الحالي : اختر ادناه للتغير",
+                type: "Date",
+                initialValue: cart?.choosenDate ?? null,
+                onChanged: (value) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    setState(() {
+                      date = value;
+                      print(date);
+                    });
+                  });
+                },
+              ),
+              FieldWidget(
+                id: 1,
+                name: "time",
+                showName: (cart?.choosenTime == null)
+                    ? "اختر الوقت"
+                    : "الوقت الحالي : اختر الوقت للتغير",
+                type: "Time",
+                initialValue: cart?.choosenTime ?? null,
+                onChanged: (value) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    setState(() {
+                      time = value;
+                      print(time);
+                    });
+                  });
+                },
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              ElevatedButton.icon(
+                  label: Text((checkTimePressed == false)
+                      ? 'اضغط هنا للتحقق من الوقت والتاريخ'
+                      : 'جاري التحقق .. الرجاء الانتظار'),
+                  iconAlignment: IconAlignment.start,
+                  onPressed: (checkTimePressed == false)
+                      ? () {
+                          setState(() {
+                            checkTimePressed = true;
+                          });
+                          checkTime(user!.id, date!, time!);
+                        }
+                      : null,
+                  icon: Icon(Icons.search)),
+              if (timeisNotAvailableText != null) ...[
+                H2Text(
+                  text: timeisNotAvailableText ?? '',
+                  textColor: Colors.red,
+                )
+              ],
+            ],
+          ],
+          if ((timeIsAvailable == true && timeIsAvailable != null) ||
+              isPaid == true) ...[
+            // if (isPaid != true) ...[
+            //   H2Text(
+            //       lines: 3,
+            //       textColor: const Color.fromARGB(255, 18, 88, 145),
+            //       text:
+            //           "الوقت والتاريخ الذي اخترته متوفر لدى موفر الخدمة بامكانك إتمام الطلب"),
+            // ],
+            Wrap(spacing: 10, children: [
+              boxWidget(
+                title: "التاريخ",
+                height: 90,
+                TextAsLogo: (date != null) ? "${date}" : "${cart!.choosenDate}",
+                TextAsLogoSize: 20,
+              ),
+              boxWidget(
+                title: "الوقت",
+                height: 90,
+                TextAsLogo: (time != null) ? "${time}" : "${cart!.choosenTime}",
+                TextAsLogoSize: 20,
+              ),
+            ]),
+            SizedBox(
+              height: 10,
+            ),
+            if (isPaid != true) ...[
+              ElevatedButton.icon(
+                  label: Text('اعادة ضبط الوقت والتاريخ'),
+                  iconAlignment: IconAlignment.start,
+                  onPressed: () {
+                    if (mounted) {
+                      setState(() {
+                        timeIsAvailable = false;
+                        dateTimeStamp = null;
+                      });
+                    }
+                  },
+                  icon: Icon(Icons.update)),
+            ],
+          ],
           if (cart != null && isPaid != true) ...[
             SizedBox(
               height: 30,
@@ -165,6 +427,8 @@ class _userServicesPageState extends State<userServicesPage> {
                     onTap:
                         isPaid == true ? () => _openRatingModal(context) : null,
                     child: boxWidget(
+                      iconSize: 50,
+                      height: 100,
                       // width: double.infinity,
                       icon: Icons.star,
                       title: "تقيم الخدمة",
@@ -175,32 +439,52 @@ class _userServicesPageState extends State<userServicesPage> {
                   // height: 90,
                   // width: double.infinity,
                   TextAsLogo: "رقم الطلب #",
+                  height: 100,
+
                   TextAsLogoSize: 20,
                   title: "${cart!.id}",
                 ),
-                boxWidget(
-                  // width: 210,
-                  title: (isServiceProvider == true)
-                      ? "${cart!.customer.phone}"
-                      : "${cart!.service_provider.phone}",
-                  icon: Icons.phone,
+                InkWell(
+                  onTap: () => {
+                    _makePhoneCall(
+                      (isServiceProvider == true)
+                          ? "${cart!.customer.phone}"
+                          : "${cart!.service_provider.phone}",
+                    )
+                  },
+                  child: boxWidget(
+                    // width: 210,
+                    height: 100,
+                    iconSize: 50,
+                    title: (isServiceProvider == true)
+                        ? "${cart!.customer.phone}"
+                        : "${cart!.service_provider.phone}",
+                    icon: Icons.call,
+                  ),
+                ),
+                InkWell(
+                  onTap: () => {
+                    _openWhatsApp(
+                      (isServiceProvider == true)
+                          ? "${cart!.customer.phone}"
+                          : "${cart!.service_provider.phone}",
+                    )
+                  },
+                  child: boxWidget(
+                    height: 100,
+                    iconSize: 50,
+                    // width: 210,
+                    title: (isServiceProvider == true)
+                        ? "${cart!.customer.phone}"
+                        : "${cart!.service_provider.phone}",
+                    icon: FontAwesomeIcons.whatsapp,
+                  ),
                 ),
                 boxWidget(
-                  TextAsLogo: "اجمالي مبلغ الفاتورة",
+                  height: 100,
+                  TextAsLogo: "اجمالي المبلغ ",
                   TextAsLogoSize: 20,
-                  title: "${cart!.total}",
-                ),
-                boxWidget(
-                  width: double.infinity,
-                  title: "حالة الخدمة",
-                  TextAsLogo: (cart!.status == 2)
-                      ? "قيد التنفيذ"
-                      : (cart!.status == 3)
-                          ? "قيد التنفيذ"
-                          : (cart!.status == 4)
-                              ? "مكتملة"
-                              : "لم تكتمل",
-                  TextAsLogoSize: 30,
+                  title: "${cart!.total} SAR",
                 ),
                 if (isServiceProvider != true && cart!.otp != null) ...[
                   boxWidget(
@@ -211,18 +495,42 @@ class _userServicesPageState extends State<userServicesPage> {
                     TextAsLogo: "${cart!.otp}",
                   ),
                 ],
+                if (isServiceProvider == true && cart!.status == 2) ...[
+                  InkWell(
+                    onTap: isPaid == true ? () => _addOtpNumber(context) : null,
+                    child: boxWidget(
+                      height: 180,
+                      width: double.infinity,
+                      TextAsLogo: "اضغط هنا",
+                      TextAsLogoSize: 30,
+                      titleColor: Colors.red,
+                      title:
+                          "لحفظ مستحقاتكم الماليه، رجاءً اطلب من العميل تزويدكم بالكود المرسل اليه وادخاله هنا عند وصول الخدمة او الطلب للعميل",
+                    ),
+                  ),
+                ],
+                boxWidget(
+                  height: 100,
+                  width: double.infinity,
+                  title: "حالة الخدمة",
+                  TextAsLogo: (cart!.status == 2)
+                      ? "تجهيز الطلب"
+                      : (cart!.status == 3)
+                          ? "تجهيز الطلب"
+                          : (cart!.status == 4)
+                              ? "تم إنجاز الخدمة"
+                              : "لم تكتمل",
+                  TextAsLogoSize: 20,
+                ),
                 if (isServiceProvider == true) ...[
                   if (cart!.status == 2) ...[
-                    InkWell(
-                      onTap:
-                          isPaid == true ? () => _addOtpNumber(context) : null,
-                      child: boxWidget(
-                        height: 180,
-                        width: double.infinity,
-                        icon: Icons.settings,
-                        title:
-                            "لحفظ مستحقاتكم الماليه، رجاءً اطلب من العميل تزويدكم بالكود المرسل اليه وادخاله هنا عند وصول الخدمة او الطلب للعميل",
-                      ),
+                    boxWidget(
+                      TextAsLogo:
+                          "الرجاء طلب اللوكيشن من العميل حتى تستطيعون توصيل  الطلب ليه عند تجهيزه",
+                      TextAsLogoSize: 20,
+                      width: double.infinity,
+                      height: 120,
+                      title: "لإكمال الخدمة",
                     ),
                   ],
                   if (cart!.status == 3) ...[
@@ -247,45 +555,53 @@ class _userServicesPageState extends State<userServicesPage> {
             ...services,
             if (current_user != user?.id && (isPaid != true)) ...[
               InkWell(
-                onTap: () => _saveAndPayCart(true),
+                onTap: (dateTimeStamp != null)
+                    ? () => _saveAndPayCart(true)
+                    : null,
                 child: Container(
                   alignment: Alignment.center,
                   padding: EdgeInsets.only(top: 10, bottom: 10),
                   child: Container(
                       decoration: BoxDecoration(
-                        color: Color.fromARGB(255, 240, 190, 174),
+                        color: (dateTimeStamp != null)
+                            ? Color.fromARGB(255, 240, 190, 174)
+                            : Colors.grey,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       height: 70,
                       width: double.infinity,
                       child: H2Text(
-                        text: "حفظ بالسلة",
+                        text: (dateTimeStamp != null)
+                            ? "حفظ بالسلة"
+                            : "للحفظ الرجاء اختيار الوقت",
                         aligment: 'center',
-                        size: 25,
+                        size: 20,
                         textColor: Colors.black,
                       )),
                 ),
               ),
-              InkWell(
-                onTap: () => _saveAndPayCart(false),
-                child: Container(
-                  alignment: Alignment.center,
-                  padding: EdgeInsets.only(top: 10, bottom: 10),
-                  child: Container(
-                      decoration: BoxDecoration(
-                        color: Color(0XFFEF5B2C),
-                        borderRadius: BorderRadius.circular(10),
+              (dateTimeStamp != null)
+                  ? InkWell(
+                      onTap: () => _saveAndPayCart(false),
+                      child: Container(
+                        alignment: Alignment.center,
+                        padding: EdgeInsets.only(top: 10, bottom: 10),
+                        child: Container(
+                            decoration: BoxDecoration(
+                              color: Color(0XFFEF5B2C),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            height: 70,
+                            width: double.infinity,
+                            child: H2Text(
+                              text: "المتابعة للدفع",
+                              aligment: 'center',
+                              size: 25,
+                              textColor: Colors.white,
+                            )),
                       ),
-                      height: 70,
-                      width: double.infinity,
-                      child: H2Text(
-                        text: "المتابعة للدفع",
-                        aligment: 'center',
-                        size: 25,
-                        textColor: Colors.white,
-                      )),
-                ),
-              ),
+                    )
+                  : SizedBox.shrink()
             ],
             H2Text(
                 aligment: 'center',
@@ -301,9 +617,9 @@ class _userServicesPageState extends State<userServicesPage> {
   Future<void> _saveAndPayCart(bool? OnlySaveAsCart) async {
     // print(finalresults);
     Map<String, dynamic> result =
-        await ApiConfig.updateCart(finalresults, cart);
+        await ApiConfig.updateCart(finalresults, cart, dateTimeStamp!);
     try {
-      print(double.tryParse(result['data']['total']));
+      // print(double.tryParse(result['data']['total']));
       if (OnlySaveAsCart == false) {
         Navigator.pushNamed(context, '/payment_page', arguments: [
           result['data']['id'],
@@ -315,6 +631,7 @@ class _userServicesPageState extends State<userServicesPage> {
           "id": cart.service_provider.id,
           "title": cart.service_provider.name,
           "cart": cart,
+          "submitType": "update"
         });
       }
     } catch (e) {}
@@ -328,6 +645,63 @@ class _userServicesPageState extends State<userServicesPage> {
         builder: (BuildContext context) {
           return RateUserModal(cart: cart!.id);
         },
+      );
+    }
+  }
+
+  String convertToInternationalFormat(String localNumber) {
+    // إزالة أي مسافات إضافية
+    localNumber = localNumber.replaceAll(' ', '');
+
+    // التأكد أن الرقم يبدأ بـ 0
+    if (localNumber.startsWith('0')) {
+      // استبدال الصفر الأول بمفتاح الدولة (مثال: +966)
+      return '+966' + localNumber.substring(1);
+    }
+
+    // إذا لم يبدأ الرقم بـ 0، يعاد كما هو
+    return localNumber;
+  }
+
+  Future<void> _openWhatsApp(String localNumber) async {
+    // تحويل الرقم المحلي إلى دولي
+    String internationalNumber = convertToInternationalFormat(localNumber);
+    final message = (isServiceProvider == true)
+        ? "مرحبا انا ${cart!.service_provider.name} اتواصل معك من مكفي"
+        : "مرحبا انا ${cart!.customer.name} اتواصل معك من مكفي";
+    final Uri whatsappUri = Uri(
+      scheme: 'https',
+      host: 'wa.me',
+      path: internationalNumber,
+      queryParameters: {'text': message}, // النص الافتراضي
+    );
+
+    if (await canLaunchUrl(whatsappUri)) {
+      await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
+    } else {
+      print('Could not launch WhatsApp');
+    }
+  }
+
+  Future<void> _makePhoneCall(String phoneNumber) async {
+    try {
+      final Uri launchUri = Uri(
+        scheme: 'tel',
+        path: phoneNumber, // تأكد من تنسيق الرقم
+      );
+      if (await canLaunchUrl(launchUri)) {
+        await launchUrl(launchUri);
+      } else {
+        print('Could not launch $phoneNumber');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('لا يمكن إجراء المكالمة على الرقم: $phoneNumber')),
+        );
+      }
+    } catch (e) {
+      print('Error launching phone call: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('حدث خطأ أثناء محاولة إجراء المكالمة')),
       );
     }
   }
@@ -433,7 +807,7 @@ class _userServicesPageState extends State<userServicesPage> {
                                   isLoading = true;
                                 });
                                 cart = await ApiConfig.getCart(cartId);
-                                print(cart!.status);
+                                // print(cart!.status);
                                 Navigator.pushReplacementNamed(
                                     context, '/user_page',
                                     arguments: {
@@ -450,7 +824,7 @@ class _userServicesPageState extends State<userServicesPage> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                      'تم تحويل الطلب إلى حالة قيد التنفيذ بنجاح'),
+                                      'تم تحويل الطلب إلى حالة تم الاكتمال بنجاح'),
                                 ),
                               );
                             } else {

@@ -44,8 +44,6 @@ class _FieldWidgetState extends State<FieldWidget> {
   void initState() {
     super.initState();
     _initializeDefaultValues();
-    _initializeSelectedOption(
-        widget.initialValue); // تعيين القيمة الأولية للخيار
   }
 
   void _initializeDefaultValues() {
@@ -58,45 +56,70 @@ class _FieldWidgetState extends State<FieldWidget> {
           selectedDate = DateTime.parse(widget.initialValue);
           break;
         case 'Time':
-          selectedTime = TimeOfDay(
-              hour: int.parse(widget.initialValue.split(":")[0]),
-              minute: int.parse(widget.initialValue.split(":")[1]));
+          final normalizedTime = normalizeTime(widget.initialValue);
+          selectedTime = parseTime(normalizedTime);
           break;
         case 'File':
           _selectedImage = null;
+          break;
+        case 'Select':
+          _initializeSelectedOption(widget.initialValue);
           break;
       }
       widget.onChanged?.call(widget.initialValue);
     }
   }
 
-  void _initializeSelectedOption(dynamic initalValue) {
-    final optionsList = widget.options != null
+  String normalizeTime(String time) {
+    return time.replaceAll('ص', 'AM').replaceAll('م', 'PM');
+  }
+
+  TimeOfDay parseTime(String time) {
+    // تحويل "ص" و "م" إلى AM و PM
+    final normalizedTime = time.replaceAll('ص', 'AM').replaceAll('م', 'PM');
+
+    // استخراج الساعة والدقيقة والفترة (AM/PM)
+    final parts = normalizedTime.split(' ');
+    final timeParts = parts[0].split(':'); // الجزء الأول: الساعة والدقيقة
+    final hour = int.parse(timeParts[0]);
+    final minute = int.parse(timeParts[1]);
+    final isAm = parts[1].toUpperCase() == 'AM'; // التحقق إذا كانت الفترة AM
+
+    // إذا كانت الفترة PM والساعة أقل من 12، نضيف 12 للساعة لتكون في صيغة 24 ساعة
+    final adjustedHour =
+        (hour == 12 ? (isAm ? 0 : 12) : (isAm ? hour : hour + 12));
+
+    return TimeOfDay(hour: adjustedHour, minute: minute);
+  }
+
+  void _initializeSelectedOption(dynamic initialValue) {
+    // تحويل initialValue إلى int إذا كان نصيًا
+    initialValue = int.tryParse(initialValue.toString());
+
+    // تعيين الخيارات من widget.options
+    final List<Option> optionsList = widget.options != null
         ? widget.options!.map((map) => Option.fromJson(map)).toList()
         : [];
-
-    // تعيين القيمة الابتدائية إذا كانت متوفرة وتتطابق مع عنصر في optionsList
-    void _initializeSelectedOption() {
-      final optionsList = widget.options != null
-          ? widget.options!.map((map) => Option.fromJson(map)).toList()
-          : [];
-
-      // إذا كانت optionsList غير فارغة، حاول مطابقة selectedOption بناءً على initialValue
+    // إذا كانت optionsList غير فارغة، حاول مطابقة selectedOption بناءً على initialValue
+    setState(() {
       if (optionsList.isNotEmpty) {
-        selectedOption = (widget.initialValue != null)
-            ? optionsList.firstWhere(
-                (option) => option.id == widget.initialValue,
-                orElse: () =>
-                    optionsList.first) // استخدم الخيار الأول كخيار افتراضي
-            : optionsList.first;
-
-        // التأكد من أن selectedOption يتطابق مع عنصر في optionsList
-        if (!optionsList.contains(selectedOption)) {
-          selectedOption =
-              optionsList.first; // تعيين الخيار الأول إذا لم يكن هناك تطابق
+        if (mounted) {
+          selectedOption = initialValue != null
+              ? optionsList.firstWhere(
+                  (option) => option.id == initialValue,
+                  orElse: () => optionsList.first, // استخدام دالة تُعيد العنصر
+                )
+              : optionsList.first;
         }
+
+        // طباعة البيانات للتأكد
+        print(
+            "Selected Option: ${selectedOption?.id}, ${selectedOption?.name}");
+      } else {
+        print("Options list is empty");
+        selectedOption = null; // لا يوجد خيارات متاحة
       }
-    }
+    });
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -128,14 +151,27 @@ class _FieldWidgetState extends State<FieldWidget> {
     final TimeOfDay? pickedTime = await showTimePicker(
       context: context,
       initialEntryMode: TimePickerEntryMode.input,
-      initialTime: TimeOfDay.now(),
+      initialTime: selectedTime,
     );
+
     if (pickedTime != null && pickedTime != selectedTime) {
       setState(() {
         selectedTime = pickedTime;
-        widget.onChanged?.call(selectedTime.format(context));
+
+        // تحويل الوقت إلى التنسيق الصحيح (AM/PM)
+        final formattedTime = formatTime(selectedTime, context);
+        widget.onChanged
+            ?.call(formattedTime); // قم بإعادة الوقت بالتنسيق المطلوب
       });
     }
+  }
+
+  String formatTime(TimeOfDay time, BuildContext context) {
+    final localizations = MaterialLocalizations.of(context);
+    return localizations.formatTimeOfDay(
+      time,
+      alwaysUse24HourFormat: false, // تأكد من استخدام صيغة 12 ساعة
+    );
   }
 
   @override
@@ -167,9 +203,7 @@ class _FieldWidgetState extends State<FieldWidget> {
       case 'Time':
         return _buildValidatedTimePicker(screenWidth);
       case 'Select':
-        return (ModalRoute.of(context)?.settings.name == '/create_service')
-            ? _buildValidatedSingleSelect()
-            : _buildValidatedMultiSelect();
+        return _buildValidatedSingleSelect();
       case 'File':
         return _buildImagePicker(screenWidth);
       default:
@@ -215,9 +249,14 @@ class _FieldWidgetState extends State<FieldWidget> {
         ? widget.options!.map((map) => Option.fromJson(map)).toList()
         : [];
 
-    // تحقق من أن selectedOption متطابقة مع أحد الخيارات في DropdownMenuItem
-    if (!optionsList.contains(selectedOption)) {
-      selectedOption = null; // اجعلها null إذا لم يكن هناك تطابق
+    // التأكد من أن selectedOption تُشير إلى كائن داخل optionsList
+    if (selectedOption != null) {
+      selectedOption = optionsList.firstWhere(
+        (option) => option.id == selectedOption!.id,
+        orElse: () => optionsList.first, // إذا لم يتم العثور على تطابق
+      );
+    } else {
+      selectedOption = null;
     }
 
     return DropdownButton<Option>(
@@ -255,8 +294,8 @@ class _FieldWidgetState extends State<FieldWidget> {
       ),
       buttonText: Text(
         _selectedValues.isNotEmpty
-            ? 'Selected values: ${_selectedValues.join(', ')}'
-            : 'Choose items',
+            ? 'تم اختيار : ${_selectedValues.first}' // تعديل النص ليعرض خيارًا واحدًا فقط
+            : 'الرجاء اختر',
         style: TextStyle(fontSize: 16, color: Colors.black),
       ),
       initialValue: optionsList
@@ -266,12 +305,18 @@ class _FieldWidgetState extends State<FieldWidget> {
           .map((option) => MultiSelectItem<Option>(option, option.name))
           .toList(),
       onConfirm: (results) {
-        setState(() {
-          _selectedIds = results.map((option) => option.id).toList();
-          _selectedValues = results.map((option) => option.name).toList();
-          widget.onChanged?.call(_selectedIds.join(', '));
-        });
+        if (results.isNotEmpty) {
+          setState(() {
+            // السماح باختيار عنصر واحد فقط
+            final selectedOption = results.first;
+            _selectedIds = [selectedOption.id];
+            _selectedValues = [selectedOption.name];
+            widget.onChanged?.call(_selectedIds.first.toString());
+          });
+        }
       },
+      // تفعيل وضع الاختيار الفردي
+      chipDisplay: MultiSelectChipDisplay.none(),
     );
   }
 
@@ -296,50 +341,43 @@ class _FieldWidgetState extends State<FieldWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          height: 150,
-          width: screenWidth * 0.95,
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.blue, width: 1.5),
-            borderRadius: BorderRadius.circular(10),
-            color: Colors.grey[200],
-          ),
-          alignment: Alignment.center,
-          child: _selectedImage != null
-              ? Image.file(
-                  _selectedImage!,
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                )
-              : widget.initialValue != null && widget.initialValue is String
-                  ? Image.network(
-                      widget.initialValue, // عرض الصورة من الرابط الافتراضي
+        Stack(children: [
+          Container(
+            height: 150,
+            width: screenWidth * 0.95,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.blue, width: 1.5),
+              borderRadius: BorderRadius.circular(10),
+              color: Colors.grey[200],
+            ),
+            alignment: Alignment.center,
+            child: _selectedImage != null
+                ? Stack(children: [
+                    Image.file(
+                      _selectedImage!,
                       fit: BoxFit.cover,
                       width: double.infinity,
-                    )
-                  : Text(
-                      'اختر صورة',
-                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                     ),
-        ),
+                    Center(
+                      child: ElevatedButton.icon(
+                        onPressed: () => _pickImage(ImageSource.gallery),
+                        icon: Icon(Icons.photo_library),
+                        label: Text('تغيير الصورة'),
+                      ),
+                    ),
+                  ])
+                : widget.initialValue != null
+                    ? _buildImageFromInitialValue(widget.initialValue)
+                    : ElevatedButton.icon(
+                        onPressed: () => _pickImage(ImageSource.gallery),
+                        icon: Icon(Icons.photo_library),
+                        label: Text(_selectedImage == null
+                            ? 'اضافة صورة من البوم الكاميرا'
+                            : 'تغيير الصورة'),
+                      ),
+          ),
+        ]),
         SizedBox(height: 10),
-        Row(
-          children: [
-            ElevatedButton.icon(
-              onPressed: () => _pickImage(ImageSource.gallery),
-              icon: Icon(Icons.photo_library),
-              label: Text(
-                  _selectedImage == null ? 'اختر من المعرض' : 'تغيير الصورة'),
-            ),
-            SizedBox(width: 10),
-            ElevatedButton.icon(
-              onPressed: () => _pickImage(ImageSource.camera),
-              icon: Icon(Icons.camera),
-              label:
-                  Text(_selectedImage == null ? 'التقاط صورة' : 'التقاط جديدة'),
-            ),
-          ],
-        ),
         if (widget.required == true &&
             _selectedImage == null &&
             widget.initialValue == null)
@@ -351,6 +389,55 @@ class _FieldWidgetState extends State<FieldWidget> {
             ),
           ),
       ],
+    );
+  }
+
+  /// Helper method to handle different types of `initialValue`
+  Widget _buildImageFromInitialValue(dynamic initialValue) {
+    // print(initialValue);
+    if (initialValue is String) {
+      if (initialValue.startsWith('file://')) {
+        // معالجة مسار ملف محلي
+        final filePath = initialValue.replaceFirst('file://', '');
+        return Stack(children: [
+          Image.file(
+            File(filePath),
+            fit: BoxFit.cover,
+            width: double.infinity,
+          ),
+          Center(
+            child: ElevatedButton.icon(
+              onPressed: () => _pickImage(ImageSource.gallery),
+              icon: Icon(Icons.photo_library),
+              label: Text('تغيير الصورة'),
+            ),
+          ),
+        ]);
+      } else if (initialValue.startsWith('http://') ||
+          initialValue.startsWith('https://')) {
+        // معالجة رابط شبكة
+        return Stack(children: [
+          Image.network(
+            initialValue,
+            fit: BoxFit.cover,
+            width: double.infinity,
+          ),
+          Center(
+            child: ElevatedButton.icon(
+              onPressed: () => _pickImage(ImageSource.gallery),
+              icon: Icon(Icons.photo_library),
+              label: Text('تغير الصورة'),
+            ),
+          ),
+        ]);
+      }
+    }
+    return Center(
+      child: ElevatedButton.icon(
+        onPressed: () => _pickImage(ImageSource.gallery),
+        icon: Icon(Icons.photo_library),
+        label: Text('تغير الصورة'),
+      ),
     );
   }
 }

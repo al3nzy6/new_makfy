@@ -8,22 +8,26 @@ class boxWidget extends StatelessWidget {
   String title;
   IconData? icon;
   String? image;
+  Color? titleColor;
   String? route;
   List<dynamic>? data;
   String? TextAsLogo;
   double? TextAsLogoSize;
   double? width;
   double? height;
+  double? iconSize;
   boxWidget({
     Key? key,
     this.color,
     required this.title,
     this.icon,
     this.image,
+    this.titleColor,
     this.route,
     this.data,
     this.width,
     this.height,
+    this.iconSize,
     this.TextAsLogo,
     this.TextAsLogoSize,
   }) : super(key: key);
@@ -55,7 +59,7 @@ class boxWidget extends StatelessWidget {
             (icon != null)
                 ? Icon(
                     icon,
-                    size: screenWidth * 0.20,
+                    size: (iconSize == null) ? screenWidth * 0.20 : iconSize,
                     color: Color(0XFFEF5B2C),
                   ) // عرض الأيقونة إذا كانت غير null
                 : (image != null)
@@ -80,6 +84,7 @@ class boxWidget extends StatelessWidget {
                           ),
             H2Text(
               text: title,
+              textColor: titleColor,
               lines: 5,
             ),
           ],

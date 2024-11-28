@@ -62,17 +62,18 @@ class _ServicePageState extends State<ServicePage> {
       routeArguments: [serviceData?.category?.id, serviceData?.category?.name],
       onRefresh: _getService,
       start: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        H1text(text: serviceData?.category?.name ?? 'error'),
+        SizedBox(height: 20),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            H1text(text: serviceData?.category?.name ?? 'error'),
             Flexible(
               child: H1text(
                 text: serviceData?.title ?? 'يوجد خلل',
               ),
             ),
             H1text(
-              text: serviceData?.price ?? 'يوجد خلل',
+              text: "${serviceData?.price} SAR" ?? 'يوجد خلل',
             ),
           ],
         ),
@@ -99,15 +100,18 @@ class _ServicePageState extends State<ServicePage> {
             initalPageIndex: serviceData!.imageUrls!.isNotEmpty ? 0 : 1,
             isAssets: false,
             autoPlay: true,
+            expandedImageFitMode: BoxFit.contain,
+            expandImageHeight: 400,
             sliderHeight: 300,
             currentItemShadow: [],
             sliderDuration: const Duration(milliseconds: 200),
             imageRadius: 0,
-            slideViewportFraction: 1.2,
+            slideViewportFraction: 2,
           )
         else
           SizedBox(height: 10),
         H2Text(
+          lines: 10,
           text: serviceData?.description ?? 'non',
           textColor: Colors.grey,
           size: 25,
@@ -116,11 +120,6 @@ class _ServicePageState extends State<ServicePage> {
         H2Text(
           text: 'تفاصيل الخدمة',
           size: 22,
-        ),
-        H2Text(
-          text: 'الرجاء اختيار الوقت والتاريخ للتحقق من توفر الخدمه',
-          size: 19,
-          lines: 2,
         ),
         SizedBox(height: 20),
         if (serviceData?.customFields != null &&
@@ -151,8 +150,8 @@ class _ServicePageState extends State<ServicePage> {
             }).toList(),
           )
         else
-          Container(child: Text('لا يوجد خيارات')),
-        SizedBox(height: 60),
+          // Container(child: Text('لا يوجد خيارات')),
+          SizedBox(height: 60),
         if (user_id != null && user_id == serviceData?.user.id)
           Center(
             child: Column(
@@ -214,10 +213,13 @@ class _ServicePageState extends State<ServicePage> {
                     textStyle: TextStyle(fontSize: 16),
                   ),
                   child: Text(
+                    textAlign: TextAlign.center,
                     serviceData?.is_available == true
-                        ? "اجعل الخدمة غير متوفرة"
-                        : "اجعل الخدمة متوفرة",
-                    style: TextStyle(color: Colors.white),
+                        ? "الخدمة الان متوفره وتظهر للعملاء لجعلها غير متوفره اضغط هنا"
+                        : "الخدمة الان غير متوفره لجعل الخدمة متوفر اضغط هنا",
+                    style: TextStyle(
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ],

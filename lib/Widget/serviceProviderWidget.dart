@@ -42,7 +42,7 @@ class serviceProviderWidget extends StatelessWidget {
         })
       },
       child: ShadowBoxWidget(
-        height: (total == null) ? 70 : 120,
+        height: (total == null) ? 45 : 120,
         child: Column(
           children: [
             Row(
@@ -50,11 +50,14 @@ class serviceProviderWidget extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(top: 20),
-                  child: H1text(text: title),
+                  padding: const EdgeInsets.only(top: 2),
+                  child: H1text(
+                    text: title,
+                    size: 20,
+                  ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.only(top: 20),
+                  padding: const EdgeInsets.only(top: 10),
                   child: RatingWidget(
                     stars: averageRating ?? 0,
                     ratingCount: countRating ?? "0",
@@ -74,7 +77,7 @@ class serviceProviderWidget extends StatelessWidget {
                 Column(
                   children: [
                     H2Text(text: 'اجمالي القيمة'),
-                    Text("${total ?? 0}"),
+                    Text("${total ?? 0} SAR"),
                   ],
                 )
               ])

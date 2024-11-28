@@ -1,24 +1,15 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_holo_date_picker/flutter_holo_date_picker.dart';
 import 'package:makfy_new/Models/Category.dart';
-import 'package:makfy_new/Models/Option.dart';
-import 'package:makfy_new/Models/Service.dart';
+import 'package:makfy_new/Models/City.dart';
+import 'package:makfy_new/Models/District.dart';
 import 'package:makfy_new/Models/fieldSection.dart';
 import 'package:makfy_new/Utilities/ApiConfig.dart';
 import 'package:makfy_new/Widget/FieldWidget.dart';
+import 'package:makfy_new/Widget/H2Text.dart';
 import 'package:makfy_new/Widget/MainScreenWidget.dart';
 import 'package:makfy_new/Widget/serviceProviderWidget.dart';
-import 'package:makfy_new/Widget/shimmerLoadingWidget.dart';
-import 'package:multi_select_flutter/multi_select_flutter.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:makfy_new/Widget/H1textWidget.dart';
-import 'package:makfy_new/Widget/H2Text.dart';
 import 'package:makfy_new/Widget/ServiceAddedWidget.dart';
-import 'package:makfy_new/Widget/appHeadWidget.dart';
-import 'package:makfy_new/Widget/boxWidget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Subsectionpage extends StatefulWidget {
@@ -41,6 +32,19 @@ class _SubsectionpageState extends State<Subsectionpage> {
   bool isLoading = true;
   List<fieldSection>? fields = [];
   List<Widget> fieldsWidget = [];
+  bool _isInitialized = false;
+  // List<Map<String, dynamic>>? cities;
+  List<Map<String, dynamic>>? districts;
+  String? SelectedCity;
+  String? SelectedDistrict;
+  List<City> cities = [];
+  List<City> filteredCities = [];
+  District? selectedDistrict;
+  City? selectedCity;
+  Future<List<District>>? districtsFuture;
+  List<District> filteredDistricts = [];
+  List<District> userDistricts = [];
+
   // القائمة الخاصة بالعناصر
   Map<String, dynamic> fieldResults = {};
   bool isServiceProvider = false;
@@ -58,7 +62,163 @@ class _SubsectionpageState extends State<Subsectionpage> {
       id = arguments[0];
       name = arguments[1];
     }
-    _getTheCategory();
+    if (_isInitialized == false) {
+      _getTheCategory();
+      getCities();
+      setState(() {
+        _isInitialized = true;
+      });
+    }
+  }
+
+  Future<void> getCities() async {
+    try {
+      List<City> citiesFromApi = await ApiConfig.getCities();
+      setState(() {
+        cities = citiesFromApi;
+        filteredCities = citiesFromApi;
+      });
+    } catch (e) {
+      print("Error fetching cities: $e");
+    }
+  }
+
+  Future<List<District>> getDistricts(int cityId) async {
+    try {
+      City cityFromApi = await ApiConfig.getDistricts(cityId);
+      return cityFromApi.districts ?? [];
+    } catch (e) {
+      print("Error fetching districts: $e");
+      return [];
+    }
+  }
+
+  Future<void> _loadDistricts(int cityId) async {
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      List<District> districts = await getDistricts(cityId);
+      setState(() {
+        filteredDistricts = districts;
+      });
+    } catch (e) {
+      print("Error fetching districts: $e");
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _showCityPicker(BuildContext context) async {
+    filteredCities = cities;
+    await showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return Container(
+              height: MediaQuery.of(context).size.height / 2,
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextField(
+                      decoration: InputDecoration(
+                        labelText: 'ابحث عن مدينة',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          filteredCities = cities
+                              .where((city) => city.name.contains(value))
+                              .toList();
+                        });
+                      },
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: filteredCities.length,
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          title: Text(filteredCities[index].name),
+                          onTap: () {
+                            setState(() {
+                              selectedCity = filteredCities[index];
+                              selectedDistrict = null;
+                              _loadDistricts(selectedCity!.id);
+                            });
+                            Navigator.pop(context);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _showDistrictPicker(BuildContext context) async {
+    await showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return Container(
+              height: MediaQuery.of(context).size.height / 2,
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextField(
+                      decoration: InputDecoration(
+                        labelText: 'ابحث عن حي',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          filteredDistricts = filteredDistricts
+                              .where(
+                                  (district) => district.name.contains(value))
+                              .toList();
+                        });
+                      },
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: filteredDistricts.length,
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          title: Text(filteredDistricts[index].name),
+                          onTap: () {
+                            setState(() {
+                              selectedDistrict = filteredDistricts[index];
+                            });
+                            Navigator.pop(context);
+                            Future.delayed(Duration(milliseconds: 100), () {
+                              setState(
+                                  () {}); // تأكيد التحديث بعد إغلاق القائمة
+                            });
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> _searchServices() async {
@@ -69,6 +229,8 @@ class _SubsectionpageState extends State<Subsectionpage> {
 
       final filters = {
         'category_id': id, // التصنيف المحدد
+        'date': date ?? null,
+        'time': time ?? null,
         ...fieldResults, // البيانات المجمعة من الحقول
       };
 
@@ -86,6 +248,7 @@ class _SubsectionpageState extends State<Subsectionpage> {
                 name: field.name,
                 showName: field.showName,
                 type: field.type,
+                initialValue: fieldResults[field.name] ?? null,
                 onChanged: (value) {
                   fieldResults[field.name] = value;
                 },
@@ -125,12 +288,33 @@ class _SubsectionpageState extends State<Subsectionpage> {
     }
   }
 
+  Future<void> _getDistrict(int district) async {
+    List<Map<String, dynamic>> getDistrictOption =
+        (await ApiConfig.getDistricts(district!))
+            .districts!
+            .map((district) => {'id': district.id, 'name': district.name})
+            .toList();
+    try {
+      if (mounted) {
+        setState(() {
+          isLoading = true;
+          districts = getDistrictOption;
+          isLoading = false;
+        });
+      }
+    } catch (e) {}
+  }
+
   Future<void> _getTheCategory() async {
     Category category = await ApiConfig.getCategory(id);
     prefs = await SharedPreferences.getInstance();
+    List<Map<String, dynamic>> getCityOptions = (await ApiConfig.getCities())
+        .map((city) => {'id': city.id, 'name': city.name})
+        .toList();
     isServiceProvider = (prefs.getInt('isServiceProvider') == 1) ? true : false;
     try {
       setState(() {
+        // cities = getCityOptions;
         fieldsWidget = category.Fields?.where((field) =>
                     field.type != 'File') // تصفية الحقول التي نوعها ليس 'File'
                 .map((field) {
@@ -211,40 +395,107 @@ class _SubsectionpageState extends State<Subsectionpage> {
           const SizedBox(
             height: 10,
           ),
-          ExpansionTile(
-            title: H1text(text: 'تصفية مقدمي الخدمات'),
-            collapsedShape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.zero,
-              side: BorderSide.none, // إزالة الخط عند إغلاق العنصر
-            ),
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.zero,
-              side: BorderSide.none, // إزالة الخط عند فتح العنصر
-            ),
+          ...fieldsWidget,
+          FieldWidget(
+            id: 30,
+            name: '1',
+            showName: 'اختر التاريخ',
+            type: 'Date',
+            initialValue: date ?? null,
+            onChanged: (value) {
+              date = value;
+            },
+          ),
+          FieldWidget(
+            id: 30,
+            name: 'time',
+            showName: 'اختر الوقت',
+            initialValue: time ?? null,
+            type: 'Time',
+            onChanged: (value) {
+              time = value;
+            },
+          ),
+          SizedBox(
+            height: 10,
+          ),
+          Wrap(
             children: [
-              ...fieldsWidget,
-              FieldWidget(
-                id: 30,
-                name: 'date',
-                showName: 'اختر التاريخ',
-                type: 'Date',
-                onChanged: (value) {
-                  date = value;
-                },
+              GestureDetector(
+                onTap: () => _showCityPicker(context),
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+                  margin: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(selectedCity?.name ?? 'اختر المدينة'),
+                ),
               ),
-              FieldWidget(
-                id: 30,
-                name: 'date',
-                showName: 'اختر التاريخ',
-                type: 'Time',
-                onChanged: (value) {
-                  time = value;
+              GestureDetector(
+                onTap: () {
+                  if (selectedCity != null) {
+                    _loadDistricts(selectedCity!.id);
+                    _showDistrictPicker(context);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("اختر المدينة أولاً")),
+                    );
+                  }
                 },
+                child: Container(
+                  padding: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+                  width: double.infinity,
+                  margin: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(selectedDistrict?.name ?? 'اختر الحي'),
+                ),
               ),
+            ],
+          ),
+          // FieldWidget(
+          //   id: 30,
+          //   name: 'city',
+          //   options: cities,
+          //   showName: 'اختر المدينة',
+          //   initialValue: SelectedCity ?? null,
+          //   type: 'Select',
+          //   onChanged: (value) {
+          //     SelectedCity = value;
+          //     SelectedDistrict = null;
+          //     districts = null;
+          //     _getDistrict(int.tryParse(value)!);
+          //   },
+          // ),
+          // if (districts != null)
+          //   FieldWidget(
+          //     id: 30,
+          //     name: 'district',
+          //     options: districts,
+          //     showName: 'اختر الحي',
+          //     initialValue: SelectedDistrict ?? null,
+          //     type: 'Select',
+          //     onChanged: (value) {
+          //       SelectedDistrict = value;
+          //     },
+          //   ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.max,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            spacing: 40,
+            children: [
               InkWell(
                 onTap: () {
                   fieldResults['category_id'] = id;
                   _searchServices();
+                  print(date);
+                  print(time);
                   print(fieldResults);
                 },
                 child: Container(
@@ -256,11 +507,46 @@ class _SubsectionpageState extends State<Subsectionpage> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     height: 50,
-                    width: 70,
-                    child: Icon(
-                      Icons.search,
-                      color: Colors.white,
-                      size: 40,
+                    width: 150,
+                    child: H2Text(
+                      text: "بحث",
+                      textColor: Colors.white,
+                      size: 30,
+                      aligment: 'center',
+                    ),
+                  ),
+                ),
+              ),
+              InkWell(
+                onTap: () {
+                  if (mounted) {
+                    setState(() {
+                      fieldResults = {};
+                      fieldResults['category_id'] = id;
+                      date = null;
+                      time = null;
+                      districts = null;
+                      SelectedCity = null;
+                      SelectedDistrict = null;
+                    });
+                    _searchServices();
+                  }
+                },
+                child: Container(
+                  alignment: Alignment.topRight,
+                  padding: EdgeInsets.only(top: 10, bottom: 10),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Color(0XFFEF5B2C),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    height: 50,
+                    width: 150,
+                    child: H2Text(
+                      text: "مسح الفلاتر",
+                      textColor: Colors.white,
+                      size: 20,
+                      aligment: 'center',
                     ),
                   ),
                 ),

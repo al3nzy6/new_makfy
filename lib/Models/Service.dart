@@ -7,6 +7,7 @@ class Service {
   final String title;
   final String description;
   final String price;
+  final String priceWithOutCommission;
   final List<String>? imageUrls;
   final List<CustomField>? customFields; // يمكن أن تكون nullable
   final String? insertedValues;
@@ -20,6 +21,7 @@ class Service {
     required this.title,
     required this.description,
     required this.price,
+    required this.priceWithOutCommission,
     required this.is_available,
     this.imageUrls,
     this.customFields,
@@ -36,6 +38,7 @@ class Service {
       title: json['title'],
       description: json['description'],
       price: json['price'],
+      priceWithOutCommission: json['priceWithOutCommission'],
       is_available: json['is_available'],
       insertedValues: json['insertedValues'],
       imageUrls: List<String>.from(json['image_urls'] ?? []),
@@ -61,6 +64,7 @@ class Service {
       'title': title,
       'description': description,
       'price': price,
+      'priceWithOutCommission': priceWithOutCommission,
       'is_available': is_available,
       'insertedValues': insertedValues,
       'image_urls': imageUrls ?? [],
@@ -79,6 +83,7 @@ class Service {
       'title': title,
       'description': description,
       'price': price,
+      'priceWithOutCommission': priceWithOutCommission,
       'is_available': is_available,
       'insertedValues': insertedValues,
       'image_urls': imageUrls ?? [],
@@ -96,6 +101,7 @@ class Service {
       title: map['title'] ?? '',
       description: map['description'] ?? '',
       price: map['price'] ?? '',
+      priceWithOutCommission: map['priceWithOutCommission'] ?? '',
       is_available: map['is_available'] ?? '',
       imageUrls: map['image_urls'] != null
           ? List<String>.from(map['image_urls'])

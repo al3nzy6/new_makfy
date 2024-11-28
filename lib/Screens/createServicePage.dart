@@ -23,6 +23,7 @@ class _createServicePageState extends State<createServicePage> {
   final ApiConfig apiConfig = ApiConfig();
   final _formKey = GlobalKey<FormState>();
   Map<String, dynamic>? serviceData; // تخزين بيانات الخدمة عند التعديل
+  bool ButtonIsPressed = false;
 
   @override
   void didChangeDependencies() {
@@ -42,6 +43,9 @@ class _createServicePageState extends State<createServicePage> {
 
   Future<void> _submitFunction(data) async {
     try {
+      setState(() {
+        ButtonIsPressed = true;
+      });
       List response;
       if (serviceId != null) {
         response = await apiConfig.updateService(data, serviceId!);
@@ -65,6 +69,11 @@ class _createServicePageState extends State<createServicePage> {
         SnackBar(content: Text('حدث خطأ: $e')),
       );
     }
+    // Future.delayed(Duration(seconds: 10), () {
+    setState(() {
+      ButtonIsPressed = false;
+    });
+    // });
   }
 
   Future<void> _getServiceData(int serviceId) async {
@@ -74,7 +83,7 @@ class _createServicePageState extends State<createServicePage> {
       setState(() {
         serviceData = {
           'title': fetchedServiceData.title,
-          'price': fetchedServiceData.price,
+          'price': fetchedServiceData.priceWithOutCommission,
           'description': fetchedServiceData.description,
         };
         // تخزين القيم الافتراضية في fieldResults
@@ -157,7 +166,8 @@ class _createServicePageState extends State<createServicePage> {
             H1text(text: serviceId != null ? 'تعديل الخدمة' : 'إنشاء الخدمة'),
             SizedBox(height: 10),
             H2Text(
-              lines: 3,
+              lines: 10,
+              textColor: Colors.red,
               text:
                   "عزيزي مقدم الخدمه ان لم يكن التوصيل مجانا من قبلكم .. رجاءً اضف قيمة سعر التوصيل لديكم كصنف من اصناف الخدمه المقدمه من قبلكم ليتم دفعها من قبل العميل ويجب ان تكون اول خدمه تقوم باضافتها",
             ),
@@ -198,34 +208,47 @@ class _createServicePageState extends State<createServicePage> {
             ),
             ...fieldsWidget,
             InkWell(
-              onTap: () {
-                if (_formKey.currentState!.validate()) {
-                  fieldResults['service_category_id'] = id;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content: Text(serviceId != null
-                            ? 'جاري تحديث الخدمة'
-                            : 'جاري إنشاء الخدمة')),
-                  );
-                  _submitFunction(fieldResults);
-                }
-              },
+              onTap: (ButtonIsPressed == false)
+                  ? () {
+                      if (_formKey.currentState!.validate()) {
+                        fieldResults['service_category_id'] = id;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text(serviceId != null
+                                  ? 'جاري تحديث الخدمة'
+                                  : 'جاري إنشاء الخدمة')),
+                        );
+                        _submitFunction(fieldResults);
+                      }
+                    }
+                  : null,
               child: Container(
                 alignment: Alignment.center,
                 padding: EdgeInsets.only(top: 10, bottom: 10),
                 child: Container(
-                  decoration: BoxDecoration(
-                    color: Color(0XFFEF5B2C),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  height: 50,
-                  width: double.infinity,
-                  child: Icon(
-                    serviceId != null ? Icons.update : Icons.add_circle_sharp,
-                    color: Colors.white,
-                    size: 40,
-                  ),
-                ),
+                    decoration: BoxDecoration(
+                      color: Color(0XFFEF5B2C),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    height: 50,
+                    width: double.infinity,
+                    child: (!ButtonIsPressed)
+                        ? H2Text(
+                            text: serviceId != null
+                                ? "تعديل الخدمة"
+                                : "تفعيل الخدمة",
+                            aligment: "center",
+                            textColor: Colors.white,
+                            size: 25,
+                          )
+                        : H2Text(
+                            text: serviceId != null
+                                ? "جاري تعديل الخدمة .. الرجاء الانتظار"
+                                : "جاري تفعيل الخدمة .. الرجاء الانتظار",
+                            aligment: "center",
+                            textColor: const Color.fromARGB(255, 214, 213, 213),
+                            size: 20,
+                          )),
               ),
             ),
           ],

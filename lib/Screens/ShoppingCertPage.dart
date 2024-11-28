@@ -20,6 +20,7 @@ class _ShoppingCertPageState extends State<ShoppingCertPage> {
   bool isPaidCart = false;
   bool isServiceProviderCart = false;
   List<Widget> cartsWidget = [];
+  List<Widget> uncompletedCartsWidget = [];
   double totalSum = 0.0; // متغير لتخزين المجموع
 
   @override
@@ -43,28 +44,62 @@ class _ShoppingCertPageState extends State<ShoppingCertPage> {
           : (isServiceProviderCart)
               ? await ApiConfig.serviceProviderCartList()
               : await ApiConfig.customerCartList();
-
+      carts = Cart.sortById(carts, descending: true);
       if (!mounted)
         return; // تأكد من أن العنصر ما زال موجودًا قبل استدعاء setState
 
       setState(() {
         totalSum = 0.0; // Reset totalSum before calculating
-        cartsWidget = carts?.map((cart) {
-              double cartTotal = cart.total;
-              totalSum += cartTotal;
-              return serviceProviderWidget(
-                title: (isServiceProviderCart)
-                    ? cart.customer.name
-                    : cart.service_provider.name,
-                id: cart.service_provider.id,
-                averageRating: cart.service_provider.averageRating,
-                countRating: cart.service_provider.countRating,
-                total: cart.total,
-                servicesCount: cart.services?.length,
-                cart: cart,
-              );
-            }).toList() ??
-            [];
+        uncompletedCartsWidget =
+            carts?.where((cart) => cart.status == 2).map((cart) {
+                  double cartTotal = cart.total;
+                  totalSum += cartTotal;
+                  return serviceProviderWidget(
+                    title: (isServiceProviderCart)
+                        ? cart.customer.name
+                        : cart.service_provider.name,
+                    id: cart.service_provider.id,
+                    averageRating: cart.service_provider.averageRating,
+                    countRating: cart.service_provider.countRating,
+                    total: cart.total,
+                    servicesCount: cart.services?.length,
+                    cart: cart,
+                  );
+                }).toList() ??
+                [];
+        cartsWidget = (isPaidCart || isServiceProviderCart)
+            ? carts?.where((cart) => cart.status >= 3).map((cart) {
+                  double cartTotal = cart.total;
+                  totalSum += cartTotal;
+                  return serviceProviderWidget(
+                    title: (isServiceProviderCart)
+                        ? cart.customer.name
+                        : cart.service_provider.name,
+                    id: cart.service_provider.id,
+                    averageRating: cart.service_provider.averageRating,
+                    countRating: cart.service_provider.countRating,
+                    total: cart.total,
+                    servicesCount: cart.services?.length,
+                    cart: cart,
+                  );
+                }).toList() ??
+                []
+            : carts?.map((cart) {
+                  double cartTotal = cart.total;
+                  totalSum += cartTotal;
+                  return serviceProviderWidget(
+                    title: (isServiceProviderCart)
+                        ? cart.customer.name
+                        : cart.service_provider.name,
+                    id: cart.service_provider.id,
+                    averageRating: cart.service_provider.averageRating,
+                    countRating: cart.service_provider.countRating,
+                    total: cart.total,
+                    servicesCount: cart.services?.length,
+                    cart: cart,
+                  );
+                }).toList() ??
+                [];
         isLoading = false;
       });
     } catch (e) {
@@ -110,7 +145,9 @@ class _ShoppingCertPageState extends State<ShoppingCertPage> {
                       size: 20,
                     ),
                     H2Text(
-                      text: "${cartsWidget.length}",
+                      text: (!isPaidCart)
+                          ? "${cartsWidget.length}"
+                          : "${cartsWidget.length + uncompletedCartsWidget.length}",
                       textColor: Colors.white,
                       size: 20,
                     ),
@@ -143,7 +180,33 @@ class _ShoppingCertPageState extends State<ShoppingCertPage> {
               ),
             ],
           ),
+          if (isPaidCart || isServiceProviderCart) ...[
+            H2Text(
+              text: "طلبات تحت التجهيز",
+              size: 20,
+            ),
+            ...uncompletedCartsWidget,
+            if (uncompletedCartsWidget.length == 0)
+              H2Text(
+                text: 'لا يوجد طلبات',
+                size: 20,
+                textColor: Colors.grey,
+              ),
+            Divider(
+              height: 10,
+            ),
+            H2Text(
+              text: "طلبات مكتملة",
+              size: 20,
+            ),
+          ],
           ...cartsWidget,
+          if (cartsWidget.length == 0)
+            H2Text(
+              text: 'لا يوجد طلبات',
+              size: 20,
+              textColor: Colors.grey,
+            )
         ],
       ),
     );

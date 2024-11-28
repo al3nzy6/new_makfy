@@ -55,18 +55,16 @@ class _ProfilepageState extends State<Profilepage> {
                     Navigator.pushReplacementNamed(context, '/');
                   },
                   child: Container(
-                    height: 50,
-                    width: 50,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Color(0XFFEF5B2C),
-                    ),
-                    child: Icon(
-                      Icons.logout_sharp,
-                      color: Colors.white,
-                      size: 35,
-                    ),
-                  ),
+                      height: 50,
+                      padding: EdgeInsets.all(1),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.all(Radius.circular(5)),
+                        color: Color(0XFFEF5B2C),
+                      ),
+                      child: H2Text(
+                        text: "تسجيل لخروج",
+                        textColor: Colors.white,
+                      )),
                 )
               ],
             ),
@@ -117,7 +115,7 @@ class _ProfilepageState extends State<Profilepage> {
   List<Widget> _serviceProviderProfileSections() {
     return [
       boxWidget(
-          title: 'طلبات خدماتي',
+          title: 'طلبات العملاء',
           icon: Icons.request_page,
           route: '/customer_orders'),
       boxWidget(

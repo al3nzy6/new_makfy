@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:makfy_new/Screens/ForgotPasswordPage.dart';
 import 'package:makfy_new/Screens/MyHomePage.dart';
 import 'package:makfy_new/Screens/PaymentPage.dart';
 import 'package:makfy_new/Screens/ProfilePage.dart';
@@ -24,6 +25,7 @@ class AppRoutes {
     '/': (context) => LoadingPage(), // استخدم صفحة تحميل كمؤقت للتحقق
     '/home': (context) => MyHomePage(), // الصفحة الرئيسية
     '/login': (context) => LoginPage(),
+    '/forgot-password': (context) => const ForgotPasswordPage(),
     '/register': (context) => RegistrationPage(),
     '/profile': (context) => Profilepage(),
     '/main_section': (context) => Mainsectionpage(),

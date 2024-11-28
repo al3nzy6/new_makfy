@@ -6,6 +6,7 @@ import 'package:makfy_new/Widget/H2Text.dart';
 import 'package:makfy_new/Widget/MainScreenWidget.dart';
 import 'package:makfy_new/Widget/boxWidget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class RegistrationPage extends StatefulWidget {
   const RegistrationPage({super.key});
@@ -27,6 +28,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
   String? nationality;
   final TextEditingController ibanController = TextEditingController();
   String? bankController;
+  bool agreeToTerms = false;
+
   final List<String> banks = [
     "بنك الراجحي",
     "البنك الأهلي",
@@ -54,6 +57,16 @@ class _RegistrationPageState extends State<RegistrationPage> {
   void initState() {
     super.initState();
     _initUser();
+  }
+
+  Future<void> _openTermsAndConditions() async {
+    // const url = 'http://makfy.test/terms'; // استبدل الرابط برابط الشروط
+    const url = 'https://makfy.sa/terms'; // استبدل الرابط برابط الشروط
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'لا يمكن فتح الرابط: $url';
+    }
   }
 
   Future<void> _initUser() async {
@@ -245,12 +258,12 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   TextFormField(
                     controller: nameController,
                     decoration: const InputDecoration(
-                      labelText: 'اسم المستخدم',
+                      labelText: 'الاسم',
                       border: OutlineInputBorder(),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'يرجى إدخال اسم المستخدم';
+                        return 'يرجى إدخال الاسم  ';
                       }
                       return null;
                     },
@@ -430,12 +443,40 @@ class _RegistrationPageState extends State<RegistrationPage> {
                       }).toList(),
                     ),
                   SizedBox(height: 20),
+                  CheckboxListTile(
+                    title: Column(
+                      children: [
+                        const Text("الموافقة على الشروط والأحكام"),
+                        const SizedBox(width: 8),
+                        InkWell(
+                          onTap: _openTermsAndConditions,
+                          child: const Text(
+                            "للاطلاع اضغط هنا",
+                            style: TextStyle(
+                              color: Colors.blue,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    value: agreeToTerms,
+                    onChanged: (value) {
+                      setState(() {
+                        agreeToTerms = value!;
+                      });
+                    },
+                  ),
                   if (isEdit == true && isServiceProvider == true)
                     H2Text(text: "لتعديل رقم الهوية الرجاء مراجعة الدعم الفني"),
                   isLoading
                       ? const CircularProgressIndicator()
                       : ElevatedButton(
-                          onPressed: (isEdit == false) ? _register : _update,
+                          onPressed: agreeToTerms
+                              ? (isEdit == false)
+                                  ? _register
+                                  : _update
+                              : null,
                           child:
                               (isEdit == false) ? Text('تسجيل') : Text('تعديل'),
                         ),

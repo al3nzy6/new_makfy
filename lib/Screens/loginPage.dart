@@ -86,14 +86,23 @@ class _LoginPageState extends State<LoginPage> {
                 ? const CircularProgressIndicator()
                 : ElevatedButton(
                     onPressed: _login,
-                    child: const Text('تسجيل الدخول'),
+                    child: const Text('دخول'),
                   ),
             const SizedBox(height: 20),
             InkWell(
               onTap: () {
                 Navigator.pushNamed(context, '/register');
               },
-              child: const Text("تسجيل عضوية"),
+              child: const Text("تسجيل جديد"),
+            ),
+            SizedBox(
+              height: 10,
+            ),
+            InkWell(
+              onTap: () {
+                Navigator.pushNamed(context, '/forgot-password');
+              },
+              child: const Text("نسيت كلمة المرور؟"),
             ),
           ],
         ),

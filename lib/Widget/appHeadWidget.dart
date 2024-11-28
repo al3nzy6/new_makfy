@@ -1,13 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:makfy_new/Widget/H2Text.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class appHeadWidget extends StatelessWidget {
+class appHeadWidget extends StatefulWidget {
   final List? routeArguments;
+
   appHeadWidget({
     Key? key,
     this.routeArguments,
   }) : super(key: key);
 
   @override
+  State<appHeadWidget> createState() => _appHeadWidgetState();
+}
+
+class _appHeadWidgetState extends State<appHeadWidget> {
+  final prefs = SharedPreferences.getInstance();
+
+  int? isServiceProvider = 0;
+
+  @override
+  @override
+  void initState() {
+    super.initState();
+    _loadSharedPreferences();
+  }
+
+  Future<void> _loadSharedPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      isServiceProvider = prefs.getInt('isServiceProvider');
+    });
+  }
+
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
@@ -24,6 +49,48 @@ class appHeadWidget extends StatelessWidget {
             'images/logo.png',
             height: 100,
           ),
+          (isServiceProvider == 1)
+              ? Expanded(
+                  child: InkWell(
+                      onTap: () {
+                        Navigator.pushNamed(context, '/customer_orders');
+                        // Navigator.pushNamed(context, '/shopping_cert');
+                      },
+                      child: Container(
+                        height: 50,
+                        margin: EdgeInsets.only(left: 15, right: 15),
+                        alignment: Alignment.centerLeft,
+                        decoration: const BoxDecoration(
+                            color: Color(0XFFEF5B2C),
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(30))),
+                        child: Center(
+                            child: H2Text(
+                          text: "(1) طلبات العملاء",
+                          textColor: Colors.white,
+                          size: 16,
+                        )),
+                      )))
+              : Expanded(
+                  child: InkWell(
+                      onTap: () {
+                        Navigator.pushNamed(context, '/shopping_cert');
+                      },
+                      child: Container(
+                        height: 50,
+                        margin: EdgeInsets.only(left: 15, right: 15),
+                        alignment: Alignment.centerLeft,
+                        decoration: const BoxDecoration(
+                            color: Color(0XFFEF5B2C),
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(30))),
+                        child: Center(
+                            child: H2Text(
+                          text: "(1) السلة",
+                          textColor: Colors.white,
+                          size: 16,
+                        )),
+                      ))),
           (ModalRoute.of(context)?.settings.name != '/login')
               ? InkWell(
                   onTap: () {
