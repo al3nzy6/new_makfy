@@ -53,5 +53,7 @@
 	<array>
 		<string>tel</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>نحتاج إلى الوصول إلى موقعك لتحسين تجربتك.</string>
 </dict>
 </plist>
