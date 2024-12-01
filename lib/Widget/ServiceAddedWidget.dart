@@ -134,7 +134,7 @@ class _ServiceAddedWidgetState extends State<ServiceAddedWidget> {
                         ),
                       ),
                       Text(
-                        '${widget.price} SAR',
+                        '${widget.price} SR',
                         style: const TextStyle(
                           fontSize: 19,
                           color: Color(0XFFEF5B2C),

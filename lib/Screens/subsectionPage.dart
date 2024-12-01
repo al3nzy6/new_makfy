@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:makfy_new/Models/Category.dart';
 import 'package:makfy_new/Models/City.dart';
 import 'package:makfy_new/Models/District.dart';
@@ -44,6 +45,8 @@ class _SubsectionpageState extends State<Subsectionpage> {
   Future<List<District>>? districtsFuture;
   List<District> filteredDistricts = [];
   List<District> userDistricts = [];
+  Position? position;
+  String? DistrictFromLocation;
 
   // القائمة الخاصة بالعناصر
   Map<String, dynamic> fieldResults = {};
@@ -64,10 +67,11 @@ class _SubsectionpageState extends State<Subsectionpage> {
     }
     if (_isInitialized == false) {
       _getTheCategory();
-      getCities();
-      setState(() {
-        _isInitialized = true;
-      });
+      if (mounted) {
+        setState(() {
+          _isInitialized = true;
+        });
+      }
     }
   }
 
@@ -257,6 +261,7 @@ class _SubsectionpageState extends State<Subsectionpage> {
             }).toList() ??
             [];
         services = category.services?.map((service) {
+              print("${date} tttt");
               return ServiceAddedWidget(
                 title: service.title,
                 fields: service.insertedValues?.split(','),
@@ -270,9 +275,13 @@ class _SubsectionpageState extends State<Subsectionpage> {
             }).toList() ??
             [];
         serviceProviders = category.service_providers?.map((service_provider) {
+              print("${date} tttt");
+
               return serviceProviderWidget(
                 title: service_provider.name,
                 id: service_provider.id,
+                date: date ?? null,
+                time: time ?? null,
                 averageRating: service_provider.averageRating,
                 countRating: service_provider.countRating,
               );
@@ -305,14 +314,40 @@ class _SubsectionpageState extends State<Subsectionpage> {
     } catch (e) {}
   }
 
+  void getAreaFromCoordinates(double latitude, double longitude) async {
+    try {
+      District? district = await ApiConfig.findArea(latitude, longitude);
+
+      if (district != null) {
+        if (mounted) {
+          setState(() {
+            DistrictFromLocation =
+                "${district.city?.name}  -  ${district.name}";
+          });
+        }
+        print("District Found: ${district.name}");
+      } else {
+        print("No district found for the provided coordinates.");
+      }
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
+
   Future<void> _getTheCategory() async {
-    Category category = await ApiConfig.getCategory(id);
     prefs = await SharedPreferences.getInstance();
+    final getPosition = await ApiConfig().getCurrentLocation();
+    final latitude = getPosition.latitude;
+    final longitude = getPosition.longitude;
+    Category category = await ApiConfig.getCategory(id, latitude, longitude);
+
     List<Map<String, dynamic>> getCityOptions = (await ApiConfig.getCities())
         .map((city) => {'id': city.id, 'name': city.name})
         .toList();
     isServiceProvider = (prefs.getInt('isServiceProvider') == 1) ? true : false;
     try {
+      getCities();
+      getAreaFromCoordinates(latitude, longitude);
       setState(() {
         // cities = getCityOptions;
         fieldsWidget = category.Fields?.where((field) =>
@@ -334,6 +369,7 @@ class _SubsectionpageState extends State<Subsectionpage> {
             }).toList() ??
             [];
         services = category.services?.map((service) {
+              print(date);
               return ServiceAddedWidget(
                 title: service.title,
                 fields: service.insertedValues?.split(','),
@@ -350,6 +386,8 @@ class _SubsectionpageState extends State<Subsectionpage> {
               return serviceProviderWidget(
                 title: service_provider.name,
                 id: service_provider.id,
+                date: date ?? null,
+                time: time ?? null,
                 averageRating: service_provider.averageRating,
                 countRating: service_provider.countRating,
               );
@@ -383,17 +421,17 @@ class _SubsectionpageState extends State<Subsectionpage> {
       start: Column(
         children: [
           const SizedBox(
-            height: 10,
+            height: 5,
           ),
           H1text(text: name),
           const SizedBox(
-            height: 20,
+            height: 5,
           ),
           Divider(
             color: Color(0XFFEF5B2C).withOpacity(0.3),
           ),
           const SizedBox(
-            height: 10,
+            height: 5,
           ),
           ...fieldsWidget,
           FieldWidget(
@@ -403,7 +441,11 @@ class _SubsectionpageState extends State<Subsectionpage> {
             type: 'Date',
             initialValue: date ?? null,
             onChanged: (value) {
-              date = value;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                setState(() {
+                  date = value;
+                });
+              });
             },
           ),
           FieldWidget(
@@ -413,49 +455,93 @@ class _SubsectionpageState extends State<Subsectionpage> {
             initialValue: time ?? null,
             type: 'Time',
             onChanged: (value) {
-              time = value;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                setState(() {
+                  time = value;
+                });
+              });
             },
           ),
           SizedBox(
-            height: 10,
+            height: 5,
           ),
           Wrap(
             children: [
-              GestureDetector(
-                onTap: () => _showCityPicker(context),
-                child: Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
-                  margin: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(8),
+              if (DistrictFromLocation == null) ...[
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.4,
+                  child: GestureDetector(
+                    onTap: () => _showCityPicker(context),
+                    child: Container(
+                      width: double.infinity,
+                      padding:
+                          EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+                      margin: EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(selectedCity?.name ?? 'اختر المدينة'),
+                    ),
                   ),
-                  child: Text(selectedCity?.name ?? 'اختر المدينة'),
                 ),
-              ),
-              GestureDetector(
-                onTap: () {
-                  if (selectedCity != null) {
-                    _loadDistricts(selectedCity!.id);
-                    _showDistrictPicker(context);
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("اختر المدينة أولاً")),
-                    );
-                  }
-                },
-                child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
-                  width: double.infinity,
-                  margin: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(8),
+                GestureDetector(
+                  onTap: () {
+                    if (selectedCity != null) {
+                      _loadDistricts(selectedCity!.id);
+                      _showDistrictPicker(context);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("اختر المدينة أولاً")),
+                      );
+                    }
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+                    width: MediaQuery.of(context).size.width * 0.5,
+                    margin: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(selectedDistrict?.name ?? 'اختر الحي'),
                   ),
-                  child: Text(selectedDistrict?.name ?? 'اختر الحي'),
                 ),
-              ),
+              ],
+              if (DistrictFromLocation != null)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    H2Text(text: DistrictFromLocation ?? ""),
+                    InkWell(
+                      onTap: () {
+                        if (mounted) {
+                          setState(() {
+                            DistrictFromLocation = null;
+                          });
+                        }
+                      },
+                      child: Container(
+                        alignment: Alignment.topRight,
+                        padding: EdgeInsets.only(top: 10, bottom: 10),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Color(0XFFEF5B2C),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          height: 40,
+                          width: 90,
+                          child: H2Text(
+                            text: "تغير",
+                            textColor: Colors.white,
+                            size: 18,
+                            aligment: 'center',
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
             ],
           ),
           // FieldWidget(
@@ -506,12 +592,12 @@ class _SubsectionpageState extends State<Subsectionpage> {
                       color: Color(0XFFEF5B2C),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    height: 50,
+                    height: 40,
                     width: 150,
                     child: H2Text(
                       text: "بحث",
                       textColor: Colors.white,
-                      size: 30,
+                      size: 18,
                       aligment: 'center',
                     ),
                   ),
@@ -540,12 +626,12 @@ class _SubsectionpageState extends State<Subsectionpage> {
                       color: Color(0XFFEF5B2C),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    height: 50,
+                    height: 40,
                     width: 150,
                     child: H2Text(
                       text: "مسح الفلاتر",
                       textColor: Colors.white,
-                      size: 20,
+                      size: 18,
                       aligment: 'center',
                     ),
                   ),
@@ -554,11 +640,11 @@ class _SubsectionpageState extends State<Subsectionpage> {
             ],
           ),
           const SizedBox(
-            height: 10,
+            height: 5,
           ),
           H1text(text: "مقدمي الخدمات"),
           const SizedBox(
-            height: 20,
+            height: 10,
           ),
           Wrap(spacing: 10, runSpacing: 10, children: [
             ...serviceProviders,

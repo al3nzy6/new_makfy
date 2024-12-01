@@ -28,7 +28,7 @@ class _MainsectionpageState extends State<Mainsectionpage> {
 
   Future<void> _getTheCategory() async {
     try {
-      Category category = await ApiConfig.getCategory(id.toInt());
+      Category category = await ApiConfig.getCategory(id.toInt(), null, null);
       setState(() {
         categoryWidgets = category.categories?.map((subcat) {
               return boxWidget(

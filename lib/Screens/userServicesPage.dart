@@ -66,6 +66,16 @@ class _userServicesPageState extends State<userServicesPage> {
       name = arguments["title"];
       cart = arguments["cart"];
       submitType = arguments['submitType'];
+      if (_hasBeenLoaded == false) {
+        if (arguments['date'] != null) {
+          choosenDate = arguments['date'];
+          date = choosenDate;
+        }
+        if (arguments['time'] != null) {
+          choosenTime = arguments['time'];
+          time = choosenTime;
+        }
+      }
 
       // استخدام البيانات المستخرجة حسب الحاجة
     } else if (arguments is List) {
@@ -76,6 +86,7 @@ class _userServicesPageState extends State<userServicesPage> {
     }
     if (_hasBeenLoaded == false) {
       _getUserServices();
+      checkTime(id, date!, time!);
     }
   }
 
@@ -137,7 +148,11 @@ class _userServicesPageState extends State<userServicesPage> {
                     currentUserIsTheProvider:
                         (user?.id == current_user) ? true : false,
                     onChanged: (value) {
-                      finalresults[service.id] = value;
+                      if (mounted) {
+                        setState(() {
+                          finalresults[service.id] = value;
+                        });
+                      }
                     },
                     count: (finalresults.containsKey(service.id))
                         ? finalresults[service.id]
@@ -157,7 +172,11 @@ class _userServicesPageState extends State<userServicesPage> {
                     currentUserIsTheProvider:
                         (user?.id == current_user) ? true : false,
                     onChanged: (value) {
-                      finalresults[service.id] = value;
+                      if (mounted) {
+                        setState(() {
+                          finalresults[service.id] = value;
+                        });
+                      }
                     },
                     count: (finalresults.containsKey(service.id))
                         ? finalresults[service.id]
@@ -316,12 +335,12 @@ class _userServicesPageState extends State<userServicesPage> {
                     ? "اختر التاريخ"
                     : "التاريخ الحالي : اختر ادناه للتغير",
                 type: "Date",
-                initialValue: cart?.choosenDate ?? null,
+                initialValue: cart?.choosenDate ?? choosenDate,
                 onChanged: (value) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     setState(() {
                       date = value;
-                      print(date);
+                      choosenDate = date;
                     });
                   });
                 },
@@ -333,12 +352,12 @@ class _userServicesPageState extends State<userServicesPage> {
                     ? "اختر الوقت"
                     : "الوقت الحالي : اختر الوقت للتغير",
                 type: "Time",
-                initialValue: cart?.choosenTime ?? null,
+                initialValue: cart?.choosenTime ?? choosenTime,
                 onChanged: (value) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     setState(() {
                       time = value;
-                      print(time);
+                      choosenTime = time;
                     });
                   });
                 },
@@ -484,7 +503,7 @@ class _userServicesPageState extends State<userServicesPage> {
                   height: 100,
                   TextAsLogo: "اجمالي المبلغ ",
                   TextAsLogoSize: 20,
-                  title: "${cart!.total} SAR",
+                  title: "${cart!.total} SR",
                 ),
                 if (isServiceProvider != true && cart!.otp != null) ...[
                   boxWidget(
@@ -555,7 +574,7 @@ class _userServicesPageState extends State<userServicesPage> {
             ...services,
             if (current_user != user?.id && (isPaid != true)) ...[
               InkWell(
-                onTap: (dateTimeStamp != null)
+                onTap: (dateTimeStamp != null && finalresults.length > 1)
                     ? () => _saveAndPayCart(true)
                     : null,
                 child: Container(
@@ -563,24 +582,27 @@ class _userServicesPageState extends State<userServicesPage> {
                   padding: EdgeInsets.only(top: 10, bottom: 10),
                   child: Container(
                       decoration: BoxDecoration(
-                        color: (dateTimeStamp != null)
-                            ? Color.fromARGB(255, 240, 190, 174)
-                            : Colors.grey,
+                        color:
+                            (dateTimeStamp != null && finalresults.length > 1)
+                                ? Color.fromARGB(255, 240, 190, 174)
+                                : Colors.grey,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       height: 70,
                       width: double.infinity,
                       child: H2Text(
-                        text: (dateTimeStamp != null)
+                        text: (dateTimeStamp != null && finalresults.length > 1)
                             ? "حفظ بالسلة"
-                            : "للحفظ الرجاء اختيار الوقت",
+                            : (dateTimeStamp == null)
+                                ? "للحفظ الرجاء اختيار الوقت"
+                                : "الرجاء اختيار خدمة",
                         aligment: 'center',
                         size: 20,
                         textColor: Colors.black,
                       )),
                 ),
               ),
-              (dateTimeStamp != null)
+              (dateTimeStamp != null && finalresults.length > 1)
                   ? InkWell(
                       onTap: () => _saveAndPayCart(false),
                       child: Container(
@@ -615,7 +637,7 @@ class _userServicesPageState extends State<userServicesPage> {
   }
 
   Future<void> _saveAndPayCart(bool? OnlySaveAsCart) async {
-    // print(finalresults);
+    print(finalresults.length);
     Map<String, dynamic> result =
         await ApiConfig.updateCart(finalresults, cart, dateTimeStamp!);
     try {

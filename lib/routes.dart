@@ -5,6 +5,7 @@ import 'package:makfy_new/Screens/PaymentPage.dart';
 import 'package:makfy_new/Screens/ProfilePage.dart';
 import 'package:makfy_new/Screens/ServicePage.dart';
 import 'package:makfy_new/Screens/ShoppingCertPage.dart';
+import 'package:makfy_new/Screens/UpdateLocationScreen.dart';
 import 'package:makfy_new/Screens/createServicePage.dart';
 import 'package:makfy_new/Screens/loginPage.dart';
 import 'package:makfy_new/Screens/mainsectionPage.dart';
@@ -40,6 +41,7 @@ class AppRoutes {
     '/payment_page': (context) => PaymentPage(),
     '/my_districts': (context) => MyDistrictsPage(),
     '/my_dues': (context) => myDuesPage(),
+    '/update_location': (context) => UpdateLocationScreen(),
   };
 }
 

@@ -60,8 +60,13 @@ class ApiConfig {
     }
   }
 
-  static Future<Category> getCategory(int id) async {
-    final url = Uri.parse("${apiUrl}/category/$id");
+  static Future<Category> getCategory(
+      int id, double? latitude, double? longtitude) async {
+    // Position position = await ApiConfig().getCurrentLocation();
+    final url = (latitude == null)
+        ? Uri.parse("${apiUrl}/category/${id}")
+        : Uri.parse("${apiUrl}/category/${id}/${latitude}/${longtitude}");
+    print(id);
     try {
       final authHeader = await ApiConfig.getAuthHeaders();
       final response = await http.get(url, headers: authHeader);
@@ -917,6 +922,98 @@ class ApiConfig {
     // احصل على الموقع الحالي
     return await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high);
+  }
+
+  static Future<District?> findArea(double latitude, double longitude) async {
+    final url = Uri.parse("$apiUrl/area/find/$latitude/$longitude");
+    final authHeader = await ApiConfig.getAuthHeaders();
+
+    try {
+      // إرسال الطلب
+      final response = await http.post(
+        url,
+        headers: {
+          ...authHeader,
+          'Content-Type': 'application/json',
+        },
+      );
+
+      // التحقق من نجاح الطلب
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+
+        // التحقق من وجود البيانات المطلوبة
+        if (jsonResponse.containsKey('data') && jsonResponse['data'] != null) {
+          return District.fromMap(jsonResponse['data']);
+        } else {
+          throw Exception("Invalid response format: Missing 'data' field.");
+        }
+      } else {
+        throw Exception(
+            "Failed to find area. Status code: ${response.statusCode}");
+      }
+    } catch (e) {
+      // التعامل مع الأخطاء
+      throw Exception("Error finding area: $e");
+    }
+  }
+
+  static Future<bool> updateUserLocation() async {
+    try {
+      // الحصول على الموقع الحالي
+      final position = await ApiConfig().getCurrentLocation();
+      final latitude = position.latitude;
+      final longitude = position.longitude;
+
+      // استدعاء API لإرسال الطول والعرض
+      final url = Uri.parse("${apiUrl}/user/updateOrCreateLocation");
+      final authHeader = await ApiConfig.getAuthHeaders();
+
+      final response = await http.post(
+        url,
+        headers: {
+          ...authHeader,
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'latitude': latitude,
+          'longitude': longitude,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print("Location updated successfully.");
+        return true;
+      } else {
+        print("Failed to update location. Status code: ${response.statusCode}");
+        return false;
+      }
+    } catch (e) {
+      print("Error updating user location: $e");
+      return false;
+    }
+  }
+
+  static Future<Map<String, dynamic>?> getUserLocation() async {
+    final url = Uri.parse("$apiUrl/user/getLocation");
+    final authHeader = await getAuthHeaders();
+
+    try {
+      final response = await http.get(
+        url,
+        headers: authHeader,
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        return jsonResponse['data']; // يحتوي على latitude و longitude
+      } else {
+        throw Exception(
+            "Failed to fetch location. Status code: ${response.statusCode}");
+      }
+    } catch (e) {
+      throw Exception("Error fetching user location: $e");
+    }
   }
 
   // static Future<List<FieldSection>> getFieldSections(int category_id) async {

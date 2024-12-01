@@ -77,7 +77,7 @@ class serviceProviderWidget extends StatelessWidget {
                 Column(
                   children: [
                     H2Text(text: 'اجمالي القيمة'),
-                    Text("${total ?? 0} SAR"),
+                    Text("${total ?? 0} SR"),
                   ],
                 )
               ])

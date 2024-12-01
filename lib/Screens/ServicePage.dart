@@ -73,7 +73,7 @@ class _ServicePageState extends State<ServicePage> {
               ),
             ),
             H1text(
-              text: "${serviceData?.price} SAR" ?? 'يوجد خلل',
+              text: "${serviceData?.price} SR" ?? 'يوجد خلل',
             ),
           ],
         ),

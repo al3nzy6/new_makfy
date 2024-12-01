@@ -97,7 +97,7 @@ class _PaymentWidgetState extends State<PaymentWidget> {
     if (result is PaymentResponse) {
       switch (result.status) {
         case PaymentStatus.paid:
-          showToast(context, "Payment Status: ${result.status.name}");
+          showToast(context, "حالة الفاتورة: تم الدفع");
           print("Payment successful. ID: ${result.id}");
           checkPayment(result.id);
           break;

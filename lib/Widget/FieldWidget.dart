@@ -11,6 +11,7 @@ class FieldWidget extends StatefulWidget {
   final String showName;
   final String type;
   final bool? required;
+  final double? width;
   final Function(dynamic)? onChanged;
   final dynamic initialValue;
 
@@ -18,6 +19,7 @@ class FieldWidget extends StatefulWidget {
     Key? key,
     required this.id,
     this.options,
+    this.width,
     required this.name,
     required this.showName,
     required this.type,
@@ -140,10 +142,13 @@ class _FieldWidgetState extends State<FieldWidget> {
       lastDate: DateTime(2101),
     );
     if (picked != null && picked != selectedDate) {
-      setState(() {
-        selectedDate = picked;
-        widget.onChanged?.call(selectedDate.toLocal().toString().split(' ')[0]);
-      });
+      if (mounted) {
+        setState(() {
+          selectedDate = picked;
+          widget.onChanged
+              ?.call(selectedDate.toLocal().toString().split(' ')[0]);
+        });
+      }
     }
   }
 
@@ -155,14 +160,16 @@ class _FieldWidgetState extends State<FieldWidget> {
     );
 
     if (pickedTime != null && pickedTime != selectedTime) {
-      setState(() {
-        selectedTime = pickedTime;
+      if (mounted) {
+        setState(() {
+          selectedTime = pickedTime;
 
-        // تحويل الوقت إلى التنسيق الصحيح (AM/PM)
-        final formattedTime = formatTime(selectedTime, context);
-        widget.onChanged
-            ?.call(formattedTime); // قم بإعادة الوقت بالتنسيق المطلوب
-      });
+          // تحويل الوقت إلى التنسيق الصحيح (AM/PM)
+          final formattedTime = formatTime(selectedTime, context);
+          widget.onChanged
+              ?.call(formattedTime); // قم بإعادة الوقت بالتنسيق المطلوب
+        });
+      }
     }
   }
 
@@ -180,15 +187,19 @@ class _FieldWidgetState extends State<FieldWidget> {
 
     return Container(
       child: Wrap(
+        spacing: 20,
         children: [
           Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.only(top: 10, left: 15),
             child: Text(
               widget.showName,
               style: TextStyle(fontSize: 19),
             ),
           ),
-          _buildFieldBasedOnType(screenWidth),
+          Container(
+              padding: EdgeInsets.all(5),
+              width: MediaQuery.of(context).size.width * 0.6,
+              child: _buildFieldBasedOnType(screenWidth)),
         ],
       ),
     );
@@ -306,13 +317,15 @@ class _FieldWidgetState extends State<FieldWidget> {
           .toList(),
       onConfirm: (results) {
         if (results.isNotEmpty) {
-          setState(() {
-            // السماح باختيار عنصر واحد فقط
-            final selectedOption = results.first;
-            _selectedIds = [selectedOption.id];
-            _selectedValues = [selectedOption.name];
-            widget.onChanged?.call(_selectedIds.first.toString());
-          });
+          if (mounted) {
+            setState(() {
+              // السماح باختيار عنصر واحد فقط
+              final selectedOption = results.first;
+              _selectedIds = [selectedOption.id];
+              _selectedValues = [selectedOption.name];
+              widget.onChanged?.call(_selectedIds.first.toString());
+            });
+          }
         }
       },
       // تفعيل وضع الاختيار الفردي
@@ -327,7 +340,7 @@ class _FieldWidgetState extends State<FieldWidget> {
         color: Color(0XFFEF5B2C),
         borderRadius: BorderRadius.circular(10),
       ),
-      height: 60,
+      height: 35,
       width: screenWidth * 0.95,
       alignment: Alignment.center,
       child: Text(

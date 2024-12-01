@@ -121,7 +121,7 @@ class _createServicePageState extends State<createServicePage> {
   }
 
   Future<void> _getTheCategory() async {
-    Category category = await ApiConfig.getCategory(id);
+    Category category = await ApiConfig.getCategory(id, null, null);
     try {
       if (!mounted) return; // تأكد من أن الواجهة لا تزال نشطة
       setState(() {

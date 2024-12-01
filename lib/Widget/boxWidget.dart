@@ -57,10 +57,13 @@ class boxWidget extends StatelessWidget {
         child: Column(
           children: [
             (icon != null)
-                ? Icon(
-                    icon,
-                    size: (iconSize == null) ? screenWidth * 0.20 : iconSize,
-                    color: Color(0XFFEF5B2C),
+                ? Container(
+                    margin: EdgeInsets.only(top: 8),
+                    child: Icon(
+                      icon,
+                      size: (iconSize == null) ? screenWidth * 0.20 : iconSize,
+                      color: Color(0XFFEF5B2C),
+                    ),
                   ) // عرض الأيقونة إذا كانت غير null
                 : (image != null)
                     ? Image.asset(

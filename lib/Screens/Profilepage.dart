@@ -57,8 +57,9 @@ class _ProfilepageState extends State<Profilepage> {
                   child: Container(
                       height: 50,
                       padding: EdgeInsets.all(1),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.all(Radius.circular(5)),
+                      decoration: const BoxDecoration(
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(5)),
                         color: Color(0XFFEF5B2C),
                       ),
                       child: H2Text(
@@ -70,7 +71,7 @@ class _ProfilepageState extends State<Profilepage> {
             ),
           ),
           SizedBox(
-            height: 50,
+            height: 20,
           ),
           Wrap(
             spacing: 10,
@@ -101,40 +102,74 @@ class _ProfilepageState extends State<Profilepage> {
       boxWidget(
         title: 'طلباتي',
         route: '/my_orders',
+        width: 120,
+        height: 120,
+        iconSize: 40,
       ),
       boxWidget(
           title: 'بياناتي',
           icon: Icons.person_2_sharp,
           route: '/personal_profile',
+          iconSize: 50,
+          width: 100,
+          height: 120,
           data: [2]),
       boxWidget(
-          title: 'السلة', icon: Icons.shopping_cart, route: '/shopping_cert'),
+        title: 'السلة',
+        icon: Icons.shopping_cart,
+        iconSize: 50,
+        width: 100,
+        height: 120,
+        route: '/shopping_cert',
+      ),
     ];
   }
 
   List<Widget> _serviceProviderProfileSections() {
     return [
       boxWidget(
-          title: 'طلبات العملاء',
-          icon: Icons.request_page,
-          route: '/customer_orders'),
+        title: 'طلبات العملاء',
+        icon: Icons.request_page,
+        route: '/customer_orders',
+        iconSize: 50,
+        width: 100,
+        height: 120,
+      ),
       boxWidget(
         title: 'خدماتي',
         icon: Icons.list,
         route: '/user_page',
         data: [userID, userName],
+        iconSize: 50,
+        width: 100,
+        height: 120,
       ),
       boxWidget(
         title: 'الاحياء التي اعمل بها',
         icon: FontAwesomeIcons.mapLocation,
         route: '/my_districts',
         data: [userID, userName],
+        iconSize: 50,
+        width: 100,
+        height: 120,
       ),
       boxWidget(
         title: 'مستحقاتي',
         icon: FontAwesomeIcons.moneyCheck,
         route: '/my_dues',
         data: [userID, userName],
+        iconSize: 50,
+        width: 100,
+        height: 120,
+      ),
+      boxWidget(
+        title: 'تحديث الموقع',
+        icon: FontAwesomeIcons.locationCrosshairs,
+        route: '/update_location',
+        data: [userID, userName],
+        iconSize: 50,
+        width: 100,
+        height: 120,
       ),
     ];
   }
