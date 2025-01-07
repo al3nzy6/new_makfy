@@ -51,8 +51,12 @@ class _ProfilepageState extends State<Profilepage> {
                 InkWell(
                   onTap: () {
                     ApiConfig apiConfig = ApiConfig();
-                    apiConfig.logout();
-                    Navigator.pushReplacementNamed(context, '/');
+                    if (userID == null) {
+                      Navigator.pushReplacementNamed(context, '/login');
+                    } else {
+                      apiConfig.logout();
+                      Navigator.pushReplacementNamed(context, '/');
+                    }
                   },
                   child: Container(
                       height: 50,
@@ -63,7 +67,7 @@ class _ProfilepageState extends State<Profilepage> {
                         color: Color(0XFFEF5B2C),
                       ),
                       child: H2Text(
-                        text: "تسجيل لخروج",
+                        text: userID == null ? "تسجيل الدخول" : "تسجيل لخروج",
                         textColor: Colors.white,
                       )),
                 )
@@ -76,7 +80,7 @@ class _ProfilepageState extends State<Profilepage> {
           Wrap(
             spacing: 10,
             runSpacing: 10,
-            children: _NormalUserprofileSections(),
+            children: (userID != null) ? _NormalUserprofileSections() : [],
           ),
           if (isServiceProvider == 1) ...[
             SizedBox(
@@ -121,6 +125,14 @@ class _ProfilepageState extends State<Profilepage> {
         width: 100,
         height: 120,
         route: '/shopping_cert',
+      ),
+      boxWidget(
+        title: 'حذف الحساب',
+        icon: Icons.archive,
+        iconSize: 50,
+        width: 100,
+        height: 120,
+        route: '/account_delete',
       ),
     ];
   }

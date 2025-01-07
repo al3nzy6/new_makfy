@@ -1063,6 +1063,33 @@ class ApiConfig {
     }
   }
 
+  static Future<bool> deleteUser() async {
+    try {
+      // استدعاء API لإرسال الطول والعرض
+      final url = Uri.parse("${apiUrl}/user/user_delete");
+      final authHeader = await ApiConfig.getAuthHeaders();
+
+      final response = await http.post(
+        url,
+        headers: {
+          ...authHeader,
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        print("Time updated successfully.");
+        return true;
+      } else {
+        print("Failed to update Time. Status code: ${response.statusCode}");
+        return false;
+      }
+    } catch (e) {
+      print("Error updating user Time: $e");
+      return false;
+    }
+  }
+
   static Future<Map<String, dynamic>?> getUserLocation() async {
     final url = Uri.parse("$apiUrl/user/getLocation");
     final authHeader = await getAuthHeaders();

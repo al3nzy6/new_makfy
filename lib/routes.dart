@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:makfy_new/Screens/DeleteUserScreen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:makfy_new/Screens/ForgotPasswordPage.dart';
 import 'package:makfy_new/Screens/MyHomePage.dart';
@@ -25,7 +26,7 @@ Future<bool> checkIfLoggedIn() async {
 
 class AppRoutes {
   static Map<String, WidgetBuilder> routes = {
-    '/': (context) => const LoadingPage(), // صفحة تحميل مؤقتة للتحقق
+    '/': (context) => MyHomePage(), // صفحة تحميل مؤقتة للتحقق
     '/home': (context) => MyHomePage(), // الصفحة الرئيسية
     '/login': (context) => LoginPage(),
     '/forgot-password': (context) => const ForgotPasswordPage(),
@@ -46,6 +47,7 @@ class AppRoutes {
     '/update_location': (context) => UpdateLocationScreen(),
     '/update_times': (context) => UpdateTimesScreen(),
     '/vacation_page': (context) => VacationScreen(),
+    '/account_delete': (context) => DeleteUserScreen(),
   };
 }
 
@@ -70,12 +72,29 @@ class LoadingPage extends StatelessWidget {
   Future<void> _checkLoginStatus(BuildContext context) async {
     bool isLoggedIn = await checkIfLoggedIn();
 
-    if (isLoggedIn) {
-      Navigator.pushReplacementNamed(
-          context, '/home'); // التوجيه للصفحة الرئيسية
-    } else {
+    // قائمة المسارات المسموحة دون تسجيل الدخول
+    List<String> allowedRoutes = [
+      '/',
+      '/home',
+      '/service_page',
+      '/main_section',
+      '/sub_section',
+      '/user_page',
+      '/login',
+      '/forgot-password',
+    ];
+
+    if (!isLoggedIn &&
+        !allowedRoutes.contains(ModalRoute.of(context)?.settings.name)) {
+      // إذا لم يكن مسجلاً الدخول والمسار غير مسموح
       Navigator.pushReplacementNamed(
           context, '/login'); // التوجيه لصفحة تسجيل الدخول
+    } else {
+      // إذا كان المسار مسموح أو مسجل الدخول
+      Navigator.pushReplacementNamed(
+          context,
+          ModalRoute.of(context)?.settings.name ??
+              '/home'); // التوجيه للصفحة المطلوبة
     }
   }
 }
