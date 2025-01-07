@@ -16,6 +16,7 @@ class User extends Equatable {
   String? countRating;
   String? start_time;
   String? end_time;
+  String? order_limit_per_day;
 
   List<Service>? services;
   User({
@@ -32,6 +33,7 @@ class User extends Equatable {
     this.start_time,
     this.end_time,
     this.services,
+    this.order_limit_per_day,
   });
 
   User copyWith({
@@ -43,6 +45,7 @@ class User extends Equatable {
     return User(
       id: id ?? this.id,
       name: name ?? this.name,
+      order_limit_per_day: order_limit_per_day ?? this.order_limit_per_day,
       email: email ?? this.email,
       phone: phone ?? this.phone,
       nationality: nationality ?? this.nationality,
@@ -72,6 +75,7 @@ class User extends Equatable {
     result.addAll({'countRating': countRating});
     result.addAll({'start_time': start_time});
     result.addAll({'end_time': end_time});
+    result.addAll({'order_limit_per_day': order_limit_per_day});
 
     return result;
   }
@@ -87,6 +91,7 @@ class User extends Equatable {
       iban: map['iban'] ?? '',
       id_number: map['id_number'] ?? '',
       end_time: map['end_time'] ?? '',
+      order_limit_per_day: map['order_limit_per_day'] ?? '',
       start_time: map['start_time'] ?? '',
       averageRating: map['averageRating']?.toInt() ?? 0,
       countRating: map['countRating'] ?? '',
@@ -105,6 +110,7 @@ class User extends Equatable {
       id_number: json['id_number'],
       start_time: json['start_time'],
       end_time: json['end_time'],
+      order_limit_per_day: json['order_limit_per_day'],
       averageRating: json['averageRating'],
       countRating: json['countRating'],
       services: json['services'] != null

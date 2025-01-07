@@ -178,50 +178,6 @@ class _ServicePageState extends State<ServicePage> {
                     style: TextStyle(color: Colors.white),
                   ),
                 ),
-                SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (serviceData != null) {
-                      final result = await ApiConfig.changeServiceAvailability(
-                          serviceData!.id);
-
-                      if (result) {
-                        await _getService();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(serviceData!.is_available!
-                                ? "تم جعل الخدمة متوفرة"
-                                : "تم جعل الخدمة غير متوفرة"),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("حدث خطأ أثناء تحديث حالة التوفر"),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      }
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: serviceData?.is_available == true
-                        ? Colors.red
-                        : Colors.green,
-                    padding: EdgeInsets.symmetric(horizontal: 25, vertical: 12),
-                    textStyle: TextStyle(fontSize: 16),
-                  ),
-                  child: Text(
-                    textAlign: TextAlign.center,
-                    serviceData?.is_available == true
-                        ? "الخدمة الان متوفره وتظهر للعملاء لجعلها غير متوفره اضغط هنا"
-                        : "الخدمة الان غير متوفره لجعل الخدمة متوفر اضغط هنا",
-                    style: TextStyle(
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
               ],
             ),
           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:makfy_new/Screens/ForgotPasswordPage.dart';
 import 'package:makfy_new/Screens/MyHomePage.dart';
 import 'package:makfy_new/Screens/PaymentPage.dart';
@@ -6,6 +7,8 @@ import 'package:makfy_new/Screens/ProfilePage.dart';
 import 'package:makfy_new/Screens/ServicePage.dart';
 import 'package:makfy_new/Screens/ShoppingCertPage.dart';
 import 'package:makfy_new/Screens/UpdateLocationScreen.dart';
+import 'package:makfy_new/Screens/UpdateTimesScreen.dart';
+import 'package:makfy_new/Screens/VacationScreen.dart';
 import 'package:makfy_new/Screens/createServicePage.dart';
 import 'package:makfy_new/Screens/loginPage.dart';
 import 'package:makfy_new/Screens/mainsectionPage.dart';
@@ -14,16 +17,15 @@ import 'package:makfy_new/Screens/registration_page.dart';
 import 'package:makfy_new/Screens/userServicesPage.dart';
 import 'package:makfy_new/Screens/personalProfilePage.dart';
 import 'package:makfy_new/Screens/subsectionPage.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 Future<bool> checkIfLoggedIn() async {
   final prefs = await SharedPreferences.getInstance();
-  return prefs.containsKey('auth_token');
+  return prefs.containsKey('auth_token'); // فحص وجود "auth_token"
 }
 
 class AppRoutes {
   static Map<String, WidgetBuilder> routes = {
-    '/': (context) => LoadingPage(), // استخدم صفحة تحميل كمؤقت للتحقق
+    '/': (context) => const LoadingPage(), // صفحة تحميل مؤقتة للتحقق
     '/home': (context) => MyHomePage(), // الصفحة الرئيسية
     '/login': (context) => LoginPage(),
     '/forgot-password': (context) => const ForgotPasswordPage(),
@@ -42,28 +44,38 @@ class AppRoutes {
     '/my_districts': (context) => MyDistrictsPage(),
     '/my_dues': (context) => myDuesPage(),
     '/update_location': (context) => UpdateLocationScreen(),
+    '/update_times': (context) => UpdateTimesScreen(),
+    '/vacation_page': (context) => VacationScreen(),
   };
 }
 
 class LoadingPage extends StatelessWidget {
+  const LoadingPage({super.key});
+
   @override
   Widget build(BuildContext context) {
-    _checkLoginStatus(context);
-    return Scaffold(
-      body: Center(child: CircularProgressIndicator()), // شاشة تحميل مؤقتة
+    // استدعاء الدالة للتحقق من حالة تسجيل الدخول
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkLoginStatus(context);
+    });
+
+    return const Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(), // شاشة تحميل مؤقتة أثناء التحقق
+      ),
     );
   }
 
   // دالة للتحقق من حالة تسجيل الدخول وتوجيه المستخدم
-  void _checkLoginStatus(BuildContext context) async {
+  Future<void> _checkLoginStatus(BuildContext context) async {
     bool isLoggedIn = await checkIfLoggedIn();
 
     if (isLoggedIn) {
       Navigator.pushReplacementNamed(
-          context, '/home'); // إذا كان مسجلًا، انتقل إلى الصفحة الرئيسية
+          context, '/home'); // التوجيه للصفحة الرئيسية
     } else {
       Navigator.pushReplacementNamed(
-          context, '/login'); // إذا لم يكن مسجلًا، انتقل إلى صفحة تسجيل الدخول
+          context, '/login'); // التوجيه لصفحة تسجيل الدخول
     }
   }
 }

@@ -4,11 +4,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:makfy_new/routes.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const MakfyApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MakfyApp extends StatelessWidget {
+  const MakfyApp({super.key});
 
   // This widget is the root of your application.
   @override
@@ -26,6 +26,7 @@ class MyApp extends StatelessWidget {
       ],
       locale: const Locale('ar'),
       supportedLocales: const [Locale('en', 'US'), Locale('ar')],
+      // onGenerateRoute: AppRoutes.generateRoute,
       routes: AppRoutes.routes,
     );
   }

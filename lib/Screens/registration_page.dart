@@ -27,6 +27,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
   final TextEditingController idnumberController = TextEditingController();
   String? nationality;
   final TextEditingController ibanController = TextEditingController();
+  final TextEditingController orderLimitPerDayController =
+      TextEditingController();
   String? bankController;
   bool agreeToTerms = false;
 
@@ -88,6 +90,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
           nationality = user?.nationality;
           bankController = user?.bank;
           ibanController.text = user?.iban ?? '';
+          orderLimitPerDayController.text = user?.order_limit_per_day ?? "";
 
           // إذا كان المستخدم مزود خدمات، يتم جلب رقم الهوية
           if (isServiceProvider == true) {
@@ -124,8 +127,17 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
       final idnumber = idnumberController.text.trim();
       final iban = ibanController.text.trim();
-      final success = await apiService.updateProfile(name, phone, email,
-          isServiceProvider, idnumber, nationality, bankController, iban);
+      final orderLimitPerDay = orderLimitPerDayController.text.trim();
+      final success = await apiService.updateProfile(
+          name,
+          phone,
+          email,
+          isServiceProvider,
+          idnumber,
+          nationality,
+          bankController,
+          iban,
+          orderLimitPerDay);
 
       setState(() {
         isLoading = false;
@@ -162,6 +174,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
       final idnumber = idnumberController.text.trim();
       final iban = ibanController.text.trim();
+      final orderLimitPerDay = orderLimitPerDayController.text.trim();
       final success = await apiService.register(
           name,
           phone,
@@ -172,7 +185,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
           idnumber,
           nationality,
           bankController,
-          iban);
+          iban,
+          orderLimitPerDay);
 
       setState(() {
         isLoading = false;
@@ -184,7 +198,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
           const SnackBar(content: Text('تم التسجيل بنجاح!')),
         );
         // يمكن الانتقال إلى صفحة أخرى إذا لزم الأمر
-        Navigator.pushReplacementNamed(context, '/');
+        (isServiceProvider == 1)
+            ? Navigator.pushReplacementNamed(context, '/update_location')
+            : Navigator.pushReplacementNamed(context, '/');
       } else {
         // عرض رسالة خطأ إذا فشل التسجيل
         setState(() {
@@ -203,6 +219,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
     if (isServiceProvider == true) {
       idnumberController.dispose();
       ibanController.dispose();
+      orderLimitPerDayController.dispose();
     }
     super.dispose();
   }
@@ -416,6 +433,20 @@ class _RegistrationPageState extends State<RegistrationPage> {
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'يرجى إدخال IBAN الايبان ';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: orderLimitPerDayController,
+                      decoration: const InputDecoration(
+                        labelText: 'حد استقبال الطلبات باليوم',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'يرجى ادخال الحد';
                         }
                         return null;
                       },

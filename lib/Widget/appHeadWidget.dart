@@ -18,6 +18,7 @@ class _appHeadWidgetState extends State<appHeadWidget> {
   final prefs = SharedPreferences.getInstance();
 
   int? isServiceProvider = 0;
+  String? user_email;
 
   @override
   @override
@@ -30,6 +31,7 @@ class _appHeadWidgetState extends State<appHeadWidget> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       isServiceProvider = prefs.getInt('isServiceProvider');
+      user_email = prefs.getString('user_email');
     });
   }
 
@@ -49,52 +51,54 @@ class _appHeadWidgetState extends State<appHeadWidget> {
             'images/logo.png',
             height: 100,
           ),
-          (isServiceProvider == 1)
-              ? Expanded(
-                  child: InkWell(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/customer_orders');
-                        // Navigator.pushNamed(context, '/shopping_cert');
-                      },
-                      child: Container(
-                        height: 50,
-                        margin: EdgeInsets.only(left: 15, right: 15),
-                        alignment: Alignment.centerLeft,
-                        decoration: const BoxDecoration(
-                            color: Color(0XFFEF5B2C),
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(30))),
-                        child: Center(
-                            child: H2Text(
-                          text: "(1) طلبات العملاء",
-                          textColor: Colors.white,
-                          size: 16,
-                        )),
-                      )))
-              : Expanded(
-                  child: InkWell(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/shopping_cert');
-                      },
-                      child: Container(
-                        height: 50,
-                        margin: EdgeInsets.only(left: 15, right: 15),
-                        alignment: Alignment.centerLeft,
-                        decoration: const BoxDecoration(
-                            color: Color(0XFFEF5B2C),
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(30))),
-                        child: Center(
-                            child: H2Text(
-                          text: "(1) السلة",
-                          textColor: Colors.white,
-                          size: 16,
-                        )),
-                      ))),
+          if (user_email != null)
+            (isServiceProvider == 1)
+                ? Expanded(
+                    child: InkWell(
+                        onTap: () {
+                          Navigator.pushNamed(context, '/customer_orders');
+                          // Navigator.pushNamed(context, '/shopping_cert');
+                        },
+                        child: Container(
+                          height: 50,
+                          margin: EdgeInsets.only(left: 15, right: 15),
+                          alignment: Alignment.centerLeft,
+                          decoration: const BoxDecoration(
+                              color: Color(0XFFEF5B2C),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(30))),
+                          child: Center(
+                              child: H2Text(
+                            text: "طلبات العملاء",
+                            textColor: Colors.white,
+                            size: 16,
+                          )),
+                        )))
+                : Expanded(
+                    child: InkWell(
+                        onTap: () {
+                          Navigator.pushNamed(context, '/shopping_cert');
+                        },
+                        child: Container(
+                          height: 50,
+                          margin: EdgeInsets.only(left: 15, right: 15),
+                          alignment: Alignment.centerLeft,
+                          decoration: const BoxDecoration(
+                              color: Color(0XFFEF5B2C),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(30))),
+                          child: Center(
+                              child: H2Text(
+                            text: "السلة",
+                            textColor: Colors.white,
+                            size: 16,
+                          )),
+                        ))),
           (ModalRoute.of(context)?.settings.name != '/login')
               ? InkWell(
                   onTap: () {
-                    if (ModalRoute.of(context)?.settings.name == '/home') {
+                    if (ModalRoute.of(context)?.settings.name == '/home' ||
+                        ModalRoute.of(context)?.settings.name == '/') {
                       Navigator.pushNamed(context, '/profile');
                     } else {
                       Navigator.pop(context);
@@ -108,7 +112,8 @@ class _appHeadWidgetState extends State<appHeadWidget> {
                         color: Color(0XFFEF5B2C), shape: BoxShape.circle),
                     child: Center(
                         child: Icon(
-                      (ModalRoute.of(context)?.settings.name == '/home')
+                      (ModalRoute.of(context)?.settings.name == '/home' ||
+                              ModalRoute.of(context)?.settings.name == '/')
                           ? Icons.person
                           : Icons.arrow_forward,
                       color: Colors.white,
