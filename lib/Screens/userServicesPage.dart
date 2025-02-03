@@ -30,6 +30,7 @@ class _userServicesPageState extends State<userServicesPage> {
   List<Widget> services = [];
   Map<int, dynamic> finalresults = {};
   User? user;
+  bool hasDelivery = false; // لتخزين حالة الاختيار
   int? current_user;
   bool isLoading = true;
   bool? isPaid;
@@ -113,6 +114,7 @@ class _userServicesPageState extends State<userServicesPage> {
         finalresults[0] = id;
         isPaid = (cart != null && cart?.status != 1) ? true : false;
         if (cart != null) {
+          hasDelivery = cart!.delivery_fee! > 0 ? true : false;
           dateTimeStamp = cart!.service_time;
           timeIsAvailable = true;
           date = null;
@@ -134,6 +136,7 @@ class _userServicesPageState extends State<userServicesPage> {
                     service: service,
                     imageUrl: service.imageUrls,
                     isPaid: isPaid,
+                    isLogin: (current_user != null) ? true : false,
                     currentUserIsTheProvider:
                         (user?.id == current_user) ? true : false,
                     onChanged: (value) {
@@ -158,6 +161,7 @@ class _userServicesPageState extends State<userServicesPage> {
                     id: service.id,
                     service: service,
                     imageUrl: service.imageUrls,
+                    isLogin: (current_user != null) ? true : false,
                     currentUserIsTheProvider:
                         (user?.id == current_user) ? true : false,
                     onChanged: (value) {
@@ -566,6 +570,25 @@ class _userServicesPageState extends State<userServicesPage> {
             runSpacing: 10,
             children: [
               ...services,
+              if (current_user != user?.id && user!.delivery_fee! > 0.0)
+                CheckboxListTile(
+                  title: Text(
+                    "التوصيل",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    "الرسوم: ${user?.delivery_fee} SAR",
+                    style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                  ),
+                  value: hasDelivery,
+                  onChanged: (cart != null && cart?.status != 1)
+                      ? null
+                      : (bool? newValue) {
+                          setState(() {
+                            hasDelivery = newValue ?? false;
+                          });
+                        },
+                ),
               if (current_user != user?.id && (isPaid != true)) ...[
                 InkWell(
                   onTap: (dateTimeStamp != null && finalresults.length > 1)
@@ -645,9 +668,17 @@ class _userServicesPageState extends State<userServicesPage> {
   }
 
   Future<void> _saveAndPayCart(bool? OnlySaveAsCart) async {
-    print(finalresults.length);
-    Map<String, dynamic> result =
-        await ApiConfig.updateCart(finalresults, cart, dateTimeStamp!);
+    if (current_user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(
+                'يجب تسجيل الدخول او التسجيل للاستفادة من كامل خدمات التطبيق')),
+      );
+      Navigator.pushReplacementNamed(context, '/login');
+    }
+    Map<String, dynamic> result = await ApiConfig.updateCart(
+        finalresults, cart, dateTimeStamp!, hasDelivery);
+    print(hasDelivery);
     try {
       // print(double.tryParse(result['data']['total']));
       if (OnlySaveAsCart == false) {

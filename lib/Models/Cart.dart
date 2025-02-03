@@ -18,6 +18,7 @@ class Cart extends Equatable {
   String? service_time;
   String? choosenDate;
   String? choosenTime;
+  int? delivery_fee;
   List<Service>? services;
   Cart({
     required this.id,
@@ -33,6 +34,7 @@ class Cart extends Equatable {
     this.services,
     this.choosenDate,
     this.choosenTime,
+    this.delivery_fee,
   });
 
   Cart copyWith({
@@ -48,6 +50,7 @@ class Cart extends Equatable {
     String? service_time,
     String? choosenDate,
     String? choosenTime,
+    int? delivery_fee,
     List<Service>? services,
   }) {
     return Cart(
@@ -63,6 +66,7 @@ class Cart extends Equatable {
       payment_time: payment_time ?? this.payment_time,
       choosenDate: choosenDate ?? this.choosenDate,
       choosenTime: choosenTime ?? this.choosenTime,
+      delivery_fee: delivery_fee ?? this.delivery_fee,
       services: services ?? this.services,
     );
   }
@@ -82,6 +86,7 @@ class Cart extends Equatable {
     result.addAll({'payment_time': payment_time});
     result.addAll({'choosenDate': choosenDate});
     result.addAll({'choosenTime': choosenTime});
+    result.addAll({'delivery_fee': delivery_fee});
     if (services != null) {
       result.addAll({'services': services!.map((x) => x?.toMap()).toList()});
     }
@@ -103,6 +108,7 @@ class Cart extends Equatable {
       payment_time: map['payment_time'] ?? '',
       choosenDate: map['choosenDate'] ?? '',
       choosenTime: map['choosenTime'] ?? '',
+      delivery_fee: map['delivery_fee'] ?? '',
       services: map['services'] != null
           ? List<Service>.from(map['services']?.map((x) => Service.fromMap(x)))
           : null,
@@ -135,6 +141,7 @@ class Cart extends Equatable {
       payment_time: json['payment_time'] ?? '',
       choosenDate: json['choosenDate'] ?? '',
       choosenTime: json['choosenTime'] ?? '',
+      delivery_fee: json['delivery_fee'] ?? '',
       services: (json['services'] as List)
           .map((serviceJson) => Service.fromJson(serviceJson))
           .toList(),

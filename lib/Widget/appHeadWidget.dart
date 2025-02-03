@@ -94,34 +94,34 @@ class _appHeadWidgetState extends State<appHeadWidget> {
                             size: 16,
                           )),
                         ))),
-          (ModalRoute.of(context)?.settings.name != '/login')
-              ? InkWell(
-                  onTap: () {
-                    if (ModalRoute.of(context)?.settings.name == '/home' ||
-                        ModalRoute.of(context)?.settings.name == '/') {
-                      Navigator.pushNamed(context, '/profile');
-                    } else {
-                      Navigator.pop(context);
-                    }
-                  },
-                  child: Container(
-                    width: 50,
-                    height: 50,
-                    alignment: Alignment.center,
-                    decoration: const BoxDecoration(
-                        color: Color(0XFFEF5B2C), shape: BoxShape.circle),
-                    child: Center(
-                        child: Icon(
-                      (ModalRoute.of(context)?.settings.name == '/home' ||
-                              ModalRoute.of(context)?.settings.name == '/')
-                          ? Icons.person
-                          : Icons.arrow_forward,
-                      color: Colors.white,
-                      size: 35,
-                    )),
-                  ),
-                )
-              : SizedBox.shrink(),
+          // (ModalRoute.of(context)?.settings.name != '/login')
+          InkWell(
+            onTap: () {
+              if (ModalRoute.of(context)?.settings.name == '/home' ||
+                  ModalRoute.of(context)?.settings.name == '/') {
+                Navigator.pushNamed(context, '/profile');
+              } else {
+                Navigator.pop(context);
+              }
+            },
+            child: Container(
+              width: 50,
+              height: 50,
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(
+                  color: Color(0XFFEF5B2C), shape: BoxShape.circle),
+              child: Center(
+                  child: Icon(
+                (ModalRoute.of(context)?.settings.name == '/home' ||
+                        ModalRoute.of(context)?.settings.name == '/')
+                    ? Icons.person
+                    : Icons.arrow_forward,
+                color: Colors.white,
+                size: 35,
+              )),
+            ),
+          )
+          // : SizedBox.shrink(),
         ],
       ),
     );

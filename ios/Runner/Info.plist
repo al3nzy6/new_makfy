@@ -38,6 +38,8 @@
 	<string>السماح للتطبيق باستخدام الكاميرا لالتقاط الصور</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>نحتاج إلى الوصول إلى موقعك لتحسين تجربتك.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>نحتاج إلى إذن الوصول للموقع لتحسين تجربة الاستخدام ولتوفير الخدمات المناسبة.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>السماح للتطبيق باستخدام الميكروفون</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
@@ -45,7 +47,7 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>السماح للتطبيق بالوصول إلى مكتبة الصور</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
-	<true/>
+	<false/> <!-- تم تعديل القيمة -->
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

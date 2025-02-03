@@ -14,8 +14,8 @@ import 'package:path/path.dart';
 import 'package:geolocator/geolocator.dart';
 
 class ApiConfig {
-  static const String apiUrl = 'http://makfy.test/api';
-  // static const String apiUrl = 'https://makfy.sa/api';
+  // static const String apiUrl = 'http://makfy.test/api';
+  static const String apiUrl = 'https://makfy.sa/api';
   static Future<Map<String, String>> getAuthHeaders() async {
     final token = await ApiConfig().getToken();
     return {
@@ -105,8 +105,8 @@ class ApiConfig {
   static Future<User> getUserProfile(int id) async {
     final url = Uri.parse("${apiUrl}/user/$id/profile");
     try {
-      final authHeader = await ApiConfig.getAuthHeaders();
-      final response = await http.get(url, headers: authHeader);
+      // final authHeader = await ApiConfig.getAuthHeaders();
+      final response = await http.get(url);
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
@@ -404,18 +404,18 @@ class ApiConfig {
   }
 
   Future<List> register(
-    String name,
-    String phone,
-    String email,
-    String password,
-    String passwordConfirmation,
-    bool? isServiceProvider,
-    String? idnumber,
-    String? nationality,
-    String? bank,
-    String? iban,
-    String? order_limit_per_day,
-  ) async {
+      String name,
+      String phone,
+      String email,
+      String password,
+      String passwordConfirmation,
+      bool? isServiceProvider,
+      String? idnumber,
+      String? nationality,
+      String? bank,
+      String? iban,
+      String? order_limit_per_day,
+      int? deliveryFee) async {
     final url = Uri.parse('$apiUrl/register');
     final response = await http.post(
       url,
@@ -432,6 +432,7 @@ class ApiConfig {
         'bank': bank ?? null,
         'iban': iban ?? null,
         'order_limit_per_day': order_limit_per_day ?? null,
+        'delivery_fee': deliveryFee ?? null,
       }),
     );
 
@@ -460,7 +461,8 @@ class ApiConfig {
       String? nationality,
       String? bank,
       String? iban,
-      String? order_limit_per_day) async {
+      String? order_limit_per_day,
+      int? deliveryFee) async {
     final url = Uri.parse('$apiUrl/profile/update');
     final response = await http.put(
       url,
@@ -478,6 +480,7 @@ class ApiConfig {
         'bank': bank,
         'iban': iban,
         'order_limit_per_day': order_limit_per_day,
+        'delivery_fee': deliveryFee,
       }),
     );
 
@@ -493,8 +496,8 @@ class ApiConfig {
     }
   }
 
-  static Future<Map<String, dynamic>> updateCart(
-      Map<int, dynamic> data, Cart? cart, String datatimestamp) async {
+  static Future<Map<String, dynamic>> updateCart(Map<int, dynamic> data,
+      Cart? cart, String datatimestamp, bool? delivery_is_required) async {
     final url = (cart != null)
         ? Uri.parse('$apiUrl/cart/update')
         : Uri.parse('$apiUrl/cart/create');
@@ -502,6 +505,8 @@ class ApiConfig {
     final formattedData =
         data.map((key, value) => MapEntry(key.toString(), value.toString()));
     formattedData['service_datetime'] = datatimestamp;
+    formattedData['delivery_is_required'] =
+        delivery_is_required == true ? "1" : "0";
     final response = await http.post(
       url, // Ensure this endpoint is correct
       headers: {...authHeader, 'Content-Type': 'application/json'},
@@ -749,10 +754,7 @@ class ApiConfig {
       final authHeader = await ApiConfig.getAuthHeaders();
       final response = await http.post(
         url,
-        headers: {
-          ...authHeader,
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode(filters),
       );
       // print(jsonEncode(filters));
@@ -831,11 +833,12 @@ class ApiConfig {
       int userID, String date, String time) async {
     final url = Uri.parse(
         '$apiUrl/user/checkTime/$userID'); // استبدل المسار حسب API الخاص بك
-    final headers = await getAuthHeaders();
+    // final headers = await getAuthHeaders();
     print('$apiUrl/user/checkTime/$userID');
     try {
       final response = await http.post(url,
-          headers: headers, body: jsonEncode({"date": date, "time": time}));
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({"date": date, "time": time}));
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
