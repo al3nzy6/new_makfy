@@ -30,7 +30,7 @@ class _userServicesPageState extends State<userServicesPage> {
   List<Widget> services = [];
   Map<int, dynamic> finalresults = {};
   User? user;
-  bool hasDelivery = false; // لتخزين حالة الاختيار
+  bool hasDelivery = true; // لتخزين حالة الاختيار
   int? current_user;
   bool isLoading = true;
   bool? isPaid;
@@ -571,23 +571,32 @@ class _userServicesPageState extends State<userServicesPage> {
             children: [
               ...services,
               if (current_user != user?.id && user!.delivery_fee! > 0.0)
-                CheckboxListTile(
-                  title: Text(
-                    "التوصيل",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  subtitle: Text(
-                    "الرسوم: ${user?.delivery_fee} SAR",
-                    style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                  child: CheckboxListTile(
+                    title: Text(
+                      "التوصيل",
+                      style:
+                          TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      "الرسوم: ${user?.delivery_fee} SAR",
+                      style: TextStyle(
+                          fontSize: 20,
+                          color: const Color.fromARGB(255, 255, 254, 254)),
+                    ),
+                    value: hasDelivery,
+                    onChanged: (cart != null && cart?.status != 1)
+                        ? null
+                        : (bool? newValue) {
+                            setState(() {
+                              hasDelivery = newValue ?? false;
+                            });
+                          },
                   ),
-                  value: hasDelivery,
-                  onChanged: (cart != null && cart?.status != 1)
-                      ? null
-                      : (bool? newValue) {
-                          setState(() {
-                            hasDelivery = newValue ?? false;
-                          });
-                        },
                 ),
               if (current_user != user?.id && (isPaid != true)) ...[
                 InkWell(
@@ -652,11 +661,10 @@ class _userServicesPageState extends State<userServicesPage> {
                 onTap: () => {_openWhatsApp("966543049002")},
                 child: boxWidget(
                   height: 100,
+                  width: double.infinity,
                   iconSize: 50,
                   // width: 210,
-                  title: (isServiceProvider == true)
-                      ? (cart?.customer.phone) ?? "non"
-                      : (cart?.service_provider.phone) ?? "non",
+                  title: "0543049002",
                   icon: FontAwesomeIcons.whatsapp,
                 ),
               ),
@@ -678,7 +686,6 @@ class _userServicesPageState extends State<userServicesPage> {
     }
     Map<String, dynamic> result = await ApiConfig.updateCart(
         finalresults, cart, dateTimeStamp!, hasDelivery);
-    print(hasDelivery);
     try {
       // print(double.tryParse(result['data']['total']));
       if (OnlySaveAsCart == false) {

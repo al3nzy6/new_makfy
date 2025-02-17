@@ -233,7 +233,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
           const SnackBar(content: Text('تم التسجيل بنجاح!')),
         );
         // يمكن الانتقال إلى صفحة أخرى إذا لزم الأمر
-        (isServiceProvider == 1)
+        (isServiceProvider == true)
             ? Navigator.pushReplacementNamed(context, '/update_location')
             : Navigator.pushReplacementNamed(context, '/');
       } else {

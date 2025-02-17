@@ -37,9 +37,9 @@
 	<key>NSCameraUsageDescription</key>
 	<string>السماح للتطبيق باستخدام الكاميرا لالتقاط الصور</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>نحتاج إلى الوصول إلى موقعك لتحسين تجربتك.</string>
+	<string>نحتاج إلى الوصول إلى موقعك لعرض موفري الخدمات في منطقتك.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>نحتاج إلى إذن الوصول للموقع لتحسين تجربة الاستخدام ولتوفير الخدمات المناسبة.</string>
+	<string>نحتاج إلى الوصول إلى موقعك لعرض موفري الخدمات في منطقتك.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>السماح للتطبيق باستخدام الميكروفون</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

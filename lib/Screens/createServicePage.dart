@@ -191,13 +191,6 @@ class _createServicePageState extends State<createServicePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             H1text(text: serviceId != null ? 'تعديل الخدمة' : 'إنشاء الخدمة'),
-            SizedBox(height: 10),
-            H2Text(
-              lines: 10,
-              textColor: Colors.red,
-              text:
-                  "عزيزي مقدم الخدمه ان لم يكن التوصيل مجانا من قبلكم .. رجاءً اضف قيمة سعر التوصيل لديكم كصنف من اصناف الخدمه المقدمه من قبلكم ليتم دفعها من قبل العميل ويجب ان تكون اول خدمه تقوم باضافتها",
-            ),
             SizedBox(height: 20),
             FieldWidget(
               id: 2,

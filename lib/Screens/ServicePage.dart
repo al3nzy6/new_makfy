@@ -1,5 +1,6 @@
 import 'package:fan_carousel_image_slider/fan_carousel_image_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:makfy_new/Models/Option.dart';
 import 'package:makfy_new/Models/Service.dart';
 import 'package:makfy_new/Utilities/ApiConfig.dart';
 import 'package:makfy_new/Widget/H1textWidget.dart';
@@ -21,6 +22,11 @@ class _ServicePageState extends State<ServicePage> {
   Service? serviceData;
   bool isLoading = true;
   int? user_id;
+  List<Map<String, dynamic>> optionsList = [
+    Option(id: 1, name: "دقيقة").toJson(),
+    Option(id: 2, name: "ساعة").toJson(),
+    Option(id: 3, name: "يوم").toJson(),
+  ];
 
   @override
   void didChangeDependencies() {
@@ -116,10 +122,16 @@ class _ServicePageState extends State<ServicePage> {
           textColor: Colors.grey,
           size: 25,
         ),
-        SizedBox(height: 50),
-        H2Text(
-          text: 'تفاصيل الخدمة',
-          size: 22,
+        SizedBox(height: 10),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.green,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: H2Text(
+            text: 'تفاصيل الخدمة',
+            size: 22,
+          ),
         ),
         SizedBox(height: 20),
         if (serviceData?.customFields != null &&
@@ -151,7 +163,24 @@ class _ServicePageState extends State<ServicePage> {
           )
         else
           // Container(child: Text('لا يوجد خيارات')),
-          SizedBox(height: 60),
+          SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Flexible(
+              child: H1text(
+                text: 'مدة التنفيذ',
+              ),
+            ),
+            H1text(
+              text:
+                  "${serviceData?.time_to_beready_value} ${optionsList.firstWhere((option) => option["id"] == serviceData?.time_to_beready_type, orElse: () => {
+                        "name": "غير محدد"
+                      })["name"]}",
+            ),
+          ],
+        ),
+        SizedBox(height: 50),
         if (user_id != null && user_id == serviceData?.user.id)
           Center(
             child: Column(

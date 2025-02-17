@@ -18,7 +18,7 @@ class Cart extends Equatable {
   String? service_time;
   String? choosenDate;
   String? choosenTime;
-  int? delivery_fee;
+  double? delivery_fee;
   List<Service>? services;
   Cart({
     required this.id,
@@ -50,7 +50,7 @@ class Cart extends Equatable {
     String? service_time,
     String? choosenDate,
     String? choosenTime,
-    int? delivery_fee,
+    double? delivery_fee,
     List<Service>? services,
   }) {
     return Cart(
@@ -101,16 +101,22 @@ class Cart extends Equatable {
       service_provider: User.fromMap(map['service_provider']),
       status: map['status']?.toInt() ?? 0,
       otp: map['otp']?.toInt() ?? 0,
-      price: map['price'] ?? '',
-      total: map['total'] ?? '',
+      price: map['price'] != null
+          ? double.tryParse(map['price'].toString()) ?? 0.0
+          : 0.0,
+      total: map['total'] != null
+          ? double.tryParse(map['total'].toString()) ?? 0.0
+          : 0.0,
       service_time: map['service_time'] ?? '',
       payment_id: map['payment_id'] ?? '',
       payment_time: map['payment_time'] ?? '',
       choosenDate: map['choosenDate'] ?? '',
       choosenTime: map['choosenTime'] ?? '',
-      delivery_fee: map['delivery_fee'] ?? '',
+      delivery_fee: map['delivery_fee'] != null
+          ? double.tryParse(map['delivery_fee'].toString()) ?? 0.0
+          : 0.0,
       services: map['services'] != null
-          ? List<Service>.from(map['services']?.map((x) => Service.fromMap(x)))
+          ? List<Service>.from(map['services'].map((x) => Service.fromMap(x)))
           : null,
     );
   }
@@ -125,28 +131,33 @@ class Cart extends Equatable {
 
   factory Cart.fromJson(Map<String, dynamic> json) {
     return Cart(
-      id: json['id'],
+      id: json['id'] ?? 0,
       customer: User.fromJson(json['customer']),
       service_provider: User.fromJson(json['service_provider']),
-      status: json['status'],
+      status: json['status'] ?? 0,
       otp: json['otp'],
-      service_time: json['service_time'],
+      service_time: json['service_time'] ?? '',
       price: json['price'] != null
-          ? double.parse(json['price'].replaceAll(',', ''))
+          ? double.tryParse(json['price'].toString()) ?? 0.0
           : 0.0,
       total: json['total'] != null
-          ? double.parse(json['total'].replaceAll(',', ''))
+          ? double.tryParse(json['total'].toString()) ?? 0.0
           : 0.0,
       payment_id: json['payment_id'] ?? '',
       payment_time: json['payment_time'] ?? '',
       choosenDate: json['choosenDate'] ?? '',
       choosenTime: json['choosenTime'] ?? '',
-      delivery_fee: json['delivery_fee'] ?? '',
-      services: (json['services'] as List)
-          .map((serviceJson) => Service.fromJson(serviceJson))
-          .toList(),
+      delivery_fee: json['delivery_fee'] != null
+          ? double.tryParse(json['delivery_fee'].toString()) ?? 0.0
+          : 0.0,
+      services: json['services'] != null
+          ? (json['services'] as List)
+              .map((serviceJson) => Service.fromJson(serviceJson))
+              .toList()
+          : [],
     );
   }
+
   @override
   String toString() {
     return 'Cart(id: $id, customer: $customer, service_provider: $service_provider, status: $status, price: $price, total: $total, payment_id: $payment_id, payment_time: $payment_time, services: $services)';
