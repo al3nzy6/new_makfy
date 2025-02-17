@@ -51,7 +51,6 @@ class _SubsectionpageState extends State<Subsectionpage> {
   // القائمة الخاصة بالعناصر
   Map<String, dynamic> fieldResults = {};
   bool isServiceProvider = false;
-  late SharedPreferences prefs;
 
   @override
   void didChangeDependencies() {
@@ -226,6 +225,9 @@ class _SubsectionpageState extends State<Subsectionpage> {
   }
 
   Future<void> _searchServices() async {
+    final getPosition = await ApiConfig().getCurrentLocation();
+    final latitude = getPosition.latitude;
+    final longitude = getPosition.longitude;
     try {
       setState(() {
         isLoading = true;
@@ -238,7 +240,8 @@ class _SubsectionpageState extends State<Subsectionpage> {
         ...fieldResults, // البيانات المجمعة من الحقول
       };
 
-      final category = await ApiConfig.searchServices(filters);
+      final category = await ApiConfig.searchServices(
+          filters, latitude ?? null, longitude ?? null);
 
       setState(() {
         fieldsWidget = category.Fields?.where((field) =>
@@ -335,19 +338,18 @@ class _SubsectionpageState extends State<Subsectionpage> {
   }
 
   Future<void> _getTheCategory() async {
-    prefs = await SharedPreferences.getInstance();
+    final prefs = await SharedPreferences.getInstance();
     final getPosition = await ApiConfig().getCurrentLocation();
     final latitude = getPosition.latitude;
     final longitude = getPosition.longitude;
     Category category = await ApiConfig.getCategory(id, latitude, longitude);
-
     List<Map<String, dynamic>> getCityOptions = (await ApiConfig.getCities())
         .map((city) => {'id': city.id, 'name': city.name})
         .toList();
     isServiceProvider = (prefs.getInt('isServiceProvider') == 1) ? true : false;
     try {
-      getCities();
-      getAreaFromCoordinates(latitude, longitude);
+      // getCities();
+      // getAreaFromCoordinates(latitude, longitude);
       setState(() {
         // cities = getCityOptions;
         fieldsWidget = category.Fields?.where((field) =>
@@ -434,116 +436,118 @@ class _SubsectionpageState extends State<Subsectionpage> {
             height: 5,
           ),
           ...fieldsWidget,
-          FieldWidget(
-            id: 30,
-            name: '1',
-            showName: 'اختر التاريخ',
-            type: 'Date',
-            initialValue: date ?? null,
-            onChanged: (value) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                setState(() {
-                  date = value;
+          if (isServiceProvider == false) ...[
+            FieldWidget(
+              id: 30,
+              name: '1',
+              showName: 'اختر التاريخ',
+              type: 'Date',
+              initialValue: date ?? null,
+              onChanged: (value) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  setState(() {
+                    date = value;
+                  });
                 });
-              });
-            },
-          ),
-          FieldWidget(
-            id: 30,
-            name: 'time',
-            showName: 'اختر الوقت',
-            initialValue: time ?? null,
-            type: 'Time',
-            onChanged: (value) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                setState(() {
-                  time = value;
+              },
+            ),
+            FieldWidget(
+              id: 30,
+              name: 'time',
+              showName: 'اختر الوقت',
+              initialValue: time ?? null,
+              type: 'Time',
+              onChanged: (value) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  setState(() {
+                    time = value;
+                  });
                 });
-              });
-            },
-          ),
-          SizedBox(
-            height: 5,
-          ),
-          Wrap(
-            children: [
-              if (DistrictFromLocation == null) ...[
-                Container(
-                  width: MediaQuery.of(context).size.width * 0.4,
-                  child: GestureDetector(
-                    onTap: () => _showCityPicker(context),
-                    child: Container(
-                      width: double.infinity,
-                      padding:
-                          EdgeInsets.symmetric(vertical: 15, horizontal: 10),
-                      margin: EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(selectedCity?.name ?? 'اختر المدينة'),
-                    ),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    if (selectedCity != null) {
-                      _loadDistricts(selectedCity!.id);
-                      _showDistrictPicker(context);
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("اختر المدينة أولاً")),
-                      );
-                    }
-                  },
-                  child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
-                    width: MediaQuery.of(context).size.width * 0.5,
-                    margin: EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(selectedDistrict?.name ?? 'اختر الحي'),
-                  ),
-                ),
-              ],
-              if (DistrictFromLocation != null)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    H2Text(text: DistrictFromLocation ?? ""),
-                    InkWell(
-                      onTap: () {
-                        if (mounted) {
-                          setState(() {
-                            DistrictFromLocation = null;
-                          });
-                        }
-                      },
-                      child: Container(
-                        alignment: Alignment.topRight,
-                        padding: EdgeInsets.only(top: 10, bottom: 10),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Color(0XFFEF5B2C),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          height: 40,
-                          width: 90,
-                          child: H2Text(
-                            text: "تغير",
-                            textColor: Colors.white,
-                            size: 18,
-                            aligment: 'center',
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-            ],
-          ),
+              },
+            ),
+            SizedBox(
+              height: 5,
+            ),
+          ],
+          // Wrap(
+          //   children: [
+          //     if (DistrictFromLocation == null) ...[
+          //       Container(
+          //         width: MediaQuery.of(context).size.width * 0.4,
+          //         child: GestureDetector(
+          //           onTap: () => _showCityPicker(context),
+          //           child: Container(
+          //             width: double.infinity,
+          //             padding:
+          //                 EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+          //             margin: EdgeInsets.all(8),
+          //             decoration: BoxDecoration(
+          //               border: Border.all(color: Colors.grey),
+          //               borderRadius: BorderRadius.circular(8),
+          //             ),
+          //             child: Text(selectedCity?.name ?? 'اختر المدينة'),
+          //           ),
+          //         ),
+          //       ),
+          //       GestureDetector(
+          //         onTap: () {
+          //           if (selectedCity != null) {
+          //             _loadDistricts(selectedCity!.id);
+          //             _showDistrictPicker(context);
+          //           } else {
+          //             ScaffoldMessenger.of(context).showSnackBar(
+          //               SnackBar(content: Text("اختر المدينة أولاً")),
+          //             );
+          //           }
+          //         },
+          //         child: Container(
+          //           padding: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+          //           width: MediaQuery.of(context).size.width * 0.5,
+          //           margin: EdgeInsets.all(8),
+          //           decoration: BoxDecoration(
+          //             border: Border.all(color: Colors.grey),
+          //             borderRadius: BorderRadius.circular(8),
+          //           ),
+          //           child: Text(selectedDistrict?.name ?? 'اختر الحي'),
+          //         ),
+          //       ),
+          //     ],
+          //     if (DistrictFromLocation != null)
+          //       Row(
+          //         mainAxisAlignment: MainAxisAlignment.spaceAround,
+          //         children: [
+          //           H2Text(text: DistrictFromLocation ?? ""),
+          //           InkWell(
+          //             onTap: () {
+          //               if (mounted) {
+          //                 setState(() {
+          //                   DistrictFromLocation = null;
+          //                 });
+          //               }
+          //             },
+          //             child: Container(
+          //               alignment: Alignment.topRight,
+          //               padding: EdgeInsets.only(top: 10, bottom: 10),
+          //               child: Container(
+          //                 decoration: BoxDecoration(
+          //                   color: Color(0XFFEF5B2C),
+          //                   borderRadius: BorderRadius.circular(10),
+          //                 ),
+          //                 height: 40,
+          //                 width: 90,
+          //                 child: H2Text(
+          //                   text: "تغير",
+          //                   textColor: Colors.white,
+          //                   size: 18,
+          //                   aligment: 'center',
+          //                 ),
+          //               ),
+          //             ),
+          //           ),
+          //         ],
+          //       ),
+          //   ],
+          // ),
           // FieldWidget(
           //   id: 30,
           //   name: 'city',
@@ -570,79 +574,80 @@ class _SubsectionpageState extends State<Subsectionpage> {
           //       SelectedDistrict = value;
           //     },
           //   ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.max,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            spacing: 40,
-            children: [
-              InkWell(
-                onTap: () {
-                  fieldResults['category_id'] = id;
-                  _searchServices();
-                  print(date);
-                  print(time);
-                  print(fieldResults);
-                },
-                child: Container(
-                  alignment: Alignment.topRight,
-                  padding: EdgeInsets.only(top: 10, bottom: 10),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Color(0XFFEF5B2C),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    height: 40,
-                    width: 150,
-                    child: H2Text(
-                      text: "بحث",
-                      textColor: Colors.white,
-                      size: 18,
-                      aligment: 'center',
-                    ),
-                  ),
-                ),
-              ),
-              InkWell(
-                onTap: () {
-                  if (mounted) {
-                    setState(() {
-                      fieldResults = {};
-                      fieldResults['category_id'] = id;
-                      date = null;
-                      time = null;
-                      districts = null;
-                      SelectedCity = null;
-                      SelectedDistrict = null;
-                    });
+          if (isServiceProvider != true)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.max,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              spacing: 40,
+              children: [
+                InkWell(
+                  onTap: () {
+                    fieldResults['category_id'] = id;
                     _searchServices();
-                  }
-                },
-                child: Container(
-                  alignment: Alignment.topRight,
-                  padding: EdgeInsets.only(top: 10, bottom: 10),
+                    print(date);
+                    print(time);
+                    print(fieldResults);
+                  },
                   child: Container(
-                    decoration: BoxDecoration(
-                      color: Color(0XFFEF5B2C),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    height: 40,
-                    width: 150,
-                    child: H2Text(
-                      text: "مسح الفلاتر",
-                      textColor: Colors.white,
-                      size: 18,
-                      aligment: 'center',
+                    alignment: Alignment.topRight,
+                    padding: EdgeInsets.only(top: 10, bottom: 10),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Color(0XFFEF5B2C),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      height: 40,
+                      width: 150,
+                      child: H2Text(
+                        text: "بحث",
+                        textColor: Colors.white,
+                        size: 18,
+                        aligment: 'center',
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
+                InkWell(
+                  onTap: () {
+                    if (mounted) {
+                      setState(() {
+                        fieldResults = {};
+                        fieldResults['category_id'] = id;
+                        date = null;
+                        time = null;
+                        districts = null;
+                        SelectedCity = null;
+                        SelectedDistrict = null;
+                      });
+                      _searchServices();
+                    }
+                  },
+                  child: Container(
+                    alignment: Alignment.topRight,
+                    padding: EdgeInsets.only(top: 10, bottom: 10),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Color(0XFFEF5B2C),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      height: 40,
+                      width: 150,
+                      child: H2Text(
+                        text: "مسح الفلاتر",
+                        textColor: Colors.white,
+                        size: 18,
+                        aligment: 'center',
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           const SizedBox(
             height: 5,
           ),
-          H1text(text: "مقدمي الخدمات"),
+          H1text(text: "موفري الخدمات"),
           const SizedBox(
             height: 10,
           ),

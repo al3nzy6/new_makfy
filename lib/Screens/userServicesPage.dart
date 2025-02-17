@@ -1,27 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_holo_date_picker/flutter_holo_date_picker.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:makfy_new/Models/Cart.dart';
-import 'package:makfy_new/Models/Category.dart';
-import 'package:makfy_new/Models/City.dart';
-import 'package:makfy_new/Models/District.dart';
-import 'package:makfy_new/Models/Option.dart';
-import 'package:makfy_new/Models/Service.dart';
 import 'package:makfy_new/Models/User.dart';
-import 'package:makfy_new/Models/fieldSection.dart';
 import 'package:makfy_new/Utilities/ApiConfig.dart';
 import 'package:makfy_new/Widget/FieldWidget.dart';
 import 'package:makfy_new/Widget/MainScreenWidget.dart';
 import 'package:makfy_new/Widget/RateUserModal.dart';
 import 'package:makfy_new/Widget/RatingWidget.dart';
-import 'package:makfy_new/Widget/shimmerLoadingWidget.dart';
-import 'package:multi_select_flutter/multi_select_flutter.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:makfy_new/Widget/H1textWidget.dart';
 import 'package:makfy_new/Widget/H2Text.dart';
 import 'package:makfy_new/Widget/ServiceAddedWidget.dart';
-import 'package:makfy_new/Widget/appHeadWidget.dart';
 import 'package:makfy_new/Widget/boxWidget.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -42,6 +30,7 @@ class _userServicesPageState extends State<userServicesPage> {
   List<Widget> services = [];
   Map<int, dynamic> finalresults = {};
   User? user;
+  bool hasDelivery = true; // لتخزين حالة الاختيار
   int? current_user;
   bool isLoading = true;
   bool? isPaid;
@@ -85,6 +74,7 @@ class _userServicesPageState extends State<userServicesPage> {
       cart = null;
     }
     if (_hasBeenLoaded == false) {
+      print("${id} sssss");
       _getUserServices();
       checkTime(id, date!, time!);
     }
@@ -124,6 +114,7 @@ class _userServicesPageState extends State<userServicesPage> {
         finalresults[0] = id;
         isPaid = (cart != null && cart?.status != 1) ? true : false;
         if (cart != null) {
+          hasDelivery = cart!.delivery_fee! > 0 ? true : false;
           dateTimeStamp = cart!.service_time;
           timeIsAvailable = true;
           date = null;
@@ -145,6 +136,7 @@ class _userServicesPageState extends State<userServicesPage> {
                     service: service,
                     imageUrl: service.imageUrls,
                     isPaid: isPaid,
+                    isLogin: (current_user != null) ? true : false,
                     currentUserIsTheProvider:
                         (user?.id == current_user) ? true : false,
                     onChanged: (value) {
@@ -169,6 +161,7 @@ class _userServicesPageState extends State<userServicesPage> {
                     id: service.id,
                     service: service,
                     imageUrl: service.imageUrls,
+                    isLogin: (current_user != null) ? true : false,
                     currentUserIsTheProvider:
                         (user?.id == current_user) ? true : false,
                     onChanged: (value) {
@@ -387,7 +380,9 @@ class _userServicesPageState extends State<userServicesPage> {
               ],
             ],
           ],
-          if ((timeIsAvailable == true && timeIsAvailable != null) ||
+          if ((current_user != user?.id &&
+                  timeIsAvailable == true &&
+                  timeIsAvailable != null) ||
               isPaid == true) ...[
             // if (isPaid != true) ...[
             //   H2Text(
@@ -413,7 +408,7 @@ class _userServicesPageState extends State<userServicesPage> {
             SizedBox(
               height: 10,
             ),
-            if (isPaid != true) ...[
+            if (isPaid != true && current_user != user?.id) ...[
               ElevatedButton.icon(
                   label: Text('اعادة ضبط الوقت والتاريخ'),
                   iconAlignment: IconAlignment.start,
@@ -570,76 +565,127 @@ class _userServicesPageState extends State<userServicesPage> {
           SizedBox(
             height: 40,
           ),
-          Wrap(spacing: 10, runSpacing: 10, children: [
-            ...services,
-            if (current_user != user?.id && (isPaid != true)) ...[
-              InkWell(
-                onTap: (dateTimeStamp != null && finalresults.length > 1)
-                    ? () => _saveAndPayCart(true)
-                    : null,
-                child: Container(
-                  alignment: Alignment.center,
-                  padding: EdgeInsets.only(top: 10, bottom: 10),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              ...services,
+              if (current_user != user?.id && user!.delivery_fee! > 0.0)
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: CheckboxListTile(
+                    title: Text(
+                      "التوصيل",
+                      style:
+                          TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      "الرسوم: ${user?.delivery_fee} SAR",
+                      style: TextStyle(
+                          fontSize: 20,
+                          color: const Color.fromARGB(255, 255, 254, 254)),
+                    ),
+                    value: hasDelivery,
+                    onChanged: (cart != null && cart?.status != 1)
+                        ? null
+                        : (bool? newValue) {
+                            setState(() {
+                              hasDelivery = newValue ?? false;
+                            });
+                          },
+                  ),
+                ),
+              if (current_user != user?.id && (isPaid != true)) ...[
+                InkWell(
+                  onTap: (dateTimeStamp != null && finalresults.length > 1)
+                      ? () => _saveAndPayCart(true)
+                      : null,
                   child: Container(
-                      decoration: BoxDecoration(
-                        color:
-                            (dateTimeStamp != null && finalresults.length > 1)
-                                ? Color.fromARGB(255, 240, 190, 174)
-                                : Colors.grey,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      height: 70,
-                      width: double.infinity,
-                      child: H2Text(
-                        text: (dateTimeStamp != null && finalresults.length > 1)
-                            ? "حفظ بالسلة"
-                            : (dateTimeStamp == null)
-                                ? "للحفظ الرجاء اختيار الوقت"
-                                : "الرجاء اختيار خدمة",
-                        aligment: 'center',
-                        size: 20,
-                        textColor: Colors.black,
-                      )),
+                    alignment: Alignment.center,
+                    padding: EdgeInsets.only(top: 10, bottom: 10),
+                    child: Container(
+                        decoration: BoxDecoration(
+                          color:
+                              (dateTimeStamp != null && finalresults.length > 1)
+                                  ? Color.fromARGB(255, 240, 190, 174)
+                                  : Colors.grey,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        height: 70,
+                        width: double.infinity,
+                        child: H2Text(
+                          text:
+                              (dateTimeStamp != null && finalresults.length > 1)
+                                  ? "حفظ بالسلة"
+                                  : (dateTimeStamp == null)
+                                      ? "للحفظ الرجاء اختيار الوقت"
+                                      : "الرجاء اختيار خدمة",
+                          aligment: 'center',
+                          size: 20,
+                          textColor: Colors.black,
+                        )),
+                  ),
+                ),
+                (dateTimeStamp != null && finalresults.length > 1)
+                    ? InkWell(
+                        onTap: () => _saveAndPayCart(false),
+                        child: Container(
+                          alignment: Alignment.center,
+                          padding: EdgeInsets.only(top: 10, bottom: 10),
+                          child: Container(
+                              decoration: BoxDecoration(
+                                color: Color(0XFFEF5B2C),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              height: 70,
+                              width: double.infinity,
+                              child: H2Text(
+                                text: "المتابعة للدفع",
+                                aligment: 'center',
+                                size: 25,
+                                textColor: Colors.white,
+                              )),
+                        ),
+                      )
+                    : SizedBox.shrink()
+              ],
+              H2Text(
+                  aligment: 'center',
+                  lines: 3,
+                  text:
+                      "عزيزي العميل في حال واجهة اي اشكالية يرجى التواصل مع خدمة العملاء"),
+              InkWell(
+                onTap: () => {_openWhatsApp("966543049002")},
+                child: boxWidget(
+                  height: 100,
+                  width: double.infinity,
+                  iconSize: 50,
+                  // width: 210,
+                  title: "0543049002",
+                  icon: FontAwesomeIcons.whatsapp,
                 ),
               ),
-              (dateTimeStamp != null && finalresults.length > 1)
-                  ? InkWell(
-                      onTap: () => _saveAndPayCart(false),
-                      child: Container(
-                        alignment: Alignment.center,
-                        padding: EdgeInsets.only(top: 10, bottom: 10),
-                        child: Container(
-                            decoration: BoxDecoration(
-                              color: Color(0XFFEF5B2C),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            height: 70,
-                            width: double.infinity,
-                            child: H2Text(
-                              text: "المتابعة للدفع",
-                              aligment: 'center',
-                              size: 25,
-                              textColor: Colors.white,
-                            )),
-                      ),
-                    )
-                  : SizedBox.shrink()
             ],
-            H2Text(
-                aligment: 'center',
-                lines: 3,
-                text:
-                    "عزيزي العميل في حال واجهة اي اشكالية يرجى التواصل مع خدمة العملاء")
-          ]),
+          ),
         ],
       ),
     );
   }
 
   Future<void> _saveAndPayCart(bool? OnlySaveAsCart) async {
-    print(finalresults.length);
-    Map<String, dynamic> result =
-        await ApiConfig.updateCart(finalresults, cart, dateTimeStamp!);
+    if (current_user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(
+                'يجب تسجيل الدخول او التسجيل للاستفادة من كامل خدمات التطبيق')),
+      );
+      Navigator.pushReplacementNamed(context, '/login');
+    }
+    Map<String, dynamic> result = await ApiConfig.updateCart(
+        finalresults, cart, dateTimeStamp!, hasDelivery);
     try {
       // print(double.tryParse(result['data']['total']));
       if (OnlySaveAsCart == false) {

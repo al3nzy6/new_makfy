@@ -1,0 +1,2 @@
+/Applications/MAMP/htdocs/flutter/makfy_new/android/app/.cxx/RelWithDebInfo/2l106w4t/x86_64/CMakeFiles/rebuild_cache.dir
+/Applications/MAMP/htdocs/flutter/makfy_new/android/app/.cxx/RelWithDebInfo/2l106w4t/x86_64/CMakeFiles/edit_cache.dir

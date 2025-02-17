@@ -8,10 +8,11 @@ class FieldWidget extends StatefulWidget {
   final int id;
   final List<Map<String, dynamic>>? options;
   final String name;
-  final String showName;
+  final String? showName;
   final String type;
   final bool? required;
   final double? width;
+  final String? hint;
   final Function(dynamic)? onChanged;
   final dynamic initialValue;
 
@@ -21,7 +22,8 @@ class FieldWidget extends StatefulWidget {
     this.options,
     this.width,
     required this.name,
-    required this.showName,
+    this.showName,
+    this.hint,
     required this.type,
     this.required = false,
     this.onChanged,
@@ -36,7 +38,7 @@ class _FieldWidgetState extends State<FieldWidget> {
   DateTime selectedDate = DateTime.now();
   TimeOfDay selectedTime = TimeOfDay.now();
   List<int> _selectedIds = [];
-  List<String> _selectedValues = [];
+  List<dynamic> _selectedValues = [];
   File? _selectedImage;
   Option? selectedOption; // متغير الحالة للحفاظ على الخيار المحدد
 
@@ -53,6 +55,9 @@ class _FieldWidgetState extends State<FieldWidget> {
       switch (widget.type) {
         case 'String':
           _selectedValues = [widget.initialValue.toString()];
+          break;
+        case 'Int':
+          _selectedValues = [int.tryParse(widget.initialValue.toString())];
           break;
         case 'Date':
           selectedDate = DateTime.parse(widget.initialValue);
@@ -189,16 +194,21 @@ class _FieldWidgetState extends State<FieldWidget> {
       child: Wrap(
         spacing: 20,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 10, left: 15),
-            child: Text(
-              widget.showName,
-              style: TextStyle(fontSize: 19),
+          if (widget.showName != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 10, left: 15),
+              child: Text(
+                widget.showName ?? "",
+                style: TextStyle(fontSize: 19),
+              ),
             ),
-          ),
           Container(
               padding: EdgeInsets.all(5),
-              width: MediaQuery.of(context).size.width * 0.6,
+              width: (widget.width == null)
+                  ? MediaQuery.of(context).size.width * 0.6
+                  : (widget.width! > 0.01 && widget.width! < 1)
+                      ? MediaQuery.of(context).size.width * widget.width!
+                      : widget.width,
               child: _buildFieldBasedOnType(screenWidth)),
         ],
       ),
@@ -209,6 +219,8 @@ class _FieldWidgetState extends State<FieldWidget> {
     switch (widget.type) {
       case 'String':
         return _buildValidatedTextField();
+      case 'Int':
+        return _buildValidatedIntField();
       case 'Date':
         return _buildValidatedDatePicker(screenWidth);
       case 'Time':
@@ -222,11 +234,35 @@ class _FieldWidgetState extends State<FieldWidget> {
     }
   }
 
-  Widget _buildValidatedTextField() {
+  Widget _buildValidatedIntField() {
     return TextFormField(
+      keyboardType: TextInputType.number,
+      validator: (value) {
+        if (widget.required! == true && (value == null || value.isEmpty)) {
+          return "${widget.showName ?? "هذا الحقل"} مطلوب"; // رسالة الخطأ إذا كان الحقل فارغًا
+        }
+      },
       decoration: InputDecoration(
         border: OutlineInputBorder(),
-        labelText: widget.showName,
+        labelText: widget.showName ?? widget.hint,
+      ),
+      initialValue: widget.initialValue?.toString(),
+      onChanged: (value) {
+        widget.onChanged?.call(value);
+      },
+    );
+  }
+
+  Widget _buildValidatedTextField() {
+    return TextFormField(
+      validator: (value) {
+        if (widget.required! == true && (value == null || value.isEmpty)) {
+          return "${widget.showName ?? "هذا الحقل"} مطلوب"; // رسالة الخطأ إذا كان الحقل فارغًا
+        }
+      },
+      decoration: InputDecoration(
+        border: OutlineInputBorder(),
+        labelText: widget.showName ?? widget.hint,
       ),
       initialValue: widget.initialValue?.toString(),
       onChanged: (value) {
@@ -273,7 +309,7 @@ class _FieldWidgetState extends State<FieldWidget> {
     return DropdownButton<Option>(
       isExpanded: true,
       value: selectedOption,
-      hint: Text('اختر'),
+      hint: (widget.hint != null) ? Text(widget.hint!) : Text('اختر'),
       items: optionsList.map((option) {
         return DropdownMenuItem<Option>(
           value: option,

@@ -28,7 +28,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _fetchAllData() async {
     _fetchCateogry();
-    _fetchServices();
+    // _fetchServices();
   }
 
   Future<void> _fetchCateogry() async {
@@ -50,19 +50,19 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  Future<void> _fetchServices() async {
-    try {
-      List<User> listServices = await ApiConfig.initServices();
-      setState(() {
-        services = listServices.map((service) {
-              return serviceProviderWidget(title: service.name, id: service.id);
-            }).toList() ??
-            [];
-      });
-    } catch (e) {
-      print("Error: $e");
-    }
-  }
+  // Future<void> _fetchServices() async {
+  //   try {
+  //     List<User> listServices = await ApiConfig.initServices();
+  //     setState(() {
+  //       services = listServices.map((service) {
+  //             return serviceProviderWidget(title: service.name, id: service.id);
+  //           }).toList() ??
+  //           [];
+  //     });
+  //   } catch (e) {
+  //     print("Error: $e");
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {

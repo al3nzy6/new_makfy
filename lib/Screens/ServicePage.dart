@@ -1,5 +1,6 @@
 import 'package:fan_carousel_image_slider/fan_carousel_image_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:makfy_new/Models/Option.dart';
 import 'package:makfy_new/Models/Service.dart';
 import 'package:makfy_new/Utilities/ApiConfig.dart';
 import 'package:makfy_new/Widget/H1textWidget.dart';
@@ -21,6 +22,11 @@ class _ServicePageState extends State<ServicePage> {
   Service? serviceData;
   bool isLoading = true;
   int? user_id;
+  List<Map<String, dynamic>> optionsList = [
+    Option(id: 1, name: "دقيقة").toJson(),
+    Option(id: 2, name: "ساعة").toJson(),
+    Option(id: 3, name: "يوم").toJson(),
+  ];
 
   @override
   void didChangeDependencies() {
@@ -116,10 +122,16 @@ class _ServicePageState extends State<ServicePage> {
           textColor: Colors.grey,
           size: 25,
         ),
-        SizedBox(height: 50),
-        H2Text(
-          text: 'تفاصيل الخدمة',
-          size: 22,
+        SizedBox(height: 10),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.green,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: H2Text(
+            text: 'تفاصيل الخدمة',
+            size: 22,
+          ),
         ),
         SizedBox(height: 20),
         if (serviceData?.customFields != null &&
@@ -151,7 +163,24 @@ class _ServicePageState extends State<ServicePage> {
           )
         else
           // Container(child: Text('لا يوجد خيارات')),
-          SizedBox(height: 60),
+          SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Flexible(
+              child: H1text(
+                text: 'مدة التنفيذ',
+              ),
+            ),
+            H1text(
+              text:
+                  "${serviceData?.time_to_beready_value} ${optionsList.firstWhere((option) => option["id"] == serviceData?.time_to_beready_type, orElse: () => {
+                        "name": "غير محدد"
+                      })["name"]}",
+            ),
+          ],
+        ),
+        SizedBox(height: 50),
         if (user_id != null && user_id == serviceData?.user.id)
           Center(
             child: Column(
@@ -176,50 +205,6 @@ class _ServicePageState extends State<ServicePage> {
                   child: Text(
                     "تعديل الخدمة",
                     style: TextStyle(color: Colors.white),
-                  ),
-                ),
-                SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (serviceData != null) {
-                      final result = await ApiConfig.changeServiceAvailability(
-                          serviceData!.id);
-
-                      if (result) {
-                        await _getService();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(serviceData!.is_available!
-                                ? "تم جعل الخدمة متوفرة"
-                                : "تم جعل الخدمة غير متوفرة"),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("حدث خطأ أثناء تحديث حالة التوفر"),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      }
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: serviceData?.is_available == true
-                        ? Colors.red
-                        : Colors.green,
-                    padding: EdgeInsets.symmetric(horizontal: 25, vertical: 12),
-                    textStyle: TextStyle(fontSize: 16),
-                  ),
-                  child: Text(
-                    textAlign: TextAlign.center,
-                    serviceData?.is_available == true
-                        ? "الخدمة الان متوفره وتظهر للعملاء لجعلها غير متوفره اضغط هنا"
-                        : "الخدمة الان غير متوفره لجعل الخدمة متوفر اضغط هنا",
-                    style: TextStyle(
-                      color: Colors.white,
-                    ),
                   ),
                 ),
               ],

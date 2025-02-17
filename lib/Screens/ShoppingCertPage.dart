@@ -45,6 +45,7 @@ class _ShoppingCertPageState extends State<ShoppingCertPage> {
               ? await ApiConfig.serviceProviderCartList()
               : await ApiConfig.customerCartList();
       carts = Cart.sortById(carts, descending: true);
+      print("Fetched carts count: ${carts.length}");
       if (!mounted)
         return; // تأكد من أن العنصر ما زال موجودًا قبل استدعاء setState
 

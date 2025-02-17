@@ -27,6 +27,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
   final TextEditingController idnumberController = TextEditingController();
   String? nationality;
   final TextEditingController ibanController = TextEditingController();
+  final TextEditingController orderLimitPerDayController =
+      TextEditingController();
   String? bankController;
   bool agreeToTerms = false;
 
@@ -47,12 +49,25 @@ class _RegistrationPageState extends State<RegistrationPage> {
     "باكستاني",
     "بنقلاديشي",
   ];
+  final List<dynamic> delivry_fees = [
+    {"مجاناً": 0},
+    {"10 SAR": 10},
+    {"15 SAR": 15},
+    {"20 SAR": 20},
+    {"25 SAR": 25},
+    {"30 SAR": 30},
+    {"35 SAR": 35},
+    {"40 SAR": 40},
+    {"45 SAR": 45},
+    {"50 SAR": 50},
+  ];
   final ApiConfig apiService = ApiConfig();
   bool? isServiceProvider;
   bool? isEdit;
   User? user;
   bool isLoading = true;
   Map<String, dynamic>? errorMessage;
+  Map<String, int>? selectedDeliveryFee;
   @override
   void initState() {
     super.initState();
@@ -88,12 +103,29 @@ class _RegistrationPageState extends State<RegistrationPage> {
           nationality = user?.nationality;
           bankController = user?.bank;
           ibanController.text = user?.iban ?? '';
+          orderLimitPerDayController.text = user?.order_limit_per_day ?? "";
 
           // إذا كان المستخدم مزود خدمات، يتم جلب رقم الهوية
           if (isServiceProvider == true) {
             idnumberController.text = user?.id_number.toString() ?? '';
           }
-
+          if (user != null && user!.delivery_fee != null) {
+            // ابحث عن الخيار الذي بعد ضرب السعر الأساسي بـ 1.15 يساوي قيمة user.delivery_fee
+            final matching = delivry_fees.firstWhere(
+              (item) {
+                // نحصل على السعر الأساسي من العنصر، والذي يكون int
+                final int baseFee = item.values.first as int;
+                // نحسب السعر النهائي بعد إضافة 15%
+                final double finalFee = baseFee * 1.15;
+                // للتعامل مع فروقات بسيطة بسبب الكسور، يمكننا استخدام مقارنة تقريبية
+                return (finalFee - (user!.delivery_fee ?? 0.0)).abs() < 0.01;
+              },
+              orElse: () => delivry_fees.first,
+            );
+            setState(() {
+              selectedDeliveryFee = matching;
+            });
+          }
           isLoading = false;
         });
       } else {
@@ -121,11 +153,22 @@ class _RegistrationPageState extends State<RegistrationPage> {
       final name = nameController.text.trim();
       final phone = phoneController.text.trim();
       final email = emailController.text.trim();
-
+      final deliveryFee =
+          selectedDeliveryFee != null ? selectedDeliveryFee!.values.first : 0;
       final idnumber = idnumberController.text.trim();
       final iban = ibanController.text.trim();
-      final success = await apiService.updateProfile(name, phone, email,
-          isServiceProvider, idnumber, nationality, bankController, iban);
+      final orderLimitPerDay = orderLimitPerDayController.text.trim();
+      final success = await apiService.updateProfile(
+          name,
+          phone,
+          email,
+          isServiceProvider,
+          idnumber,
+          nationality,
+          bankController,
+          iban,
+          orderLimitPerDay,
+          deliveryFee);
 
       setState(() {
         isLoading = false;
@@ -162,17 +205,23 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
       final idnumber = idnumberController.text.trim();
       final iban = ibanController.text.trim();
+      final orderLimitPerDay = orderLimitPerDayController.text.trim();
+      final deliveryFee =
+          selectedDeliveryFee != null ? selectedDeliveryFee!.values.first : 0;
       final success = await apiService.register(
-          name,
-          phone,
-          email,
-          password,
-          passwordConfirmation,
-          isServiceProvider,
-          idnumber,
-          nationality,
-          bankController,
-          iban);
+        name,
+        phone,
+        email,
+        password,
+        passwordConfirmation,
+        isServiceProvider,
+        idnumber,
+        nationality,
+        bankController,
+        iban,
+        orderLimitPerDay,
+        deliveryFee,
+      );
 
       setState(() {
         isLoading = false;
@@ -184,7 +233,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
           const SnackBar(content: Text('تم التسجيل بنجاح!')),
         );
         // يمكن الانتقال إلى صفحة أخرى إذا لزم الأمر
-        Navigator.pushReplacementNamed(context, '/');
+        (isServiceProvider == true)
+            ? Navigator.pushReplacementNamed(context, '/update_location')
+            : Navigator.pushReplacementNamed(context, '/');
       } else {
         // عرض رسالة خطأ إذا فشل التسجيل
         setState(() {
@@ -203,6 +254,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
     if (isServiceProvider == true) {
       idnumberController.dispose();
       ibanController.dispose();
+      orderLimitPerDayController.dispose();
     }
     super.dispose();
   }
@@ -416,6 +468,48 @@ class _RegistrationPageState extends State<RegistrationPage> {
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'يرجى إدخال IBAN الايبان ';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: orderLimitPerDayController,
+                      decoration: const InputDecoration(
+                        labelText: 'حد استقبال الطلبات باليوم',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'يرجى ادخال الحد';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    DropdownButtonFormField<Map<String, int>>(
+                      decoration: const InputDecoration(
+                        labelText: 'رسوم التوصيل',
+                        border: OutlineInputBorder(),
+                      ),
+                      value: selectedDeliveryFee,
+                      items: delivry_fees.map((fee) {
+                        final key = fee.keys.first; // على سبيل المثال "15 SAR"
+                        return DropdownMenuItem<Map<String, int>>(
+                          value: fee,
+                          child: Text(key),
+                        );
+                      }).toList(),
+                      onChanged: (Map<String, int>? newValue) {
+                        setState(() {
+                          selectedDeliveryFee = newValue;
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null) {
+                          return 'يرجى اختيار رسوم التوصيل';
                         }
                         return null;
                       },

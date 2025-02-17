@@ -51,8 +51,12 @@ class _ProfilepageState extends State<Profilepage> {
                 InkWell(
                   onTap: () {
                     ApiConfig apiConfig = ApiConfig();
-                    apiConfig.logout();
-                    Navigator.pushReplacementNamed(context, '/');
+                    if (userID == null) {
+                      Navigator.pushReplacementNamed(context, '/login');
+                    } else {
+                      apiConfig.logout();
+                      Navigator.pushReplacementNamed(context, '/');
+                    }
                   },
                   child: Container(
                       height: 50,
@@ -63,7 +67,7 @@ class _ProfilepageState extends State<Profilepage> {
                         color: Color(0XFFEF5B2C),
                       ),
                       child: H2Text(
-                        text: "تسجيل لخروج",
+                        text: userID == null ? "تسجيل الدخول" : "تسجيل لخروج",
                         textColor: Colors.white,
                       )),
                 )
@@ -76,7 +80,7 @@ class _ProfilepageState extends State<Profilepage> {
           Wrap(
             spacing: 10,
             runSpacing: 10,
-            children: _NormalUserprofileSections(),
+            children: (userID != null) ? _NormalUserprofileSections() : [],
           ),
           if (isServiceProvider == 1) ...[
             SizedBox(
@@ -122,6 +126,14 @@ class _ProfilepageState extends State<Profilepage> {
         height: 120,
         route: '/shopping_cert',
       ),
+      boxWidget(
+        title: 'حذف الحساب',
+        icon: Icons.archive,
+        iconSize: 50,
+        width: 100,
+        height: 120,
+        route: '/account_delete',
+      ),
     ];
   }
 
@@ -135,24 +147,29 @@ class _ProfilepageState extends State<Profilepage> {
         width: 100,
         height: 120,
       ),
-      boxWidget(
-        title: 'خدماتي',
-        icon: Icons.list,
-        route: '/user_page',
-        data: [userID, userName],
-        iconSize: 50,
-        width: 100,
-        height: 120,
+      InkWell(
+        onTap: () {
+          print(userID);
+          Navigator.pushNamed(context, '/user_page',
+              arguments: {"id": userID, "title": userName});
+        },
+        child: boxWidget(
+          title: 'خدماتي',
+          icon: Icons.list,
+          iconSize: 50,
+          width: 100,
+          height: 120,
+        ),
       ),
-      boxWidget(
-        title: 'الاحياء التي اعمل بها',
-        icon: FontAwesomeIcons.mapLocation,
-        route: '/my_districts',
-        data: [userID, userName],
-        iconSize: 50,
-        width: 100,
-        height: 120,
-      ),
+      // boxWidget(
+      //   title: 'الاحياء التي اعمل بها',
+      //   icon: FontAwesomeIcons.mapLocation,
+      //   route: '/my_districts',
+      //   data: [userID, userName],
+      //   iconSize: 50,
+      //   width: 100,
+      //   height: 120,
+      // ),
       boxWidget(
         title: 'مستحقاتي',
         icon: FontAwesomeIcons.moneyCheck,
@@ -166,6 +183,24 @@ class _ProfilepageState extends State<Profilepage> {
         title: 'تحديث الموقع',
         icon: FontAwesomeIcons.locationCrosshairs,
         route: '/update_location',
+        data: [userID, userName],
+        iconSize: 50,
+        width: 100,
+        height: 120,
+      ),
+      boxWidget(
+        title: 'اوقات العمل',
+        icon: FontAwesomeIcons.clock,
+        route: '/update_times',
+        data: [userID, userName],
+        iconSize: 50,
+        width: 100,
+        height: 120,
+      ),
+      boxWidget(
+        title: 'الاجازات',
+        icon: FontAwesomeIcons.businessTime,
+        route: '/vacation_page',
         data: [userID, userName],
         iconSize: 50,
         width: 100,

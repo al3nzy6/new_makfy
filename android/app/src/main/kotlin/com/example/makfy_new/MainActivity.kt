@@ -1,4 +1,4 @@
-package com.example.makfy_new
+package sa.makfy.app
 
 import io.flutter.embedding.android.FlutterActivity
 

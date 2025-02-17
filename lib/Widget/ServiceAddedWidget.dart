@@ -15,24 +15,27 @@ class ServiceAddedWidget extends StatefulWidget {
   final bool? currentUserIsTheProvider;
   final List? imageUrl;
   final Service? service;
+  final bool? isLogin;
   int? count;
   bool? isPaid;
   final Function(dynamic)? onChanged;
 
-  ServiceAddedWidget(
-      {required this.title,
-      this.fields,
-      required this.serviceProvider,
-      required this.price,
-      required this.id,
-      this.imageUrl,
-      this.service,
-      this.date,
-      this.time,
-      this.isPaid,
-      this.count = 0, // تأكيد أن count يبدأ بـ 0
-      this.onChanged,
-      this.currentUserIsTheProvider});
+  ServiceAddedWidget({
+    required this.title,
+    this.fields,
+    required this.serviceProvider,
+    required this.price,
+    required this.id,
+    this.imageUrl,
+    this.service,
+    this.date,
+    this.time,
+    this.isPaid,
+    this.count = 0, // تأكيد أن count يبدأ بـ 0
+    this.onChanged,
+    this.currentUserIsTheProvider,
+    this.isLogin,
+  });
 
   @override
   State<ServiceAddedWidget> createState() => _ServiceAddedWidgetState();
@@ -157,12 +160,21 @@ class _ServiceAddedWidgetState extends State<ServiceAddedWidget> {
                 if (widget.isPaid == null || widget.isPaid == false) ...[
                   InkWell(
                     onTap: () {
-                      setState(() {
-                        (widget.count != null)
-                            ? widget.count = widget.count! + 1
-                            : widget.count = 1;
-                        widget.onChanged?.call(widget.count);
-                      });
+                      if (widget.isLogin == false) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text(
+                                  'يجب تسجيل الدخول او التسجيل للاستفادة من كامل خدمات التطبيق')),
+                        );
+                      }
+                      if (widget.isLogin == true) {
+                        setState(() {
+                          (widget.count != null)
+                              ? widget.count = widget.count! + 1
+                              : widget.count = 1;
+                          widget.onChanged?.call(widget.count);
+                        });
+                      }
                     },
                     child: Icon(
                       Icons.add,

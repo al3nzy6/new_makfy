@@ -70,6 +70,12 @@ class _UpdateLocationScreenState extends State<UpdateLocationScreen> {
       });
       if (success) {
         _fetchCurrentLocationFromDatabase(); // Refresh the current location
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تم تحديث الموقع بنجاح!')),
+        );
+        // يمكن الانتقال إلى صفحة أخرى إذا لزم الأمر
+        Navigator.pushReplacementNamed(context, '/update_times');
       }
     } catch (e) {
       setState(() {

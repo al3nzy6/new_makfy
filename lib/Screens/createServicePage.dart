@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:makfy_new/Models/Category.dart';
+import 'package:makfy_new/Models/Option.dart';
 import 'package:makfy_new/Utilities/ApiConfig.dart';
 import 'package:makfy_new/Widget/FieldWidget.dart';
 import 'package:makfy_new/Widget/H1textWidget.dart';
@@ -22,8 +23,16 @@ class _createServicePageState extends State<createServicePage> {
   Map<String, dynamic> fieldResults = {};
   final ApiConfig apiConfig = ApiConfig();
   final _formKey = GlobalKey<FormState>();
+  String? fromDate;
+  String? toDate;
+  dynamic selectedTimeType = '';
   Map<String, dynamic>? serviceData; // تخزين بيانات الخدمة عند التعديل
   bool ButtonIsPressed = false;
+  List<Map<String, dynamic>> optionsList = [
+    Option(id: 1, name: "دقيقة").toJson(),
+    Option(id: 2, name: "ساعة").toJson(),
+    Option(id: 3, name: "يوم").toJson(),
+  ];
 
   @override
   void didChangeDependencies() {
@@ -34,9 +43,14 @@ class _createServicePageState extends State<createServicePage> {
       name = arguments[1];
       serviceId = arguments.length > 2 ? arguments[2] : null;
       if (serviceId != null) {
-        _getServiceData(serviceId!); // في حال التعديل
+        // تأجيل استدعاء setState()
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _getServiceData(serviceId!);
+        });
       } else {
-        _getTheCategory(); // في حال الإضافة
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _getTheCategory();
+        });
       }
     }
   }
@@ -85,11 +99,21 @@ class _createServicePageState extends State<createServicePage> {
           'title': fetchedServiceData.title,
           'price': fetchedServiceData.priceWithOutCommission,
           'description': fetchedServiceData.description,
+          'time_to_beready_value': fetchedServiceData.time_to_beready_value,
+          'time_to_beready_type': fetchedServiceData.time_to_beready_type,
+          'available_from': fetchedServiceData.available_from,
+          'available_to': fetchedServiceData.available_to,
         };
         // تخزين القيم الافتراضية في fieldResults
         fieldResults['title'] = serviceData?['title'] ?? '';
         fieldResults['price'] = serviceData?['price'] ?? '';
         fieldResults['description'] = serviceData?['description'] ?? '';
+        fieldResults['time_to_beready_value'] =
+            serviceData?['time_to_beready_value'] ?? 1;
+        fieldResults['time_to_beready_type'] =
+            serviceData?['time_to_beready_type'] ?? 1;
+        fieldResults['available_from'] = serviceData?['available_from'] ?? '';
+        fieldResults['available_to'] = serviceData?['available_to'] ?? '';
         fieldsWidget = fetchedServiceData.customFields?.map((field) {
               final options =
                   field.options?.map((option) => option.toJson()).toList() ??
@@ -99,6 +123,8 @@ class _createServicePageState extends State<createServicePage> {
                 name: field.name,
                 showName: field.showName,
                 type: field.type,
+                width: 0.9,
+
                 required: (field.type != 'File') ? field.required : null,
                 initialValue:
                     (field.insertedValue != null && field.type == 'Select')
@@ -135,6 +161,7 @@ class _createServicePageState extends State<createServicePage> {
                 showName: "${field.showName}:",
                 type: field.type,
                 required: field.required,
+                width: 0.9,
                 onChanged: (value) {
                   fieldResults[field.name] = value;
                 },
@@ -164,19 +191,13 @@ class _createServicePageState extends State<createServicePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             H1text(text: serviceId != null ? 'تعديل الخدمة' : 'إنشاء الخدمة'),
-            SizedBox(height: 10),
-            H2Text(
-              lines: 10,
-              textColor: Colors.red,
-              text:
-                  "عزيزي مقدم الخدمه ان لم يكن التوصيل مجانا من قبلكم .. رجاءً اضف قيمة سعر التوصيل لديكم كصنف من اصناف الخدمه المقدمه من قبلكم ليتم دفعها من قبل العميل ويجب ان تكون اول خدمه تقوم باضافتها",
-            ),
             SizedBox(height: 20),
             FieldWidget(
               id: 2,
               name: "title",
               showName: "اسم الخدمة:",
               type: "String",
+              width: 0.9,
               required: true,
               initialValue: serviceData?['title'], // عرض الاسم عند التعديل
               onChanged: (value) {
@@ -188,6 +209,7 @@ class _createServicePageState extends State<createServicePage> {
               name: "price",
               showName: "السعر:",
               type: "String",
+              width: 0.9,
               required: true,
               initialValue: serviceData?['price'], // عرض السعر عند التعديل
               onChanged: (value) {
@@ -198,6 +220,7 @@ class _createServicePageState extends State<createServicePage> {
               id: 2,
               name: "description",
               showName: "وصف مختصر للخدمة:",
+              width: 0.9,
               type: "String",
               required: true,
               initialValue:
@@ -205,6 +228,80 @@ class _createServicePageState extends State<createServicePage> {
               onChanged: (value) {
                 fieldResults['description'] = value;
               },
+            ),
+            H2Text(
+                lines: 4,
+                text:
+                    " اختر الفترة الزمنية مثلاً ساعه وادخل عدد الساعات بخانة الفترة الزمنية وهي الفترة التي تحتاجتها لتجهيز الخدمة مثلا 5 واختر من القائمة ساعة تحتاج ٥ ساعات لتجهيز الطلب"),
+            Row(
+              children: [
+                FieldWidget(
+                  id: 122,
+                  width: 0.4,
+                  name: "time_to_beready_value",
+                  type: "Int",
+                  hint: "الفترة الزمنية",
+                  initialValue: serviceData?['time_to_beready_value'],
+                  onChanged: (value) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      setState(() {
+                        fieldResults['time_to_beready_value'] = value;
+                      });
+                    });
+                  },
+                  required: true,
+                ),
+                FieldWidget(
+                  id: 122,
+                  width: 0.5,
+                  name: "time_to_beready_type",
+                  type: "Select",
+                  initialValue: serviceData?['time_to_beready_type'] ?? null,
+                  onChanged: (value) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      setState(() {
+                        selectedTimeType = value;
+                      });
+                    });
+                  },
+                  hint: "اختر نوع الفترة الزمنية",
+                  required: true,
+                  options: optionsList,
+                ),
+              ],
+            ),
+            FieldWidget(
+              id: 122,
+              width: 0.5,
+              name: "available_from",
+              type: "Date",
+              showName: "متوفر من تاريخ",
+              initialValue: serviceData?['available_from'] ?? null,
+              onChanged: (value) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  setState(() {
+                    fromDate = value;
+                  });
+                });
+              },
+              required: true,
+            ),
+            FieldWidget(
+              id: 122,
+              width: 0.5,
+              name: "available_to",
+              showName: "متوفر حتى تاريخ",
+              type: "Date",
+              initialValue: serviceData?['available_to'],
+              onChanged: (value) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  setState(() {
+                    toDate = value;
+                  });
+                });
+              },
+              hint: "اختر نوع الفترة الزمنية",
+              required: true,
             ),
             ...fieldsWidget,
             InkWell(
@@ -218,6 +315,13 @@ class _createServicePageState extends State<createServicePage> {
                                   ? 'جاري تحديث الخدمة'
                                   : 'جاري إنشاء الخدمة')),
                         );
+                        setState(() {
+                          fieldResults['available_from'] = fromDate;
+                          fieldResults['available_to'] = toDate;
+                          fieldResults['time_to_beready_type'] =
+                              selectedTimeType;
+                        });
+                        print(toDate);
                         _submitFunction(fieldResults);
                       }
                     }

@@ -8,6 +8,7 @@ import 'package:makfy_new/Models/District.dart';
 import 'package:makfy_new/Models/Service.dart';
 import 'package:makfy_new/Models/User.dart';
 import 'package:makfy_new/Models/SubCategory.dart';
+import 'package:makfy_new/Models/Vacation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path/path.dart';
 import 'package:geolocator/geolocator.dart';
@@ -26,6 +27,7 @@ class ApiConfig {
 
   // Function to get the categories from the API
   static Future<List<Category>> getCategories() async {
+    print(apiUrl);
     final url = Uri.parse("$apiUrl/categories");
     final token = await ApiConfig().getToken();
 
@@ -66,7 +68,6 @@ class ApiConfig {
     final url = (latitude == null)
         ? Uri.parse("${apiUrl}/category/${id}")
         : Uri.parse("${apiUrl}/category/${id}/${latitude}/${longtitude}");
-    print(id);
     try {
       final authHeader = await ApiConfig.getAuthHeaders();
       final response = await http.get(url, headers: authHeader);
@@ -104,8 +105,8 @@ class ApiConfig {
   static Future<User> getUserProfile(int id) async {
     final url = Uri.parse("${apiUrl}/user/$id/profile");
     try {
-      final authHeader = await ApiConfig.getAuthHeaders();
-      final response = await http.get(url, headers: authHeader);
+      // final authHeader = await ApiConfig.getAuthHeaders();
+      final response = await http.get(url);
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
@@ -276,17 +277,22 @@ class ApiConfig {
     await prefs.setString('auth_token', token);
   }
 
+  static Future<bool> isLoggedIn() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.containsKey('auth_token');
+  }
+
   Future<void> saveUserData(Map<String, dynamic> userData) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('user_name', userData['name']);
     await prefs.setString('user_email', userData['email']);
+    await prefs.setInt('user_id', userData['id']);
     if (userData['id_number'] != null || userData['id_number'] != '') {
       await prefs.setInt('isServiceProvider', 1);
     }
     if (userData['id_number'] == null) {
       await prefs.setInt('isServiceProvider', 0);
     }
-    await prefs.setInt('user_id', userData['id']);
   }
 
   static Future<int?> getUserId() async {
@@ -407,7 +413,9 @@ class ApiConfig {
       String? idnumber,
       String? nationality,
       String? bank,
-      String? iban) async {
+      String? iban,
+      String? order_limit_per_day,
+      int? deliveryFee) async {
     final url = Uri.parse('$apiUrl/register');
     final response = await http.post(
       url,
@@ -423,6 +431,8 @@ class ApiConfig {
         'nationality': nationality ?? null,
         'bank': bank ?? null,
         'iban': iban ?? null,
+        'order_limit_per_day': order_limit_per_day ?? null,
+        'delivery_fee': deliveryFee ?? null,
       }),
     );
 
@@ -450,7 +460,9 @@ class ApiConfig {
       String? idnumber,
       String? nationality,
       String? bank,
-      String? iban) async {
+      String? iban,
+      String? order_limit_per_day,
+      int? deliveryFee) async {
     final url = Uri.parse('$apiUrl/profile/update');
     final response = await http.put(
       url,
@@ -467,6 +479,8 @@ class ApiConfig {
         'nationality': nationality,
         'bank': bank,
         'iban': iban,
+        'order_limit_per_day': order_limit_per_day,
+        'delivery_fee': deliveryFee,
       }),
     );
 
@@ -482,8 +496,8 @@ class ApiConfig {
     }
   }
 
-  static Future<Map<String, dynamic>> updateCart(
-      Map<int, dynamic> data, Cart? cart, String datatimestamp) async {
+  static Future<Map<String, dynamic>> updateCart(Map<int, dynamic> data,
+      Cart? cart, String datatimestamp, bool? delivery_is_required) async {
     final url = (cart != null)
         ? Uri.parse('$apiUrl/cart/update')
         : Uri.parse('$apiUrl/cart/create');
@@ -491,6 +505,8 @@ class ApiConfig {
     final formattedData =
         data.map((key, value) => MapEntry(key.toString(), value.toString()));
     formattedData['service_datetime'] = datatimestamp;
+    formattedData['delivery_is_required'] =
+        delivery_is_required == true ? "1" : "0";
     final response = await http.post(
       url, // Ensure this endpoint is correct
       headers: {...authHeader, 'Content-Type': 'application/json'},
@@ -729,16 +745,16 @@ class ApiConfig {
     }
   }
 
-  static Future<Category> searchServices(Map<String, dynamic> filters) async {
-    final url = Uri.parse("${apiUrl}/category/filter");
+  static Future<Category> searchServices(Map<String, dynamic> filters,
+      double? latitude, double? longtitude) async {
+    final url = (latitude == null)
+        ? Uri.parse("${apiUrl}/category/filter")
+        : Uri.parse("${apiUrl}/category/filter/${latitude}/${longtitude}");
     try {
       final authHeader = await ApiConfig.getAuthHeaders();
       final response = await http.post(
         url,
-        headers: {
-          ...authHeader,
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode(filters),
       );
       // print(jsonEncode(filters));
@@ -817,10 +833,12 @@ class ApiConfig {
       int userID, String date, String time) async {
     final url = Uri.parse(
         '$apiUrl/user/checkTime/$userID'); // استبدل المسار حسب API الخاص بك
-    final headers = await getAuthHeaders();
+    // final headers = await getAuthHeaders();
+    print('$apiUrl/user/checkTime/$userID');
     try {
       final response = await http.post(url,
-          headers: headers, body: jsonEncode({"date": date, "time": time}));
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({"date": date, "time": time}));
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
@@ -994,6 +1012,87 @@ class ApiConfig {
     }
   }
 
+  static Future<bool> updateUserWorkingTime(
+      String startTime, String EndTime) async {
+    try {
+      // استدعاء API لإرسال الطول والعرض
+      final url = Uri.parse("${apiUrl}/user/updateWorkingHours");
+      final authHeader = await ApiConfig.getAuthHeaders();
+
+      final response = await http.post(
+        url,
+        headers: {
+          ...authHeader,
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'start_time': startTime,
+          'end_time': EndTime,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print("Time updated successfully.");
+        return true;
+      } else {
+        print("Failed to update Time. Status code: ${response.statusCode}");
+        return false;
+      }
+    } catch (e) {
+      print("Error updating user Time: $e");
+      return false;
+    }
+  }
+
+  static Future<Map<String, dynamic>?> getUserWorkingHours() async {
+    final url = Uri.parse("$apiUrl/user/getWorkingHours");
+    final authHeader = await getAuthHeaders();
+
+    try {
+      final response = await http.get(
+        url,
+        headers: authHeader,
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        return jsonResponse['data']; // يحتوي على latitude و longitude
+      } else {
+        throw Exception(
+            "Failed to fetch working time. Status code: ${response.statusCode}");
+      }
+    } catch (e) {
+      throw Exception("Error fetching user workingTIme: $e");
+    }
+  }
+
+  static Future<bool> deleteUser() async {
+    try {
+      // استدعاء API لإرسال الطول والعرض
+      final url = Uri.parse("${apiUrl}/user/user_delete");
+      final authHeader = await ApiConfig.getAuthHeaders();
+
+      final response = await http.post(
+        url,
+        headers: {
+          ...authHeader,
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        print("Time updated successfully.");
+        return true;
+      } else {
+        print("Failed to update Time. Status code: ${response.statusCode}");
+        return false;
+      }
+    } catch (e) {
+      print("Error updating user Time: $e");
+      return false;
+    }
+  }
+
   static Future<Map<String, dynamic>?> getUserLocation() async {
     final url = Uri.parse("$apiUrl/user/getLocation");
     final authHeader = await getAuthHeaders();
@@ -1013,6 +1112,106 @@ class ApiConfig {
       }
     } catch (e) {
       throw Exception("Error fetching user location: $e");
+    }
+  }
+
+  static Future<Vacation?> createVacation(Vacation vacation) async {
+    final url = Uri.parse("$apiUrl/user/vacations");
+    final authHeader = await ApiConfig.getAuthHeaders();
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {...authHeader, 'Content-Type': 'application/json'},
+        body: jsonEncode(vacation.toMap()), // تحويل الكائن إلى Map
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = json.decode(response.body)['data'];
+        return Vacation.fromMap(data); // تحويل الاستجابة إلى كائن Vacation
+      } else {
+        print("Failed to create vacation. Status code: ${response.statusCode}");
+        return null;
+      }
+    } catch (e) {
+      print("Error creating vacation: $e");
+      return null;
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> getVacations() async {
+    final url = Uri.parse("$apiUrl/user/vacations");
+    final authHeader = await ApiConfig.getAuthHeaders();
+
+    try {
+      final response = await http.get(url, headers: authHeader);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+
+        if (jsonResponse.containsKey('data') && jsonResponse['data'] is List) {
+          return List<Map<String, dynamic>>.from(jsonResponse['data']);
+        } else {
+          throw Exception(
+              "Invalid response format: 'data' is missing or invalid.");
+        }
+      } else {
+        throw Exception(
+            "Failed to fetch vacations. Status code: ${response.statusCode}");
+      }
+    } catch (e) {
+      throw Exception("Error fetching vacations: $e");
+    }
+  }
+
+  static Future<Vacation?> updateVacation(
+      int vacationId, Vacation updatedVacation) async {
+    final url = Uri.parse("$apiUrl/user/vacations/$vacationId");
+    final authHeader = await ApiConfig.getAuthHeaders();
+
+    try {
+      final response = await http.put(
+        url,
+        headers: {...authHeader, 'Content-Type': 'application/json'},
+        body: updatedVacation.toJson(), // تحويل Vacation إلى JSON
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body)['data'];
+        return Vacation.fromMap(data); // إرجاع Vacation بعد التحديث
+      } else {
+        print("Failed to update vacation. Status code: ${response.statusCode}");
+        return null;
+      }
+    } catch (e) {
+      print("Error updating vacation: $e");
+      return null;
+    }
+  }
+
+  static Future<bool> deleteVacation(int vacationId) async {
+    final url = Uri.parse("$apiUrl/user/vacations/$vacationId");
+    final authHeader = await ApiConfig.getAuthHeaders();
+
+    try {
+      final response = await http.delete(
+        url,
+        headers: {
+          ...authHeader,
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        print("Vacation deleted successfully.");
+        return true;
+      } else {
+        print("Failed to delete vacation. Status code: ${response.statusCode}");
+        return false;
+      }
+    } catch (e) {
+      print("Error deleting vacation: $e");
+      return false;
     }
   }
 
