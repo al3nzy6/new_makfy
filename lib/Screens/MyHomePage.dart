@@ -5,6 +5,7 @@ import 'package:makfy_new/Utilities/ApiConfig.dart';
 import 'package:makfy_new/Widget/H1textWidget.dart';
 import 'package:makfy_new/Widget/MainScreenWidget.dart';
 import 'package:makfy_new/Widget/boxWidget.dart';
+import 'package:makfy_new/Widget/fontIcon.dart';
 import 'package:makfy_new/Widget/serviceProviderWidget.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -40,6 +41,7 @@ class _MyHomePageState extends State<MyHomePage> {
               return boxWidget(
                 title: category.name,
                 route: "/main_section",
+                icon: fontAwesomeIconMappings[category.icon],
                 data: [category.id, category.name],
               );
             }).toList() ??

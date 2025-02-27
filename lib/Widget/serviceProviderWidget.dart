@@ -42,7 +42,7 @@ class serviceProviderWidget extends StatelessWidget {
         })
       },
       child: ShadowBoxWidget(
-        height: (total == null) ? 45 : 120,
+        height: (total == null) ? 70 : 120,
         child: Column(
           children: [
             Row(
@@ -50,18 +50,27 @@ class serviceProviderWidget extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(top: 2),
+                  padding: const EdgeInsets.only(top: 14),
                   child: H1text(
                     text: title,
-                    size: 20,
+                    size: 22,
+                    maxWords: 2,
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.only(top: 10),
+                  padding: const EdgeInsets.only(top: 20),
                   child: RatingWidget(
                     stars: averageRating ?? 0,
                     ratingCount: countRating ?? "0",
                     userId: id,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 15),
+                  child: Icon(
+                    Icons.arrow_forward_ios,
+                    size: 40,
+                    color: const Color.fromARGB(255, 255, 94, 0),
                   ),
                 ),
               ],

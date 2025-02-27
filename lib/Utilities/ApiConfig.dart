@@ -354,7 +354,18 @@ class ApiConfig {
         final id = json.decode(responseBody)['data']['id'];
         return [id, 'تم إنشاء الخدمة'];
       } else {
-        return [null, 'يوجد خلل لم يتم إنشاء الخدمة ${response.statusCode}'];
+        final responseBody = await response.stream.bytesToString();
+        final decodedBody = json.decode(responseBody);
+        if (response.statusCode == 422) {
+          final errors = decodedBody['errors'] as Map<String, dynamic>;
+          String errorMessages = errors.entries
+              .map((e) =>
+                  "${e.value.join(", ")}") // تحويل قائمة الأخطاء إلى نصوص مفصولة بفاصلة
+              .join("\n");
+          return [null, 'يوجد أخطاء:\n$errorMessages'];
+        } else {
+          return [null, 'يوجد خلل لم يتم إنشاء الخدمة ${response.statusCode}'];
+        }
       }
     } catch (e) {
       throw Exception("خطأ أثناء إرسال البيانات: $e");

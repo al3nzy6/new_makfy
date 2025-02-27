@@ -106,6 +106,7 @@ class _ProfilepageState extends State<Profilepage> {
       boxWidget(
         title: 'طلباتي',
         route: '/my_orders',
+        icon: FontAwesomeIcons.cartFlatbed,
         width: 120,
         height: 120,
         iconSize: 40,

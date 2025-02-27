@@ -652,6 +652,13 @@ class _SubsectionpageState extends State<Subsectionpage> {
             height: 10,
           ),
           Wrap(spacing: 10, runSpacing: 10, children: [
+            if (serviceProviders.length == 0)
+              Container(
+                margin: EdgeInsets.all(30),
+                child: Center(
+                  child: Text("لا يوجد موفري خدمات بالقرب منك"),
+                ),
+              ),
             ...serviceProviders,
             // ...services,
           ]),

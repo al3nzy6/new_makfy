@@ -1,8 +1,8 @@
-name: makfy_new
+name: "makfy_new"
 description: "this is Makfy App it's application that any one needs to have services."
 publish_to: 'none'
 
-version: 1.0.1+2
+version: 1.0.2+1
 
 environment:
   sdk: ">=3.5.0 <4.0.0"
@@ -24,7 +24,7 @@ dependencies:
   equatable: ^2.0.5
   fan_carousel_image_slider: ^1.0.1
   font_awesome_flutter: ^10.8.0
-  shared_preferences: ^2.3.2
+  shared_preferences: ^2.5.2
   image_picker: ^1.1.2
   flutter_rating_bar: ^4.0.1
   flutter_launcher_icons: ^0.14.1

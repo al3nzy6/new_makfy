@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:makfy_new/Models/Category.dart';
 import 'package:makfy_new/Models/Service.dart';
 import 'package:makfy_new/Models/SubCategory.dart';
@@ -8,6 +9,7 @@ import 'package:makfy_new/Widget/MainScreenWidget.dart';
 import 'package:makfy_new/Widget/ServiceAddedWidget.dart';
 import 'package:makfy_new/Widget/appHeadWidget.dart';
 import 'package:makfy_new/Widget/boxWidget.dart';
+import 'package:makfy_new/Widget/fontIcon.dart';
 import 'package:makfy_new/Widget/serviceProviderWidget.dart';
 
 class Mainsectionpage extends StatefulWidget {
@@ -34,6 +36,7 @@ class _MainsectionpageState extends State<Mainsectionpage> {
               return boxWidget(
                 title: subcat.name,
                 route: '/sub_section',
+                icon: fontAwesomeIconMappings[subcat.icon],
                 data: [subcat.id, subcat.name],
               );
             }).toList() ??
@@ -89,7 +92,15 @@ class _MainsectionpageState extends State<Mainsectionpage> {
           Wrap(
             spacing: 10,
             runSpacing: 10,
-            children: categoryWidgets,
+            children: [
+              if (categoryWidgets.isEmpty)
+                Container(
+                  child: Center(
+                    child: Text('لا يوجد اقسام فرعية'),
+                  ),
+                ),
+              ...categoryWidgets
+            ],
           ),
           SizedBox(
             height: 40,

@@ -37,7 +37,7 @@ class boxWidget extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     return Container(
-      height: (height == null) ? math.min(135, screenHeight * 0.15) : height,
+      height: (height == null) ? math.min(135, screenHeight * 0.20) : height,
       width: (width == null) ? math.min(190, screenWidth * 0.4) : width,
       decoration: BoxDecoration(
         // color: Colors.black,
@@ -61,7 +61,7 @@ class boxWidget extends StatelessWidget {
                     margin: EdgeInsets.only(top: 8),
                     child: Icon(
                       icon,
-                      size: (iconSize == null) ? screenWidth * 0.20 : iconSize,
+                      size: (iconSize == null) ? screenWidth * 0.15 : iconSize,
                       color: Color(0XFFEF5B2C),
                     ),
                   ) // عرض الأيقونة إذا كانت غير null
