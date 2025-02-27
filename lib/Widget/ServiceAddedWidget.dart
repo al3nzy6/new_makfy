@@ -3,6 +3,7 @@ import 'package:makfy_new/Models/Service.dart';
 import 'package:makfy_new/Models/User.dart';
 import 'package:makfy_new/Widget/H2Text.dart';
 import 'package:makfy_new/Widget/ShadowBoxWidget.dart';
+import 'package:makfy_new/Widget/lib/utils/string_utils.dart';
 
 class ServiceAddedWidget extends StatefulWidget {
   final String title;
@@ -115,8 +116,8 @@ class _ServiceAddedWidgetState extends State<ServiceAddedWidget> {
                             Text(
                               (widget.imageUrl!.isEmpty &&
                                       widget.service!.is_available == false)
-                                  ? "${widget.title} (غير متوفر)"
-                                  : "${widget.title}",
+                                  ? "${StringUtils.limitWords(widget.title, 3)} (غير متوفر)"
+                                  : "${StringUtils.limitWords(widget.title, 3)}",
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,

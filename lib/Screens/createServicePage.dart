@@ -208,7 +208,7 @@ class _createServicePageState extends State<createServicePage> {
               id: 2,
               name: "price",
               showName: "السعر:",
-              type: "String",
+              type: "Int",
               width: 0.9,
               required: true,
               initialValue: serviceData?['price'], // عرض السعر عند التعديل

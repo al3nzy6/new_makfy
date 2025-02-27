@@ -394,6 +394,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   const SizedBox(height: 20),
                   if (isServiceProvider == true) ...[
                     TextFormField(
+                      keyboardType: TextInputType.number,
                       controller: idnumberController,
                       readOnly:
                           (isEdit != null && isEdit == true) ? true : false,
@@ -474,6 +475,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     ),
                     const SizedBox(height: 20),
                     TextFormField(
+                      keyboardType: TextInputType.number,
                       controller: orderLimitPerDayController,
                       decoration: const InputDecoration(
                         labelText: 'حد استقبال الطلبات باليوم',
