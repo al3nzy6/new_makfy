@@ -189,17 +189,19 @@ class _userServicesPageState extends State<userServicesPage> {
     String response =
         await ApiConfig.checkAvailableTime(serviceProviderID, date, time);
     try {
-      setState(() {
-        if (response != 'Not Available') {
-          timeIsAvailable = true;
-          dateTimeStamp = response;
-          checkTimePressed = false;
-        } else {
-          timeIsAvailable = false;
-          checkTimePressed = false;
-          timeisNotAvailableText = "الوقت الذي اخترته غير متاح";
-        }
-      });
+      if (mounted) {
+        setState(() {
+          if (response != 'Not Available') {
+            timeIsAvailable = true;
+            dateTimeStamp = response;
+            checkTimePressed = false;
+          } else {
+            timeIsAvailable = false;
+            checkTimePressed = false;
+            timeisNotAvailableText = "الوقت الذي اخترته غير متاح";
+          }
+        });
+      }
     } catch (e) {}
   }
 

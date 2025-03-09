@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:makfy_new/Widget/lib/utils/MyRouteObserver.dart';
 import 'package:makfy_new/routes.dart';
 
 void main() {
@@ -14,6 +15,7 @@ class MakfyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorObservers: [routeObserver],
       title: 'Makfy',
       theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),

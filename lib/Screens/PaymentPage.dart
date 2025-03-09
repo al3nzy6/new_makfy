@@ -72,7 +72,7 @@ class _PaymentWidgetState extends State<PaymentWidget> {
         throw Exception("Price must be greater than 0.");
       }
       return PaymentConfig(
-        publishableApiKey: 'pk_test_awoFqrQ77zViZGzvo1NiH7cjiGffpVN7Dx4TfzMQ',
+        publishableApiKey: 'pk_live_rxvsa8sxcFa6ujt7Ghqv8NnyMwgB4kd2E83eUVco',
         amount: (widget.price * 100).toInt(), // تحويل المبلغ إلى هللات
         description: 'order #${widget.cart_id}',
         metadata: {
