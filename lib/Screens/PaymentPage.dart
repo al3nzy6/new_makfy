@@ -73,7 +73,8 @@ class _PaymentWidgetState extends State<PaymentWidget> {
       }
       return PaymentConfig(
         publishableApiKey: 'pk_live_rxvsa8sxcFa6ujt7Ghqv8NnyMwgB4kd2E83eUVco',
-        amount: (widget.price * 100).toInt(), // تحويل المبلغ إلى هللات
+        // publishableApiKey: 'pk_test_sJyfiRuo4P9VDRqoMcB9TEwm5tBcg6GjWL1PrqWw',
+        amount: (widget.price * 100).round(), // تحويل المبلغ إلى هللات
         description: 'order #${widget.cart_id}',
         metadata: {
           'cart_id': widget.cart_id,
@@ -81,8 +82,8 @@ class _PaymentWidgetState extends State<PaymentWidget> {
         },
         creditCard: CreditCardConfig(saveCard: false, manual: false),
         applePay: ApplePayConfig(
-          merchantId: 'merchant.sa.edu.njd',
-          label: 'Moyaser Payment for Makfy',
+          merchantId: 'merchant.sa.makfy',
+          label: 'Payment for Makfy A-Z',
           manual: false,
         ),
       );

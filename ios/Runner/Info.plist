@@ -35,19 +35,19 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>السماح للتطبيق باستخدام الكاميرا لالتقاط الصور</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>نحتاج إلى الوصول إلى موقعك لعرض موفري الخدمات في منطقتك.</string>
+	<string>لتصوير الصور ورفعها للخدمة او المنتج وعرضها للعملاء</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>نحتاج إلى الوصول إلى موقعك لعرض موفري الخدمات في منطقتك.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>نحتاج إلى الوصول إلى موقعك لعرض موفري الخدمات في منطقتك.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>السماح للتطبيق باستخدام الميكروفون</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>السماح للتطبيق بحفظ الصور في مكتبة الصور</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>السماح للتطبيق بالوصول إلى مكتبة الصور</string>
+	<string>لاختيار الصور ورفعها للخدمة او المنتج وعرضها للعملاء</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
-	<false/> <!-- تم تعديل القيمة -->
+	<false/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

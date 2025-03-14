@@ -12,6 +12,7 @@ import 'package:makfy_new/Widget/H2Text.dart';
 import 'package:makfy_new/Widget/ServiceAddedWidget.dart';
 import 'package:makfy_new/Widget/boxWidget.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:decimal/decimal.dart';
 
 class userServicesPage extends StatefulWidget {
   userServicesPage({super.key});
@@ -693,6 +694,7 @@ class _userServicesPageState extends State<userServicesPage> {
       if (OnlySaveAsCart == false) {
         Navigator.pushNamed(context, '/payment_page', arguments: [
           result['data']['id'],
+          // Decimal.parse(result['data']['total'])
           double.tryParse(result['data']['total']) ?? 0.0
         ]);
       } else {

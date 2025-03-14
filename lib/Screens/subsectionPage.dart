@@ -74,155 +74,155 @@ class _SubsectionpageState extends State<Subsectionpage> {
     }
   }
 
-  Future<void> getCities() async {
-    try {
-      List<City> citiesFromApi = await ApiConfig.getCities();
-      setState(() {
-        cities = citiesFromApi;
-        filteredCities = citiesFromApi;
-      });
-    } catch (e) {
-      print("Error fetching cities: $e");
-    }
-  }
+  // Future<void> getCities() async {
+  //   try {
+  //     List<City> citiesFromApi = await ApiConfig.getCities();
+  //     setState(() {
+  //       cities = citiesFromApi;
+  //       filteredCities = citiesFromApi;
+  //     });
+  //   } catch (e) {
+  //     print("Error fetching cities: $e");
+  //   }
+  // }
 
-  Future<List<District>> getDistricts(int cityId) async {
-    try {
-      City cityFromApi = await ApiConfig.getDistricts(cityId);
-      return cityFromApi.districts ?? [];
-    } catch (e) {
-      print("Error fetching districts: $e");
-      return [];
-    }
-  }
+  // Future<List<District>> getDistricts(int cityId) async {
+  //   try {
+  //     City cityFromApi = await ApiConfig.getDistricts(cityId);
+  //     return cityFromApi.districts ?? [];
+  //   } catch (e) {
+  //     print("Error fetching districts: $e");
+  //     return [];
+  //   }
+  // }
 
-  Future<void> _loadDistricts(int cityId) async {
-    setState(() {
-      isLoading = true;
-    });
-    try {
-      List<District> districts = await getDistricts(cityId);
-      setState(() {
-        filteredDistricts = districts;
-      });
-    } catch (e) {
-      print("Error fetching districts: $e");
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
+  // Future<void> _loadDistricts(int cityId) async {
+  //   setState(() {
+  //     isLoading = true;
+  //   });
+  //   try {
+  //     List<District> districts = await getDistricts(cityId);
+  //     setState(() {
+  //       filteredDistricts = districts;
+  //     });
+  //   } catch (e) {
+  //     print("Error fetching districts: $e");
+  //   } finally {
+  //     setState(() {
+  //       isLoading = false;
+  //     });
+  //   }
+  // }
 
-  Future<void> _showCityPicker(BuildContext context) async {
-    filteredCities = cities;
-    await showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            return Container(
-              height: MediaQuery.of(context).size.height / 2,
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: TextField(
-                      decoration: InputDecoration(
-                        labelText: 'ابحث عن مدينة',
-                        prefixIcon: Icon(Icons.search),
-                      ),
-                      onChanged: (value) {
-                        setState(() {
-                          filteredCities = cities
-                              .where((city) => city.name.contains(value))
-                              .toList();
-                        });
-                      },
-                    ),
-                  ),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: filteredCities.length,
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          title: Text(filteredCities[index].name),
-                          onTap: () {
-                            setState(() {
-                              selectedCity = filteredCities[index];
-                              selectedDistrict = null;
-                              _loadDistricts(selectedCity!.id);
-                            });
-                            Navigator.pop(context);
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
+  // Future<void> _showCityPicker(BuildContext context) async {
+  //   filteredCities = cities;
+  //   await showModalBottomSheet(
+  //     context: context,
+  //     builder: (BuildContext context) {
+  //       return StatefulBuilder(
+  //         builder: (BuildContext context, StateSetter setState) {
+  //           return Container(
+  //             height: MediaQuery.of(context).size.height / 2,
+  //             child: Column(
+  //               children: [
+  //                 Padding(
+  //                   padding: const EdgeInsets.all(8.0),
+  //                   child: TextField(
+  //                     decoration: InputDecoration(
+  //                       labelText: 'ابحث عن مدينة',
+  //                       prefixIcon: Icon(Icons.search),
+  //                     ),
+  //                     onChanged: (value) {
+  //                       setState(() {
+  //                         filteredCities = cities
+  //                             .where((city) => city.name.contains(value))
+  //                             .toList();
+  //                       });
+  //                     },
+  //                   ),
+  //                 ),
+  //                 Expanded(
+  //                   child: ListView.builder(
+  //                     itemCount: filteredCities.length,
+  //                     itemBuilder: (context, index) {
+  //                       return ListTile(
+  //                         title: Text(filteredCities[index].name),
+  //                         onTap: () {
+  //                           setState(() {
+  //                             selectedCity = filteredCities[index];
+  //                             selectedDistrict = null;
+  //                             _loadDistricts(selectedCity!.id);
+  //                           });
+  //                           Navigator.pop(context);
+  //                         },
+  //                       );
+  //                     },
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           );
+  //         },
+  //       );
+  //     },
+  //   );
+  // }
 
-  Future<void> _showDistrictPicker(BuildContext context) async {
-    await showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            return Container(
-              height: MediaQuery.of(context).size.height / 2,
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: TextField(
-                      decoration: InputDecoration(
-                        labelText: 'ابحث عن حي',
-                        prefixIcon: Icon(Icons.search),
-                      ),
-                      onChanged: (value) {
-                        setState(() {
-                          filteredDistricts = filteredDistricts
-                              .where(
-                                  (district) => district.name.contains(value))
-                              .toList();
-                        });
-                      },
-                    ),
-                  ),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: filteredDistricts.length,
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          title: Text(filteredDistricts[index].name),
-                          onTap: () {
-                            setState(() {
-                              selectedDistrict = filteredDistricts[index];
-                            });
-                            Navigator.pop(context);
-                            Future.delayed(Duration(milliseconds: 100), () {
-                              setState(
-                                  () {}); // تأكيد التحديث بعد إغلاق القائمة
-                            });
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
+  // Future<void> _showDistrictPicker(BuildContext context) async {
+  //   await showModalBottomSheet(
+  //     context: context,
+  //     builder: (BuildContext context) {
+  //       return StatefulBuilder(
+  //         builder: (BuildContext context, StateSetter setState) {
+  //           return Container(
+  //             height: MediaQuery.of(context).size.height / 2,
+  //             child: Column(
+  //               children: [
+  //                 Padding(
+  //                   padding: const EdgeInsets.all(8.0),
+  //                   child: TextField(
+  //                     decoration: InputDecoration(
+  //                       labelText: 'ابحث عن حي',
+  //                       prefixIcon: Icon(Icons.search),
+  //                     ),
+  //                     onChanged: (value) {
+  //                       setState(() {
+  //                         filteredDistricts = filteredDistricts
+  //                             .where(
+  //                                 (district) => district.name.contains(value))
+  //                             .toList();
+  //                       });
+  //                     },
+  //                   ),
+  //                 ),
+  //                 Expanded(
+  //                   child: ListView.builder(
+  //                     itemCount: filteredDistricts.length,
+  //                     itemBuilder: (context, index) {
+  //                       return ListTile(
+  //                         title: Text(filteredDistricts[index].name),
+  //                         onTap: () {
+  //                           setState(() {
+  //                             selectedDistrict = filteredDistricts[index];
+  //                           });
+  //                           Navigator.pop(context);
+  //                           Future.delayed(Duration(milliseconds: 100), () {
+  //                             setState(
+  //                                 () {}); // تأكيد التحديث بعد إغلاق القائمة
+  //                           });
+  //                         },
+  //                       );
+  //                     },
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           );
+  //         },
+  //       );
+  //     },
+  //   );
+  // }
 
   Future<void> _searchServices() async {
     final getPosition = await ApiConfig().getCurrentLocation();
@@ -300,22 +300,22 @@ class _SubsectionpageState extends State<Subsectionpage> {
     }
   }
 
-  Future<void> _getDistrict(int district) async {
-    List<Map<String, dynamic>> getDistrictOption =
-        (await ApiConfig.getDistricts(district!))
-            .districts!
-            .map((district) => {'id': district.id, 'name': district.name})
-            .toList();
-    try {
-      if (mounted) {
-        setState(() {
-          isLoading = true;
-          districts = getDistrictOption;
-          isLoading = false;
-        });
-      }
-    } catch (e) {}
-  }
+  // Future<void> _getDistrict(int district) async {
+  //   List<Map<String, dynamic>> getDistrictOption =
+  //       (await ApiConfig.getDistricts(district!))
+  //           .districts!
+  //           .map((district) => {'id': district.id, 'name': district.name})
+  //           .toList();
+  //   try {
+  //     if (mounted) {
+  //       setState(() {
+  //         isLoading = true;
+  //         districts = getDistrictOption;
+  //         isLoading = false;
+  //       });
+  //     }
+  //   } catch (e) {}
+  // }
 
   void getAreaFromCoordinates(double latitude, double longitude) async {
     try {
@@ -343,9 +343,9 @@ class _SubsectionpageState extends State<Subsectionpage> {
     final latitude = getPosition.latitude;
     final longitude = getPosition.longitude;
     Category category = await ApiConfig.getCategory(id, latitude, longitude);
-    List<Map<String, dynamic>> getCityOptions = (await ApiConfig.getCities())
-        .map((city) => {'id': city.id, 'name': city.name})
-        .toList();
+    // List<Map<String, dynamic>> getCityOptions = (await ApiConfig.getCities())
+    //     .map((city) => {'id': city.id, 'name': city.name})
+    //     .toList();
     isServiceProvider = (prefs.getInt('isServiceProvider') == 1) ? true : false;
     try {
       // getCities();

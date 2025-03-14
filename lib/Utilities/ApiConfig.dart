@@ -14,8 +14,8 @@ import 'package:path/path.dart';
 import 'package:geolocator/geolocator.dart';
 
 class ApiConfig {
-  static const String apiUrl = 'http://makfy.test/api';
-  // static const String apiUrl = 'https://makfy.sa/api';
+  // static const String apiUrl = 'http://makfy.test/api';
+  static const String apiUrl = 'https://makfy.sa/api';
   static Future<Map<String, String>> getAuthHeaders() async {
     final token = await ApiConfig().getToken();
     return {
