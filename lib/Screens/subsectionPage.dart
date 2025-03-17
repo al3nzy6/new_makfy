@@ -223,6 +223,29 @@ class _SubsectionpageState extends State<Subsectionpage> {
   //     },
   //   );
   // }
+  Future<void> _requestLocation(BuildContext context) async {
+    LocationPermission permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      // فتح الإعدادات إذا تم رفض الإذن نهائيًا
+      await Geolocator.openAppSettings();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text("تم رفض الإذن نهائيًا، قم بتفعيله من الإعدادات")),
+      );
+    } else if (permission == LocationPermission.whileInUse ||
+        permission == LocationPermission.always) {
+      // setState(() {});
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("تم منح إذن الموقع بنجاح!")),
+      );
+    }
+  }
 
   Future<void> _searchServices() async {
     final getPosition = await ApiConfig().getCurrentLocation();
@@ -342,6 +365,7 @@ class _SubsectionpageState extends State<Subsectionpage> {
     final getPosition = await ApiConfig().getCurrentLocation();
     final latitude = getPosition.latitude;
     final longitude = getPosition.longitude;
+    position = getPosition;
     Category category = await ApiConfig.getCategory(id, latitude, longitude);
     // List<Map<String, dynamic>> getCityOptions = (await ApiConfig.getCities())
     //     .map((city) => {'id': city.id, 'name': city.name})
@@ -585,16 +609,13 @@ class _SubsectionpageState extends State<Subsectionpage> {
                   onTap: () {
                     fieldResults['category_id'] = id;
                     _searchServices();
-                    print(date);
-                    print(time);
-                    print(fieldResults);
                   },
                   child: Container(
                     alignment: Alignment.topRight,
-                    padding: EdgeInsets.only(top: 10, bottom: 10),
+                    padding: const EdgeInsets.only(top: 10, bottom: 10),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Color(0XFFEF5B2C),
+                        color: const Color(0XFFEF5B2C),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       height: 40,
@@ -625,10 +646,10 @@ class _SubsectionpageState extends State<Subsectionpage> {
                   },
                   child: Container(
                     alignment: Alignment.topRight,
-                    padding: EdgeInsets.only(top: 10, bottom: 10),
+                    padding: const EdgeInsets.only(top: 10, bottom: 10),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Color(0XFFEF5B2C),
+                        color: const Color(0XFFEF5B2C),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       height: 40,
@@ -656,7 +677,7 @@ class _SubsectionpageState extends State<Subsectionpage> {
               Container(
                 margin: EdgeInsets.all(30),
                 child: Center(
-                  child: Text("لا يوجد موفري خدمات بالقرب منك"),
+                  child: getErrorMessage(),
                 ),
               ),
             ...serviceProviders,
@@ -665,5 +686,30 @@ class _SubsectionpageState extends State<Subsectionpage> {
         ],
       ),
     );
+  }
+
+  Widget getErrorMessage() {
+    if (position != null &&
+        position!.latitude != 0.0 &&
+        position!.longitude != 0.0) {
+      return const Text("لا يوجد موفري خدمات بالقرب منك");
+    } else {
+      return Column(
+        children: [
+          const Text(
+            'يجب تمكين خدمات الموقع للوصول لموفري الخدمات بمنطقتك',
+            style: TextStyle(color: Colors.red),
+          ),
+          ElevatedButton(
+            onPressed: () => _requestLocation(context),
+            child: const Text("طلب إذن الموقع"),
+          ),
+          const Text(
+            'بعد السماح يرجى تحديث الصفحه بسحبها للاسفل',
+            style: TextStyle(color: Colors.red),
+          ),
+        ],
+      );
+    }
   }
 }

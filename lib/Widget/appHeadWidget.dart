@@ -66,7 +66,7 @@ class _appHeadWidgetState extends State<appHeadWidget> {
                 },
                 child: Container(
                     height: 50,
-                    padding: EdgeInsets.all(1),
+                    padding: const EdgeInsets.all(1),
                     decoration: const BoxDecoration(
                       borderRadius: const BorderRadius.all(Radius.circular(5)),
                       color: Color(0XFFEF5B2C),
@@ -86,7 +86,7 @@ class _appHeadWidgetState extends State<appHeadWidget> {
                         },
                         child: Container(
                           height: 50,
-                          margin: EdgeInsets.only(left: 15, right: 15),
+                          margin: const EdgeInsets.only(left: 15, right: 15),
                           alignment: Alignment.centerLeft,
                           decoration: const BoxDecoration(
                               color: Color(0XFFEF5B2C),
@@ -106,7 +106,7 @@ class _appHeadWidgetState extends State<appHeadWidget> {
                         },
                         child: Container(
                           height: 50,
-                          margin: EdgeInsets.only(left: 15, right: 15),
+                          margin: const EdgeInsets.only(left: 15, right: 15),
                           alignment: Alignment.centerLeft,
                           decoration: const BoxDecoration(
                               color: Color(0XFFEF5B2C),

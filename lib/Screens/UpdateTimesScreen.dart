@@ -142,11 +142,11 @@ class _UpdateTimesScreenState extends State<UpdateTimesScreen> {
               style: TextStyle(fontSize: 18),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
           ],
           ElevatedButton(
             onPressed: _updateTime,
-            child: Text("تحديث الوقت"),
+            child: const Text("تحديث الوقت"),
           ),
         ],
       ),

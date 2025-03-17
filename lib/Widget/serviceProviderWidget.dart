@@ -65,7 +65,7 @@ class serviceProviderWidget extends StatelessWidget {
                     userId: id,
                   ),
                 ),
-                Padding(
+                const Padding(
                   padding: const EdgeInsets.only(top: 15),
                   child: Icon(
                     Icons.arrow_forward_ios,

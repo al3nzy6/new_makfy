@@ -97,11 +97,11 @@ class _UpdateLocationScreenState extends State<UpdateLocationScreen> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (currentLocationLink != null) ...[
-            Text(
+            const Text(
               "الموقع الحالي:",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             GestureDetector(
               onTap: () => launchURL(currentLocationLink!),
               child: Text(
@@ -113,19 +113,19 @@ class _UpdateLocationScreenState extends State<UpdateLocationScreen> {
                 textAlign: TextAlign.center,
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
           ],
           if (statusMessage != null) ...[
             Text(
               statusMessage!,
-              style: TextStyle(fontSize: 18),
+              style: const TextStyle(fontSize: 18),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
           ],
           ElevatedButton(
             onPressed: _updateLocation,
-            child: Text("تحديث الموقع"),
+            child: const Text("تحديث الموقع"),
           ),
         ],
       ),

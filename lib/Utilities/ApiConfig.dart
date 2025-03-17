@@ -932,7 +932,19 @@ class ApiConfig {
     // تحقق من أن خدمات الموقع مفعلة
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      throw Exception('خدمات الموقع معطلة.');
+      return Position(
+        latitude: 0.0,
+        longitude: 0.0,
+        accuracy: 0.0,
+        altitudeAccuracy: 0.0,
+        altitude: 0.0,
+        headingAccuracy: 0.0,
+        heading: 0.0,
+        speed: 0.0,
+        speedAccuracy: 0.0,
+        timestamp: DateTime.now(),
+      );
+      // throw Exception('خدمات الموقع معطلة.');
     }
 
     // تحقق من أذونات الموقع
@@ -940,12 +952,36 @@ class ApiConfig {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        throw Exception('تم رفض أذونات الموقع.');
+        return Position(
+          latitude: 0.0,
+          longitude: 0.0,
+          accuracy: 0.0,
+          altitudeAccuracy: 0.0,
+          altitude: 0.0,
+          headingAccuracy: 0.0,
+          heading: 0.0,
+          speed: 0.0,
+          speedAccuracy: 0.0,
+          timestamp: DateTime.now(),
+        );
+        // throw Exception('تم رفض أذونات الموقع.');
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
-      throw Exception('تم رفض أذونات الموقع بشكل دائم.');
+      return Position(
+        latitude: 0.0,
+        longitude: 0.0,
+        accuracy: 0.0,
+        altitudeAccuracy: 0.0,
+        altitude: 0.0,
+        headingAccuracy: 0.0,
+        heading: 0.0,
+        speed: 0.0,
+        speedAccuracy: 0.0,
+        timestamp: DateTime.now(),
+      );
+      // throw Exception('تم رفض أذونات الموقع بشكل دائم.');
     }
 
     // احصل على الموقع الحالي

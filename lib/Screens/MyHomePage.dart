@@ -41,6 +41,7 @@ class _MyHomePageState extends State<MyHomePage> {
         categoryWidgets = categories.map((category) {
               return boxWidget(
                 title: category.name,
+                width: double.infinity,
                 route: "/main_section",
                 icon: fontAwesomeIconMappings[category.icon],
                 data: [category.id, category.name],

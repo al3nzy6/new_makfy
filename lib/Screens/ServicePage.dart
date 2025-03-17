@@ -69,7 +69,7 @@ class _ServicePageState extends State<ServicePage> {
       onRefresh: _getService,
       start: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         H1text(text: serviceData?.category?.name ?? 'error'),
-        SizedBox(height: 20),
+        const SizedBox(height: 20),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -83,7 +83,7 @@ class _ServicePageState extends State<ServicePage> {
             ),
           ],
         ),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
         InkWell(
           onTap: () => Navigator.pushNamed(context, '/user_page',
               arguments: [serviceData?.user.id, serviceData?.user.name]),
@@ -115,14 +115,14 @@ class _ServicePageState extends State<ServicePage> {
             slideViewportFraction: 2,
           )
         else
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
         H2Text(
           lines: 10,
           text: serviceData?.description ?? 'non',
           textColor: Colors.grey,
           size: 25,
         ),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
         Container(
           decoration: BoxDecoration(
             color: Colors.green,
@@ -133,7 +133,7 @@ class _ServicePageState extends State<ServicePage> {
             size: 22,
           ),
         ),
-        SizedBox(height: 20),
+        const SizedBox(height: 20),
         if (serviceData?.customFields != null &&
             serviceData!.customFields!.isNotEmpty)
           Column(
@@ -155,7 +155,7 @@ class _ServicePageState extends State<ServicePage> {
                             ),
                           ],
                         ),
-                        Divider(),
+                        const Divider(),
                       ]
                     : [],
               );
@@ -163,7 +163,7 @@ class _ServicePageState extends State<ServicePage> {
           )
         else
           // Container(child: Text('لا يوجد خيارات')),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -180,7 +180,7 @@ class _ServicePageState extends State<ServicePage> {
             ),
           ],
         ),
-        SizedBox(height: 50),
+        const SizedBox(height: 50),
         if (user_id != null && user_id == serviceData?.user.id)
           Center(
             child: Column(
@@ -199,10 +199,11 @@ class _ServicePageState extends State<ServicePage> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
-                    padding: EdgeInsets.symmetric(horizontal: 25, vertical: 12),
-                    textStyle: TextStyle(fontSize: 16),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 25, vertical: 12),
+                    textStyle: const TextStyle(fontSize: 16),
                   ),
-                  child: Text(
+                  child: const Text(
                     "تعديل الخدمة",
                     style: TextStyle(color: Colors.white),
                   ),
