@@ -1,0 +1,36 @@
+version: 1.0
+identifier: makfy-ios-build
+
+environment:
+  flutter: stable
+  xcode: latest
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - '*'
+
+steps:
+  - name: Install Flutter SDK
+    run: |
+      git clone https://github.com/flutter/flutter.git -b stable
+      export PATH="$PATH:`pwd`/flutter/bin"
+      flutter --version
+
+  - name: Get Flutter packages
+    run: |
+      flutter pub get
+
+  - name: Install CocoaPods
+    run: |
+      cd ios
+      pod install
+      cd ..
+
+  - name: Build iOS App
+    run: |
+      flutter build ios --release --no-codesign
