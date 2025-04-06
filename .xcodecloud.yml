@@ -9,7 +9,6 @@ on:
   push:
     branches:
       - main
-      - master
   pull_request:
     branches:
       - '*'
@@ -18,23 +17,27 @@ steps:
   - name: Install Flutter SDK
     run: |
       git clone https://github.com/flutter/flutter.git -b stable
-      echo 'export PATH=$PATH:`pwd`/flutter/bin' >> $HOME/.bash_profile
-      export PATH=$PATH:`pwd`/flutter/bin
+      export PATH="$PATH:`pwd`/flutter/bin"
       flutter --version
+
+  - name: Precache Flutter iOS dependencies
+    run: |
+      export PATH="$PATH:`pwd`/flutter/bin"
+      flutter precache --ios
 
   - name: Get Flutter packages
     run: |
-      export PATH=$PATH:`pwd`/flutter/bin
+      export PATH="$PATH:`pwd`/flutter/bin"
       flutter pub get
 
   - name: Install CocoaPods
     run: |
-      export PATH=$PATH:`pwd`/flutter/bin
+      export PATH="$PATH:`pwd`/flutter/bin"
       cd ios
       pod install
       cd ..
 
   - name: Build iOS App
     run: |
-      export PATH=$PATH:`pwd`/flutter/bin
+      export PATH="$PATH:`pwd`/flutter/bin"
       flutter build ios --release --no-codesign
