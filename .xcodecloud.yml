@@ -14,27 +14,28 @@ on:
       - '*'
 
 steps:
-  - name: Setup Flutter
+  - name: Install Flutter SDK
     run: |
       git clone https://github.com/flutter/flutter.git -b stable
       export PATH="$PATH:`pwd`/flutter/bin"
-      flutter precache --ios
       flutter doctor
 
-  - name: Get Flutter packages
+  - name: Precache iOS artifacts
+    run: |
+      export PATH="$PATH:`pwd`/flutter/bin"
+      flutter precache --ios
+
+  - name: Install Flutter packages
     run: |
       export PATH="$PATH:`pwd`/flutter/bin"
       flutter pub get
-
-  - name: Install CocoaPods
-    run: |
-      export PATH="$PATH:`pwd`/flutter/bin"
       cd ios
       rm -rf Pods Podfile.lock
+      flutter pub get  # إعادة داخل ios لتوليد Generated.xcconfig
       pod install
       cd ..
 
-  - name: Build iOS Release App
+  - name: Build iOS IPA
     run: |
       export PATH="$PATH:`pwd`/flutter/bin"
       flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
