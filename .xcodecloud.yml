@@ -14,16 +14,12 @@ on:
       - '*'
 
 steps:
-  - name: Install Flutter SDK
+  - name: Setup Flutter
     run: |
       git clone https://github.com/flutter/flutter.git -b stable
       export PATH="$PATH:`pwd`/flutter/bin"
-      flutter --version
-
-  - name: Precache Flutter iOS dependencies
-    run: |
-      export PATH="$PATH:`pwd`/flutter/bin"
       flutter precache --ios
+      flutter doctor
 
   - name: Get Flutter packages
     run: |
@@ -34,10 +30,11 @@ steps:
     run: |
       export PATH="$PATH:`pwd`/flutter/bin"
       cd ios
+      rm -rf Pods Podfile.lock
       pod install
       cd ..
 
-  - name: Build iOS App
+  - name: Build iOS Release App
     run: |
       export PATH="$PATH:`pwd`/flutter/bin"
       flutter build ios --release --no-codesign
