@@ -1,32 +1,50 @@
-name: Build iOS
+name: iOS Build & Deploy
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, features ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, features ]
 
 jobs:
   build:
     runs-on: macos-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install Flutter
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.29.2'  # حدد نسخة ثابتة هنا
+          flutter-version: '3.22.0'
+          channel: 'beta'
           architecture: x64
 
-      - name: Flutter Doctor
-        run: flutter doctor
-
-      - name: Install dependencies
+      - name: Flutter pub get
         run: flutter pub get
 
-      - name: Build iOS (no codesign)
+      - name: Build iOS .ipa
         run: |
           flutter clean
-          flutter build ios --release --no-codesign
+          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+
+      - name: Upload to TestFlight (features only)
+        if: github.ref == 'refs/heads/features'
+        uses: apple-actions/upload-testflight@v1
+        with:
+          app-path: build/ios/ipa/makfy.ipa
+          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+          api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
+          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+
+      - name: Release to App Store (main only)
+        if: github.ref == 'refs/heads/main'
+        uses: apple-actions/upload-testflight@v1
+        with:
+          app-path: build/ios/ipa/makfy.ipa
+          submit-for-review: true
+          release-type: MANUAL
+          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+          api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
+          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
