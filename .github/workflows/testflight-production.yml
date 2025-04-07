@@ -1,0 +1,40 @@
+name: Release iOS to App Store (Production)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.2'
+          channel: stable
+          architecture: x64
+
+      - name: Get Flutter packages
+        run: flutter pub get
+
+      - name: Precache iOS artifacts
+        run: flutter precache --ios
+
+      - name: Build iOS .ipa (no signing)
+        run: flutter build ipa --release --no-codesign
+
+      - name: Install Fastlane
+        run: sudo gem install fastlane -NV
+
+      - name: Upload & Submit to App Store
+        run: fastlane release_to_appstore
+        working-directory: ios
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
