@@ -11,17 +11,22 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-      - name: Set up Flutter
+      - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 'stable'
+          flutter-version: '3.19.6'  # حدد نسخة ثابتة هنا
+          architecture: x64
+
+      - name: Flutter Doctor
+        run: flutter doctor
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: iOS build
+      - name: Build iOS (no codesign)
         run: |
           flutter clean
           flutter build ios --release --no-codesign
