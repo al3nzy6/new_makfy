@@ -26,7 +26,7 @@ jobs:
         run: flutter precache --ios
 
       - name: Build iOS .ipa
-        run: flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+        run: flutter build ipa --release --no-codesign --export-options-plist=ios/ExportOptions.plist
       - name: R ename IPA to new_makfy.ipa
         run: |
           find build/ios/ipa -name "*.ipa" -exec mv {} build/ios/ipa/new_makfy.ipa \;
