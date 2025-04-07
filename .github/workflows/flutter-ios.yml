@@ -1,50 +1,40 @@
-name: iOS Build & Deploy
+name: Build & Upload iOS to TestFlight
 
 on:
   push:
-    branches: [ main, features ]
-  pull_request:
-    branches: [ main, features ]
+    branches:
+      - features
 
 jobs:
   build:
     runs-on: macos-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Setup Flutter
+      - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.0'
+          flutter-version: '3.29.2'
           channel: 'beta'
           architecture: x64
 
       - name: Flutter pub get
         run: flutter pub get
 
+      - name: Precache iOS
+        run: flutter precache --ios
+
       - name: Build iOS .ipa
-        run: |
-          flutter clean
-          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+        run: flutter build ipa --release
 
-      - name: Upload to TestFlight (features only)
-        if: github.ref == 'refs/heads/features'
-        uses: apple-actions/upload-testflight@v1
-        with:
-          app-path: build/ios/ipa/makfy.ipa
-          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
-          api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
-          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+      - name: Install Fastlane
+        run: sudo gem install fastlane -NV
 
-      - name: Release to App Store (main only)
-        if: github.ref == 'refs/heads/main'
-        uses: apple-actions/upload-testflight@v1
-        with:
-          app-path: build/ios/ipa/makfy.ipa
-          submit-for-review: true
-          release-type: MANUAL
-          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
-          api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
-          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+      - name: Upload to TestFlight
+        run: fastlane upload_testflight
+        working-directory: ios
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
