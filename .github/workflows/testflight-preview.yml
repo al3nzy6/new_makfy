@@ -35,8 +35,14 @@ jobs:
       - name: Precache iOS artifacts
         run: flutter precache --ios
 
-      - name: Build iOS Archive (.xcarchive)
-        run: flutter build ios --release --no-codesign
+      - name: Build archive using xcodebuild
+        run: |
+          xcodebuild -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -archivePath build/ios/archive/Runner.xcarchive \
+            archive \
+            -allowProvisioningUpdates
 
       - name: Install Fastlane
         run: sudo gem install fastlane -NV
