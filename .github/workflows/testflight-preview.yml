@@ -36,7 +36,7 @@ jobs:
         run: flutter precache --ios
 
       - name: Build iOS Archive (.xcarchive)
-        run: flutter build ipa --release --no-codesign --export-options-plist=ios/ExportOptions.plist
+        run: flutter build ios --release --no-codesign
 
       - name: Install Fastlane
         run: sudo gem install fastlane -NV

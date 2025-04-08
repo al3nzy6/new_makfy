@@ -12,6 +12,7 @@ platform :ios do
         compileBitcode: true,
         stripSwiftSymbols: true
       },
+      skip_build_archive: true,
       output_directory: "../build/ios/ipa",
       output_name: "new_makfy.ipa"
     )
@@ -33,6 +34,7 @@ platform :ios do
         compileBitcode: true,
         stripSwiftSymbols: true
       },
+      skip_build_archive: true,
       output_directory: "../build/ios/ipa",
       output_name: "new_makfy.ipa"
     )
