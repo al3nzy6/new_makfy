@@ -1,3 +1,4 @@
+
 default_platform(:ios)
 
 platform :ios do
@@ -13,6 +14,7 @@ platform :ios do
         compileBitcode: true,
         stripSwiftSymbols: true
       },
+      xcargs: "-allowProvisioningUpdates",
       output_directory: "../build/ios/ipa",
       output_name: "new_makfy.ipa"
     )
@@ -24,7 +26,7 @@ platform :ios do
     )
   end
 
-  desc "Build and release to App Store (for main branch)"
+  desc "Export IPA and release to App Store (main branch)"
   lane :release_to_appstore do
     gym(
       scheme: "Runner",
@@ -36,6 +38,7 @@ platform :ios do
         compileBitcode: true,
         stripSwiftSymbols: true
       },
+      xcargs: "-allowProvisioningUpdates",
       output_directory: "../build/ios/ipa",
       output_name: "new_makfy.ipa"
     )
@@ -47,15 +50,6 @@ platform :ios do
       reject_if_possible: false,
       automatic_release: false,
       api_key: fetch_appstore_api_key
-    )
-  end
-
-  private_lane :fetch_appstore_api_key do
-    app_store_connect_api_key(
-      key_id: ENV["APPSTORE_API_KEY_ID"],
-      issuer_id: ENV["APPSTORE_ISSUER_ID"],
-      key_content: ENV["APPSTORE_API_PRIVATE_KEY"],
-      in_house: false
     )
   end
 end
