@@ -1,16 +1,42 @@
 default_platform(:ios)
 
 platform :ios do
-  desc "Upload to TestFlight (preview branch)"
+  desc "Export IPA from archive and upload to TestFlight (preview branch)"
   lane :upload_testflight do
+    gym(
+      archive_path: "../build/ios/archive/Runner.xcarchive",
+      export_method: "app-store",
+      export_options: {
+        method: "app-store",
+        signingStyle: "automatic",
+        compileBitcode: true,
+        stripSwiftSymbols: true
+      },
+      output_directory: "../build/ios/ipa",
+      output_name: "new_makfy.ipa"
+    )
+
     upload_to_testflight(
-      ipa: "../build/ios/ipa/new_makfy.ipa", # اسم ملف ipa مبني من المشروع
+      ipa: "../build/ios/ipa/new_makfy.ipa",
       skip_waiting_for_build_processing: true
     )
   end
 
-  desc "Release to App Store (main branch)"
+  desc "Export IPA and release to App Store (main branch)"
   lane :release_to_appstore do
+    gym(
+      archive_path: "../build/ios/archive/Runner.xcarchive",
+      export_method: "app-store",
+      export_options: {
+        method: "app-store",
+        signingStyle: "automatic",
+        compileBitcode: true,
+        stripSwiftSymbols: true
+      },
+      output_directory: "../build/ios/ipa",
+      output_name: "new_makfy.ipa"
+    )
+
     upload_to_testflight(
       ipa: "../build/ios/ipa/new_makfy.ipa",
       skip_waiting_for_build_processing: false,
