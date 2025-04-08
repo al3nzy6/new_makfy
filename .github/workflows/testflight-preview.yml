@@ -13,6 +13,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Cache Flutter & Pods
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.pub-cache
+            ios/Pods
+          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-
+
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -22,17 +32,21 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
-      - name: Precache iOS
+      - name: Precache iOS artifacts
         run: flutter precache --ios
 
-      - name: Build iOS .ipa
+      - name: Build iOS Archive (.xcarchive)
         run: flutter build ipa --release --no-codesign --export-options-plist=ios/ExportOptions.plist
+
       - name: Install Fastlane
         run: sudo gem install fastlane -NV
 
-      # - name: R ename IPA to new_makfy.ipa
-      #   run: |
-      #     find build/ios/ipa -name "*.ipa" -exec mv {} build/ios/ipa/new_makfy.ipa \;
+      - name: Check if IPA exists
+        run: |
+          if [ ! -f build/ios/archive/Runner.xcarchive ]; then
+            echo "❌ .xcarchive not found!"
+            exit 1
+          fi
 
       - name: Upload to TestFlight
         run: fastlane upload_testflight
