@@ -1,4 +1,4 @@
-name: Build & Upload iOS to TestFlight
+name: Build & Upload iOS to TestFlight (Preview)
 
 on:
   push:
@@ -13,16 +13,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Cache Flutter & Pods
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.pub-cache
-            ios/Pods
-          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-flutter-
-
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -32,31 +22,18 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
-      - name: Precache iOS artifacts
+      - name: Precache iOS
         run: flutter precache --ios
-
-      - name: Build archive using xcodebuild
-        run: |
-          xcodebuild -workspace ios/Runner.xcworkspace \
-            -scheme Runner \
-            -configuration Release \
-            -archivePath build/ios/archive/Runner.xcarchive \
-            archive \
-            -allowProvisioningUpdates
 
       - name: Install Fastlane
         run: sudo gem install fastlane -NV
 
-      - name: Check if IPA exists
-        run: |
-          if [ ! -f build/ios/archive/Runner.xcarchive ]; then
-            echo "❌ .xcarchive not found!"
-            exit 1
-          fi
-
-      - name: Upload to TestFlight
+      - name: Upload to TestFlight (Preview)
         run: fastlane upload_testflight
         working-directory: ios
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
-          FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
+          APP_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
+          APPSTORE_API_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          APPSTORE_API_PRIVATE_KEY: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}

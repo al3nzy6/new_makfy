@@ -10,54 +10,31 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Cache Flutter & Pods
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.pub-cache
-            ios/Pods
-          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-flutter-
-
-      - name: Install Flutter
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.29.2'
           channel: stable
           architecture: x64
 
-      - name: Flutter pub get
+      - name: Get Flutter packages
         run: flutter pub get
 
       - name: Precache iOS artifacts
         run: flutter precache --ios
 
-      - name: Build archive using xcodebuild
-        run: |
-          xcodebuild -workspace ios/Runner.xcworkspace \
-            -scheme Runner \
-            -configuration Release \
-            -archivePath build/ios/archive/Runner.xcarchive \
-            archive \
-            -allowProvisioningUpdates
-
       - name: Install Fastlane
         run: sudo gem install fastlane -NV
 
-      - name: Check if IPA exists
-        run: |
-          if [ ! -f build/ios/archive/Runner.xcarchive ]; then
-            echo "❌ .xcarchive not found!"
-            exit 1
-          fi
-
-      - name: Upload to App Store
+      - name: Release to App Store
         run: fastlane release_to_appstore
         working-directory: ios
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
-          FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
+          APP_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
+          APPSTORE_API_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          APPSTORE_API_PRIVATE_KEY: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}

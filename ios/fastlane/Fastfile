@@ -1,10 +1,11 @@
 default_platform(:ios)
 
 platform :ios do
-  desc "Export IPA from archive and upload to TestFlight (preview branch)"
+  desc "Build and upload to TestFlight (for features branch)"
   lane :upload_testflight do
     gym(
-      archive_path: "../build/ios/archive/Runner.xcarchive",
+      scheme: "Runner",
+      workspace: "Runner.xcworkspace",
       export_method: "app-store",
       export_options: {
         method: "app-store",
@@ -12,21 +13,22 @@ platform :ios do
         compileBitcode: true,
         stripSwiftSymbols: true
       },
-      skip_build_archive: true,
       output_directory: "../build/ios/ipa",
       output_name: "new_makfy.ipa"
     )
 
     upload_to_testflight(
       ipa: "../build/ios/ipa/new_makfy.ipa",
-      skip_waiting_for_build_processing: true
+      skip_waiting_for_build_processing: true,
+      api_key: app_store_connect_api_key
     )
   end
 
-  desc "Export IPA and release to App Store (main branch)"
+  desc "Build and release to App Store (for main branch)"
   lane :release_to_appstore do
     gym(
-      archive_path: "../build/ios/archive/Runner.xcarchive",
+      scheme: "Runner",
+      workspace: "Runner.xcworkspace",
       export_method: "app-store",
       export_options: {
         method: "app-store",
@@ -34,7 +36,6 @@ platform :ios do
         compileBitcode: true,
         stripSwiftSymbols: true
       },
-      skip_build_archive: true,
       output_directory: "../build/ios/ipa",
       output_name: "new_makfy.ipa"
     )
@@ -44,7 +45,17 @@ platform :ios do
       skip_waiting_for_build_processing: false,
       submit_for_review: true,
       reject_if_possible: false,
-      automatic_release: false
+      automatic_release: false,
+      api_key: app_store_connect_api_key
+    )
+  end
+
+  private_lane :app_store_connect_api_key do
+    app_store_connect_api_key(
+      key_id: ENV["APPSTORE_API_KEY_ID"],
+      issuer_id: ENV["APPSTORE_ISSUER_ID"],
+      key_content: ENV["APPSTORE_API_PRIVATE_KEY"],
+      in_house: false
     )
   end
 end
