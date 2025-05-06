@@ -44,6 +44,7 @@ class _userServicesPageState extends State<userServicesPage> {
   String? choosenTime;
   String? timeisNotAvailableText;
   bool _hasBeenLoaded = false;
+  int? categoryId;
 
   @override
   void didChangeDependencies() {
@@ -55,6 +56,7 @@ class _userServicesPageState extends State<userServicesPage> {
       id = arguments["id"];
       name = arguments["title"];
       cart = arguments["cart"];
+      categoryId = arguments["categoryId"];
       submitType = arguments['submitType'];
       if (_hasBeenLoaded == false) {
         if (arguments['date'] != null) {
@@ -75,7 +77,7 @@ class _userServicesPageState extends State<userServicesPage> {
       cart = null;
     }
     if (_hasBeenLoaded == false) {
-      print("${id} sssss");
+      print("${categoryId} sssss");
       _getUserServices();
       checkTime(id, date!, time!);
     }
@@ -102,7 +104,8 @@ class _userServicesPageState extends State<userServicesPage> {
   }
 
   Future<void> _getUserServices() async {
-    user = await ApiConfig.getUserProfile(id);
+    print("${categoryId}  jjjj");
+    user = await ApiConfig.getUserProfile(id, categoryId);
     current_user = await ApiConfig.getUserId();
     try {
       if (!mounted) return; // تأكد من أن الـ widget ما زالت موجودة

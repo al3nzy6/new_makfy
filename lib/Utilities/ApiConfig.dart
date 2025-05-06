@@ -14,8 +14,9 @@ import 'package:path/path.dart';
 import 'package:geolocator/geolocator.dart';
 
 class ApiConfig {
-  // static const String apiUrl = 'http://makfy.test/api';
-  static const String apiUrl = 'https://makfy.sa/api';
+  // static const String apiUrl = 'https://assume-cats-kitty-de.trycloudflare.com/api';
+  static const String apiUrl = 'http://makfy.test/api';
+  // static const String apiUrl = 'https://makfy.sa/api';
   static Future<Map<String, String>> getAuthHeaders() async {
     final token = await ApiConfig().getToken();
     return {
@@ -102,12 +103,11 @@ class ApiConfig {
     }
   }
 
-  static Future<User> getUserProfile(int id) async {
-    final url = Uri.parse("${apiUrl}/user/$id/profile");
+  static Future<User> getUserProfile(int id, int? category_id) async {
+    final url = Uri.parse("${apiUrl}/user/$id/profile/${category_id}");
     try {
       // final authHeader = await ApiConfig.getAuthHeaders();
       final response = await http.get(url);
-
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
 
@@ -141,7 +141,7 @@ class ApiConfig {
   static Future<Service> getService(int id) async {
     final url = Uri.parse('${apiUrl}/service/$id');
     final authHeader = await ApiConfig.getAuthHeaders();
-
+    print('ddd');
     try {
       final response = await http.get(url, headers: authHeader);
 
@@ -286,6 +286,8 @@ class ApiConfig {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('user_name', userData['name']);
     await prefs.setString('user_email', userData['email']);
+    await prefs.setString('user_phone', userData['phone']);
+    await prefs.setString('user_registered_at', userData['created_at']);
     await prefs.setInt('user_id', userData['id']);
     if (userData['id_number'] != null || userData['id_number'] != '') {
       await prefs.setInt('isServiceProvider', 1);
@@ -415,97 +417,113 @@ class ApiConfig {
   }
 
   Future<List> register(
-      String name,
-      String phone,
-      String email,
-      String password,
-      String passwordConfirmation,
-      bool? isServiceProvider,
-      String? idnumber,
-      String? nationality,
-      String? bank,
-      String? iban,
-      String? order_limit_per_day,
-      int? deliveryFee) async {
-    final url = Uri.parse('$apiUrl/register');
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'name': name,
-        'email': email,
-        'phone': phone,
-        'password_confirmation': passwordConfirmation,
-        'password': password,
-        'is_service_provider': isServiceProvider ?? null,
-        'id_number': idnumber ?? null,
-        'nationality': nationality ?? null,
-        'bank': bank ?? null,
-        'iban': iban ?? null,
-        'order_limit_per_day': order_limit_per_day ?? null,
-        'delivery_fee': deliveryFee ?? null,
-      }),
-    );
+  String name,
+  String phone,
+  String email,
+  String password,
+  String passwordConfirmation,
+  bool? isServiceProvider,
+  String? idnumber,
+  String? nationality,
+  String? bank,
+  String? iban,
+  String? order_limit_per_day,
+  int? deliveryFee,
+  File? profileImage, // أضف ملف الصورة
+) async {
+  final url = Uri.parse('$apiUrl/register');
+  var request = http.MultipartRequest('POST', url);
 
-    if (response.statusCode == 200) {
-      // التسجيل ناجح، قم بمعالجة الاستجابة حسب احتياجاتك
-      final data = jsonDecode(response.body);
-      // يمكنك تخزين التوكن أو معلومات المستخدم هنا إذا لزم الأمر
-      if (data['access_token'] != null) {
-        await saveToken(data['access_token']);
-        await saveUserData(data['user']); // S
-      }
-      return [true, 'Registration completed'];
-    } else {
-      // التسجيل فشل، قم بعرض رسالة خطأ أو معالجة الخطأ
-      print('Registration failed: ${response.body}');
-      return [false, jsonDecode(response.body)];
-    }
+  request.fields.addAll({
+    'name': name,
+    'email': email,
+    'phone': phone,
+    'password': password,
+    'password_confirmation': passwordConfirmation,
+    'is_service_provider': isServiceProvider?.toString() ?? '',
+    'id_number': idnumber ?? '',
+    'nationality': nationality ?? '',
+    'bank': bank ?? '',
+    'iban': iban ?? '',
+    'order_limit_per_day': order_limit_per_day ?? '',
+    'delivery_fee': deliveryFee?.toString() ?? '',
+  });
+
+  if (profileImage != null) {
+    request.files.add(await http.MultipartFile.fromPath(
+      'profile_image',
+      profileImage.path,
+    ));
   }
+
+  final streamedResponse = await request.send();
+  final response = await http.Response.fromStream(streamedResponse);
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    if (data['access_token'] != null) {
+      await saveToken(data['access_token']);
+      await saveUserData(data['user']);
+    }
+    return [true, 'تم التسجيل بنجاح'];
+  } else {
+    print('Registration failed: ${response.body}');
+    return [false, jsonDecode(response.body)];
+  }
+}
 
   Future<List> updateProfile(
-      String name,
-      String phone,
-      String email,
-      bool? isServiceProvider,
-      String? idnumber,
-      String? nationality,
-      String? bank,
-      String? iban,
-      String? order_limit_per_day,
-      int? deliveryFee) async {
-    final url = Uri.parse('$apiUrl/profile/update');
-    final response = await http.put(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${await getToken()}' // جلب التوكن للمصادقة
-      },
-      body: jsonEncode({
-        'name': name,
-        'email': email,
-        'phone': phone,
-        'is_service_provider': isServiceProvider,
-        'id_number': idnumber,
-        'nationality': nationality,
-        'bank': bank,
-        'iban': iban,
-        'order_limit_per_day': order_limit_per_day,
-        'delivery_fee': deliveryFee,
-      }),
-    );
+  String name,
+  String phone,
+  String email,
+  bool? isServiceProvider,
+  String? idnumber,
+  String? nationality,
+  String? bank,
+  String? iban,
+  String? order_limit_per_day,
+  int? deliveryFee,
+  File? profileImage,
+) async {
+  final url = Uri.parse('$apiUrl/profile/update');
+  final token = await getToken();
+  var request = http.MultipartRequest('POST', url);
 
-    if (response.statusCode == 200) {
-      // التحديث ناجح، معالجة الاستجابة حسب الحاجة
-      final data = jsonDecode(response.body);
-      await saveUserData(data['user']); // تحديث بيانات المستخدم
-      return [true, 'Profile updated successfully'];
-    } else {
-      // فشل التحديث، عرض رسالة خطأ
-      print('Profile update failed: ${response.body}');
-      return [false, jsonDecode(response.body)];
-    }
+  request.headers['Authorization'] = 'Bearer $token';
+
+  request.fields.addAll({
+    'name': name,
+    'email': email,
+    'phone': phone,
+    'is_service_provider': isServiceProvider?.toString() ?? '',
+    'id_number': idnumber ?? '',
+    'nationality': nationality ?? '',
+    'bank': bank ?? '',
+    'iban': iban ?? '',
+    'order_limit_per_day': order_limit_per_day ?? '',
+    'delivery_fee': deliveryFee?.toString() ?? '',
+    '_method': 'PUT', // Laravel يحتاج هذا ليعتبره PUT
+  });
+
+  if (profileImage != null) {
+    request.files.add(await http.MultipartFile.fromPath(
+      'profile_image',
+      profileImage.path,
+    ));
   }
+
+  final streamedResponse = await request.send();
+  final response = await http.Response.fromStream(streamedResponse);
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    await saveUserData(data['user']);
+    return [true, 'تم التحديث بنجاح'];
+  } else {
+    print('Update failed: ${response.body}');
+    return [false, jsonDecode(response.body)];
+  }
+}
 
   static Future<Map<String, dynamic>> updateCart(Map<int, dynamic> data,
       Cart? cart, String datatimestamp, bool? delivery_is_required) async {

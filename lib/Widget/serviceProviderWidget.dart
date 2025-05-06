@@ -16,6 +16,8 @@ class serviceProviderWidget extends StatelessWidget {
   final int? servicesCount;
   final String? time;
   final Cart? cart;
+  final int? categoryId;
+  final String? profileImage;
 
   serviceProviderWidget({
     required this.title,
@@ -27,6 +29,8 @@ class serviceProviderWidget extends StatelessWidget {
     this.total,
     this.servicesCount,
     this.cart,
+    this.categoryId,
+    this.profileImage,
   });
 
   @override
@@ -38,13 +42,31 @@ class serviceProviderWidget extends StatelessWidget {
           "title": title,
           "cart": cart ?? null,
           "date": date ?? null,
-          "time": time ?? null
+          "time": time ?? null,
+          "categoryId": categoryId,
         })
       },
       child: ShadowBoxWidget(
-        height: (total == null) ? 70 : 120,
+        height: (total == null) ? 190 : 244,
         child: Column(
           children: [
+            Container(
+  width: double.infinity,
+  height: 120,
+  decoration: (profileImage != null && profileImage!.isNotEmpty)
+      ? BoxDecoration(
+          image: DecorationImage(
+            image: NetworkImage(profileImage!),
+            fit: BoxFit.cover,
+          ),
+        )
+      : BoxDecoration(
+          color: Colors.grey[200],
+        ),
+  child: (profileImage == null || profileImage!.isEmpty)
+      ? const Icon(Icons.person, size: 40, color: Colors.grey)
+      : null,
+),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,7 +80,7 @@ class serviceProviderWidget extends StatelessWidget {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.only(top: 20),
+                  padding: const EdgeInsets.only(top: 10),
                   child: RatingWidget(
                     stars: averageRating ?? 0,
                     ratingCount: countRating ?? "0",

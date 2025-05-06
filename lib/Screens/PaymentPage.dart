@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:makfy_new/Utilities/ApiConfig.dart';
 import 'package:moyasar/moyasar.dart';
+import 'package:tabby_flutter_inapp_sdk/tabby_flutter_inapp_sdk.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PaymentPage extends StatefulWidget {
-  PaymentPage({Key? key}) : super(key: key);
+  const PaymentPage({Key? key}) : super(key: key);
 
   @override
   State<PaymentPage> createState() => _PaymentPageState();
@@ -33,7 +35,7 @@ class _PaymentPageState extends State<PaymentPage> {
   Widget build(BuildContext context) {
     return Localizations.override(
       context: context,
-      locale: const Locale('en'), // تحديد اللغة الإنجليزية فقط لهذه الصفحة
+      locale: const Locale('en'),
       child: PaymentWidget(cart_id: cart_id, price: price),
     );
   }
@@ -43,7 +45,7 @@ class PaymentWidget extends StatefulWidget {
   final int cart_id;
   final double price;
 
-  PaymentWidget({
+  const PaymentWidget({
     Key? key,
     required this.cart_id,
     required this.price,
@@ -57,41 +59,180 @@ class _PaymentWidgetState extends State<PaymentWidget> {
   Future<PaymentConfig>? paymentConfigFuture;
   final GlobalKey applePayKey = GlobalKey();
   final GlobalKey creditCardKey = GlobalKey();
-  bool isApplePayVisible = true;
-  bool isCreditCardVisible = true;
+  bool isApplePayVisible = false;
+  bool isCreditCardVisible = false;
 
   @override
   void initState() {
     super.initState();
     paymentConfigFuture = initializePaymentConfig();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      showPaymentOptions();
+    });
   }
 
-  Future<PaymentConfig> initializePaymentConfig() async {
-    try {
-      if (widget.price <= 0) {
-        throw Exception("Price must be greater than 0.");
-      }
-      return PaymentConfig(
-        publishableApiKey: 'pk_live_rxvsa8sxcFa6ujt7Ghqv8NnyMwgB4kd2E83eUVco',
-        // publishableApiKey: 'pk_test_sJyfiRuo4P9VDRqoMcB9TEwm5tBcg6GjWL1PrqWw',
-        amount: (widget.price * 100).round(), // تحويل المبلغ إلى هللات
-        description: 'order #${widget.cart_id}',
-        metadata: {
-          'cart_id': widget.cart_id,
-          'time_zone': 3,
-        },
-        creditCard: CreditCardConfig(saveCard: false, manual: false),
-        applePay: ApplePayConfig(
-          merchantId: 'merchant.sa.makfy',
-          label: 'Payment for Makfy A-Z',
-          manual: false,
+  void showPaymentOptions() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("اختر وسيلة الدفع لمبلغ ${widget.price} ريال سعودي"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.phone_iphone),
+              title: const Text("Apple Pay"),
+              onTap: () {
+                Navigator.of(context).pop();
+                setState(() {
+                  isApplePayVisible = true;
+                  isCreditCardVisible = false;
+                });
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.credit_card),
+              title: const Text("بطاقة ائتمان"),
+              onTap: () {
+                Navigator.of(context).pop();
+                setState(() {
+                  isCreditCardVisible = true;
+                  isApplePayVisible = false;
+                });
+              },
+            ),
+            ListTile(
+              leading: Image.asset('images/Tabby.png', width: 40),
+              title: const Text("تابي"),
+              onTap: () {
+                Navigator.of(context).pop();
+                initiateTabbyPayment();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> initiateTabbyPayment() async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final String name = prefs.getString('user_name') ?? 'اسم غير معروف';
+    final String email = prefs.getString('user_email') ?? 'test@example.com';
+    final String phone = prefs.getString('user_phone') ?? '500000001';
+    final String registeredAt = prefs.getString('user_registered_at') ?? '2020-01-01T00:00:00Z';
+    final payment = Payment(
+      amount: widget.price.toStringAsFixed(2),
+      currency: Currency.sar,
+      buyer: Buyer(
+        email: email,
+        phone: phone,
+        name: name,
+      ),
+      buyerHistory: BuyerHistory(
+        loyaltyLevel: 1,
+        registeredSince: registeredAt,
+        wishlistCount: 0,
+      ),
+      shippingAddress: const ShippingAddress(
+        city: 'Riyadh',
+        address: 'King Fahd Road',
+        zip: '12345',
+      ),
+      order: Order(
+        referenceId: 'order_${widget.cart_id}',
+        items: [
+          OrderItem(
+            title: 'طلب #${widget.cart_id}',
+            description: 'خدمة من مكفي',
+            quantity: 1,
+            unitPrice: widget.price.toStringAsFixed(2),
+            referenceId: 'item_${widget.cart_id}',
+            productUrl: 'https://makfy.sa/item/${widget.cart_id}',
+            category: 'services',
+          )
+        ],
+      ),
+      orderHistory: [],
+    );
+
+    final session = await TabbySDK().createSession(
+      TabbyCheckoutPayload(
+        merchantCode: 'MKSAU',
+        lang: Lang.ar,
+        payment: payment,
+      ),
+    );
+
+    if (session.status == SessionStatus.rejected) {
+      final rejectionText = Lang.ar == Lang.ar
+          ? TabbySDK.rejectionTextAr
+          : TabbySDK.rejectionTextEn;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(rejectionText),
         ),
       );
-    } catch (e, stacktrace) {
-      print("Error initializing PaymentConfig: $e");
-      print("Stacktrace: $stacktrace");
-      throw Exception("Failed to initialize payment config: $e");
+      return;
     }
+final webUrl = session.availableProducts.installments?.webUrl;
+final paymentUUID = session.paymentId;
+if (webUrl == null) {
+  showToast(context, "لا يوجد رابط دفع متاح من Tabby.");
+  return;
+}
+await Future.delayed(Duration(milliseconds: 200)); // delay بسيط
+
+TabbyWebView.showWebView(
+  context: context,
+  webUrl: webUrl,
+  onResult: (WebViewResult resultCode) {
+    switch (resultCode) {
+      case WebViewResult.authorized:
+        showToast(context, "تمت الموافقة على العملية");
+        checkPayment(paymentUUID);
+        break;
+      case WebViewResult.close:
+        showToast(context, "تم إغلاق نافذة الدفع");
+        break;
+      case WebViewResult.expired:
+        showToast(context, "انتهت صلاحية الجلسة");
+        break;
+      case WebViewResult.rejected:
+        showToast(context, "تم رفض العملية من Tabby");
+        break;
+    }
+  },
+);
+  } catch (e) {
+    print("خطأ أثناء بدء جلسة Tabby: $e");
+    showToast(context, "تعذر بدء عملية الدفع عبر تابي.");
+  }
+}
+
+
+  Future<PaymentConfig> initializePaymentConfig() async {
+    if (widget.price <= 0) {
+      throw Exception("Price must be greater than 0.");
+    }
+    return PaymentConfig(
+      publishableApiKey: 'pk_test_sJyfiRuo4P9VDRqoMcB9TEwm5tBcg6GjWL1PrqWw',
+      // publishableApiKey: 'pk_live_rxvsa8sxcFa6ujt7Ghqv8NnyMwgB4kd2E83eUVco',
+      amount: (widget.price * 100).round(),
+      description: 'order #${widget.cart_id}',
+      metadata: {
+        'cart_id': widget.cart_id,
+        'time_zone': 3,
+      },
+      creditCard: CreditCardConfig(saveCard: false, manual: false),
+      applePay: ApplePayConfig(
+        merchantId: 'merchant.sa.makfy',
+        label: 'Payment for Makfy A-Z',
+        manual: false,
+      ),
+    );
   }
 
   void onPaymentResult(result) {
@@ -103,42 +244,33 @@ class _PaymentWidgetState extends State<PaymentWidget> {
           checkPayment(result.id);
           break;
         case PaymentStatus.failed:
-          print("Payment failed.");
+          showToast(context, "فشلت عملية الدفع");
           break;
         case PaymentStatus.authorized:
-          print("Payment authorized, awaiting capture.");
+          showToast(context, "تم تفويض الدفع، بانتظار التأكيد");
           break;
         default:
-          print("Unknown payment status.");
+          showToast(context, "حالة دفع غير معروفة");
       }
       return;
     }
 
-    // handle various errors
     if (result is ApiError) {
-      print("API Error occurred.");
       showToast(context, "API Error occurred.");
     } else if (result is AuthError) {
-      print("Authorization error.");
       showToast(context, "Authorization error.");
     } else if (result is ValidationError) {
-      print("Validation error.");
       showToast(context, "Validation error.");
     } else if (result is PaymentCanceledError) {
-      print("Payment was canceled.");
-      showToast(context, "Payment was canceled.");
+      showToast(context, "تم إلغاء الدفع");
     } else if (result is UnprocessableTokenError) {
-      print("Token error occurred.");
       showToast(context, "Token error occurred.");
     } else if (result is TimeoutError) {
-      print("Timeout error occurred.");
-      showToast(context, "Timeout error occurred.");
+      showToast(context, "انتهت المهلة");
     } else if (result is NetworkError) {
-      print("Network error occurred.");
-      showToast(context, "Network error occurred.");
+      showToast(context, "خطأ في الاتصال");
     } else if (result is UnspecifiedError) {
-      print("An unspecified error occurred.");
-      showToast(context, "An unspecified error occurred.");
+      showToast(context, "حدث خطأ غير محدد");
     }
   }
 
@@ -148,7 +280,7 @@ class _PaymentWidgetState extends State<PaymentWidget> {
       future: paymentConfigFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
 
         if (snapshot.hasError) {
@@ -156,7 +288,7 @@ class _PaymentWidgetState extends State<PaymentWidget> {
         }
 
         if (!snapshot.hasData) {
-          return Center(child: Text("Failed to initialize payment config"));
+          return const Center(child: Text("فشل تحميل إعدادات الدفع"));
         }
 
         final paymentConfig = snapshot.data!;
@@ -170,50 +302,40 @@ class _PaymentWidgetState extends State<PaymentWidget> {
               child: ListView(
                 children: [
                   Image.asset(
-                    'images/logo.png', // تأكد من وجود الصورة في assets
-                    height: 300,
+                    'images/logo.png',
+                    height: 170,
                   ),
-                  Offstage(
-                    offstage: !isApplePayVisible,
-                    child: ApplePay(
-                      key: applePayKey, // استخدام GlobalKey لمنع إعادة الإنشاء
+                  if (isApplePayVisible)
+                    ApplePay(
+                      key: applePayKey,
                       config: paymentConfig,
                       onPaymentResult: onPaymentResult,
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  const Divider(height: 10),
-                  const SizedBox(height: 20),
-                  Offstage(
-                    offstage: !isCreditCardVisible,
-                    child: CreditCard(
-                      key:
-                          creditCardKey, // استخدام GlobalKey لمنع إعادة الإنشاء
+                  const SizedBox(height: 10),
+                  if (isCreditCardVisible)
+                    CreditCard(
+                      key: creditCardKey,
                       locale: const Localization.en(),
                       config: paymentConfig,
                       onPaymentResult: onPaymentResult,
                     ),
-                  ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 20),
                   InkWell(
                     onTap: () {
-                      Navigator.pop(context);
+                      Navigator.pop(context); // يرجع للصفحة السابقة
                     },
                     child: Container(
                       alignment: Alignment.center,
-                      padding: const EdgeInsets.only(top: 10, bottom: 10),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0XFFEF5B2C),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        height: 50,
-                        width: double.infinity,
-                        child: const Text(
-                          "إلغاء عملية الدفع",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 30, color: Colors.white),
-                        ),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0XFFEF5B2C),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      height: 50,
+                      child: const Text(
+                        "إلغاء عملية الدفع",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 24, color: Colors.white),
                       ),
                     ),
                   ),
@@ -230,12 +352,11 @@ class _PaymentWidgetState extends State<PaymentWidget> {
     try {
       Map<String, dynamic> result = await ApiConfig.checkPaymentID(uuid);
       if (result['data']['message'] == 'success') {
-        print('Invoice has been paid');
         Navigator.pushReplacementNamed(context, '/my_orders');
       }
     } catch (e) {
       print("Error in payment verification: $e");
-      showToast(context, "Error verifying payment");
+      showToast(context, "خطأ أثناء التحقق من الدفع");
     }
   }
 }
@@ -245,7 +366,7 @@ void showToast(BuildContext context, String message) {
     SnackBar(
       content: Text(
         message,
-        style: const TextStyle(fontSize: 20),
+        style: const TextStyle(fontSize: 18),
       ),
     ),
   );

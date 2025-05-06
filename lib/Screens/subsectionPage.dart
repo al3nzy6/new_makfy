@@ -286,28 +286,30 @@ class _SubsectionpageState extends State<Subsectionpage> {
               );
             }).toList() ??
             [];
-        services = category.services?.map((service) {
-              print("${date} tttt");
-              return ServiceAddedWidget(
-                title: service.title,
-                fields: service.insertedValues?.split(','),
-                serviceProvider: service.user.name,
-                price: service.price,
-                id: service.id,
-                count: 0,
-                date: date ?? null,
-                time: time ?? null,
-              );
-            }).toList() ??
-            [];
+        // services = category.services?.map((service) {
+        //       print("${date} tttt");
+        //       return ServiceAddedWidget(
+        //         title: service.title,
+        //         fields: service.insertedValues?.split(','),
+        //         serviceProvider: service.user.name,
+        //         price: service.price,
+        //         id: service.id,
+        //         count: 0,
+        //         date: date ?? null,
+        //         time: time ?? null,
+        //       );
+        //     }).toList() ??
+        //     [];
         serviceProviders = category.service_providers?.map((service_provider) {
-              print("${date} tttt");
-
+          print('ssssssssssssssssssssssssssssssssss;ssssssssssssssssssssss');
               return serviceProviderWidget(
+                // title: "ssss",
                 title: service_provider.name,
                 id: service_provider.id,
                 date: date ?? null,
                 time: time ?? null,
+                categoryId: id,
+                profileImage: service_provider.profileImageUrl,
                 averageRating: service_provider.averageRating,
                 countRating: service_provider.countRating,
               );
@@ -394,26 +396,30 @@ class _SubsectionpageState extends State<Subsectionpage> {
               );
             }).toList() ??
             [];
-        services = category.services?.map((service) {
-              print(date);
-              return ServiceAddedWidget(
-                title: service.title,
-                fields: service.insertedValues?.split(','),
-                serviceProvider: service.user.name,
-                price: service.price,
-                id: service.id,
-                count: 0,
-                date: date ?? null,
-                time: time ?? null,
-              );
-            }).toList() ??
-            [];
+        // services = category.services?.map((service) {
+        //       print(date);
+        //       return ServiceAddedWidget(
+        //         title: service.title,
+        //         fields: service.insertedValues?.split(','),
+        //         serviceProvider: service.user.name,
+        //         price: service.price,
+        //         id: service.id,
+        //         count: 0,
+        //         date: date ?? null,
+        //         time: time ?? null,
+        //       );
+        //     }).toList() ??
+        //     [];
         serviceProviders = category.service_providers?.map((service_provider) {
+          print(service_provider.profileImageUrl);
               return serviceProviderWidget(
                 title: service_provider.name,
+                // title: "qq",
                 id: service_provider.id,
                 date: date ?? null,
                 time: time ?? null,
+                categoryId: id,
+                profileImage: service_provider.profileImageUrl,
                 averageRating: service_provider.averageRating,
                 countRating: service_provider.countRating,
               );

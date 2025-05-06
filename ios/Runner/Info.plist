@@ -52,6 +52,10 @@
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This allows Tabby to take a photo of an ID</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This allows Tabby to perform a live check during a KYC process</string>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

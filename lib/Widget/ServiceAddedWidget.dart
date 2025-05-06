@@ -63,7 +63,7 @@ class _ServiceAddedWidgetState extends State<ServiceAddedWidget> {
               Navigator.pushNamed(context, '/service_page', arguments: [
                 widget.id,
                 widget.date ?? null,
-                widget.time ?? null
+                widget.time ?? null,
               ]);
             },
             child: Padding(
