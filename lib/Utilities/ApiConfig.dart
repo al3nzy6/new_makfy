@@ -318,103 +318,149 @@ class ApiConfig {
 
   // services
 
-  Future<List> createService(Map<String, dynamic> data) async {
-    final url = Uri.parse("${apiUrl}/service/create");
-    final authHeader = await ApiConfig.getAuthHeaders();
+Future<List> createService(Map<String, dynamic> data) async {
+  final url = Uri.parse("${apiUrl}/service/create");
+  final authHeader = await ApiConfig.getAuthHeaders();
 
-    // قم بإنشاء MultipartRequest لرفع الملفات
-    final request = http.MultipartRequest('POST', url)
-      ..headers.addAll(authHeader);
+  // إنشاء MultipartRequest
+  final request = http.MultipartRequest('POST', url)
+    ..headers.addAll(authHeader);
 
-    // قم بإضافة البيانات النصية (غير الصور)
-    data.forEach((key, value) {
-      if (value is! File) {
-        request.fields[key] = value.toString();
-      }
-    });
+  // أضف الحقول النصية العادية
+  data.forEach((key, value) {
+    if (value is! File && value is! List<File>) {
+      request.fields[key] = value.toString();
+    }
+  });
 
-    // قم بإضافة الملفات إلى الطلب
-    for (var entry in data.entries) {
-      if (entry.value is File) {
-        final file = entry.value as File;
+  // أضف الملفات إلى MultipartRequest
+  for (var entry in data.entries) {
+    final key = entry.key;
+    final value = entry.value;
+
+    if (value is File) {
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          key,
+          value.path,
+          filename: basename(value.path),
+        ),
+      );
+    } else if (value is List<File>) {
+      for (int i = 0; i < value.length; i++) {
+        final file = value[i];
         request.files.add(
           await http.MultipartFile.fromPath(
-            entry.key, // اسم الحقل
-            file.path,
-            filename: basename(file.path), // اسم الملف
-          ),
-        );
-      }
-    }
-
-    // إرسال الطلب
-    try {
-      final response = await request.send();
-
-      if (response.statusCode == 200) {
-        final responseBody = await response.stream.bytesToString();
-        final id = json.decode(responseBody)['data']['id'];
-        return [id, 'تم إنشاء الخدمة'];
-      } else {
-        final responseBody = await response.stream.bytesToString();
-        final decodedBody = json.decode(responseBody);
-        if (response.statusCode == 422) {
-          final errors = decodedBody['errors'] as Map<String, dynamic>;
-          String errorMessages = errors.entries
-              .map((e) =>
-                  "${e.value.join(", ")}") // تحويل قائمة الأخطاء إلى نصوص مفصولة بفاصلة
-              .join("\n");
-          return [null, 'يوجد أخطاء:\n$errorMessages'];
-        } else {
-          return [null, 'يوجد خلل لم يتم إنشاء الخدمة ${response.statusCode}'];
-        }
-      }
-    } catch (e) {
-      throw Exception("خطأ أثناء إرسال البيانات: $e");
-    }
-  }
-
-  Future<List> updateService(Map<String, dynamic> data, int serviceId) async {
-    final url = Uri.parse("${apiUrl}/service/$serviceId/update");
-    final authHeader = await ApiConfig.getAuthHeaders();
-
-    final request = http.MultipartRequest('POST', url)
-      ..headers.addAll(authHeader);
-
-    data.forEach((key, value) {
-      if (value is! File) {
-        request.fields[key] = value.toString();
-      }
-    });
-
-    for (var entry in data.entries) {
-      if (entry.value is File) {
-        final file = entry.value as File;
-        request.files.add(
-          await http.MultipartFile.fromPath(
-            entry.key,
+            "$key[]", // 🔥 مهم: للسماح بإرسال أكثر من صورة
             file.path,
             filename: basename(file.path),
           ),
         );
       }
     }
+  }
 
-    try {
-      final response = await request.send();
-      if (response.statusCode == 200) {
-        final responseBody = await response.stream.bytesToString();
-        return [
-          json.decode(responseBody)['data']['id'],
-          'تم تحديث الخدمة بنجاح'
-        ];
+  // إرسال الطلب
+  try {
+    final response = await request.send();
+
+    if (response.statusCode == 200) {
+      final responseBody = await response.stream.bytesToString();
+      final id = json.decode(responseBody)['data']['id'];
+      return [id, 'تم إنشاء الخدمة بنجاح'];
+    } else {
+      final responseBody = await response.stream.bytesToString();
+      final decodedBody = json.decode(responseBody);
+      if (response.statusCode == 422) {
+        final errors = decodedBody['errors'] as Map<String, dynamic>;
+        String errorMessages = errors.entries
+            .map((e) => "${e.value.join(", ")}")
+            .join("\n");
+        return [null, 'يوجد أخطاء:\n$errorMessages'];
       } else {
-        return [null, 'يوجد خلل لم يتم تحديث الخدمة ${response.statusCode}'];
+        return [null, 'لم يتم إنشاء الخدمة. كود: ${response.statusCode}'];
       }
-    } catch (e) {
-      throw Exception("خطأ أثناء إرسال البيانات: $e");
+    }
+  } catch (e) {
+    throw Exception("خطأ أثناء إرسال البيانات: $e");
+  }
+}
+
+static Future<bool> deleteServiceImage({
+  required int serviceId,
+  required String imageUrl,
+}) async {
+  final uri = Uri.parse("$apiUrl/service/$serviceId/delete-image");
+  final headers = await getAuthHeaders();
+  headers['Content-Type'] = 'application/json'; // تأكيد نوع المحتوى
+
+  final response = await http.post(
+    uri,
+    headers: headers,
+    body: json.encode({
+      "image_url": imageUrl,
+    }),
+  );
+
+  return response.statusCode == 200;
+}
+  Future<List> updateService(Map<String, dynamic> data, int serviceId) async {
+  final url = Uri.parse("${apiUrl}/service/$serviceId/update");
+  final authHeader = await ApiConfig.getAuthHeaders();
+
+  final request = http.MultipartRequest('POST', url)
+    ..headers.addAll(authHeader);
+
+  // أضف الحقول النصية (غير الملفات)
+  data.forEach((key, value) {
+    if (value is! File && value is! List<File>) {
+      request.fields[key] = value.toString();
+    }
+  });
+
+  // أضف الملفات
+  for (var entry in data.entries) {
+    final key = entry.key;
+    final value = entry.value;
+
+    if (value is File) {
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          key,
+          value.path,
+          filename: basename(value.path),
+        ),
+      );
+    } else if (value is List<File>) {
+      for (int i = 0; i < value.length; i++) {
+        final file = value[i];
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            "$key[]", // مثل: fields[4][value][]
+            file.path,
+            filename: basename(file.path),
+          ),
+        );
+      }
     }
   }
+
+  try {
+    final response = await request.send();
+    if (response.statusCode == 200) {
+      final responseBody = await response.stream.bytesToString();
+      return [
+        json.decode(responseBody)['data']['id'],
+        'تم تحديث الخدمة بنجاح'
+      ];
+    } else {
+      final body = await response.stream.bytesToString();
+      return [null, 'لم يتم تحديث الخدمة (${response.statusCode})\n$body'];
+    }
+  } catch (e) {
+    throw Exception("خطأ أثناء إرسال البيانات: $e");
+  }
+}
 
   Future<List> register(
   String name,
@@ -525,7 +571,7 @@ class ApiConfig {
   }
 }
 
-  static Future<Map<String, dynamic>> updateCart(Map<int, dynamic> data,
+  static Future<Map<String, dynamic>> updateCart(Map<String, dynamic> data,
       Cart? cart, String datatimestamp, bool? delivery_is_required) async {
     final url = (cart != null)
         ? Uri.parse('$apiUrl/cart/update')

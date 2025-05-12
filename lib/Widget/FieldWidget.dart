@@ -39,7 +39,7 @@ class _FieldWidgetState extends State<FieldWidget> {
   TimeOfDay selectedTime = TimeOfDay.now();
   List<int> _selectedIds = [];
   List<dynamic> _selectedValues = [];
-  File? _selectedImage;
+  List<XFile> _selectedImages = [];
   Option? selectedOption; // متغير الحالة للحفاظ على الخيار المحدد
 
   final ImagePicker _picker = ImagePicker();
@@ -67,7 +67,7 @@ class _FieldWidgetState extends State<FieldWidget> {
           selectedTime = parseTime(normalizedTime);
           break;
         case 'File':
-          _selectedImage = null;
+          _selectedImages = [];
           break;
         case 'Select':
           _initializeSelectedOption(widget.initialValue);
@@ -129,15 +129,15 @@ class _FieldWidgetState extends State<FieldWidget> {
     });
   }
 
-  Future<void> _pickImage(ImageSource source) async {
-    final pickedFile = await _picker.pickImage(source: source);
-    if (pickedFile != null) {
-      setState(() {
-        _selectedImage = File(pickedFile.path);
-        widget.onChanged?.call(_selectedImage);
-      });
-    }
+  Future<void> _pickImages() async {
+  final List<XFile>? images = await _picker.pickMultiImage();
+  if (images != null && images.isNotEmpty) {
+    setState(() {
+      _selectedImages.addAll(images);
+      widget.onChanged?.call(_selectedImages);
+    });
   }
+}
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -387,106 +387,116 @@ class _FieldWidgetState extends State<FieldWidget> {
   }
 
   Widget _buildImagePicker(double screenWidth) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Stack(children: [
-          Container(
-            height: 150,
-            width: screenWidth * 0.95,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.blue, width: 1.5),
-              borderRadius: BorderRadius.circular(10),
-              color: Colors.grey[200],
-            ),
-            alignment: Alignment.center,
-            child: _selectedImage != null
-                ? Stack(children: [
-                    Image.file(
-                      _selectedImage!,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                    ),
-                    Center(
-                      child: ElevatedButton.icon(
-                        onPressed: () => _pickImage(ImageSource.gallery),
-                        icon: Icon(Icons.photo_library),
-                        label: Text('تغيير الصورة'),
-                      ),
-                    ),
-                  ])
-                : widget.initialValue != null
-                    ? _buildImageFromInitialValue(widget.initialValue)
-                    : ElevatedButton.icon(
-                        onPressed: () => _pickImage(ImageSource.gallery),
-                        icon: Icon(Icons.photo_library),
-                        label: Text(_selectedImage == null
-                            ? 'اضافة صورة من البوم الكاميرا'
-                            : 'تغيير الصورة'),
-                      ),
-          ),
-        ]),
-        SizedBox(height: 10),
-        if (widget.required == true &&
-            _selectedImage == null &&
-            widget.initialValue == null)
-          Padding(
-            padding: const EdgeInsets.only(top: 5),
-            child: Text(
-              'الصورة مطلوبة',
-              style: TextStyle(color: Colors.red, fontSize: 12),
-            ),
-          ),
-      ],
-    );
-  }
-
-  /// Helper method to handle different types of `initialValue`
-  Widget _buildImageFromInitialValue(dynamic initialValue) {
-    // print(initialValue);
-    if (initialValue is String) {
-      if (initialValue.startsWith('file://')) {
-        // معالجة مسار ملف محلي
-        final filePath = initialValue.replaceFirst('file://', '');
-        return Stack(children: [
-          Image.file(
-            File(filePath),
-            fit: BoxFit.cover,
-            width: double.infinity,
-          ),
-          Center(
-            child: ElevatedButton.icon(
-              onPressed: () => _pickImage(ImageSource.gallery),
-              icon: Icon(Icons.photo_library),
-              label: Text('تغيير الصورة'),
-            ),
-          ),
-        ]);
-      } else if (initialValue.startsWith('http://') ||
-          initialValue.startsWith('https://')) {
-        // معالجة رابط شبكة
-        return Stack(children: [
-          Image.network(
-            initialValue,
-            fit: BoxFit.cover,
-            width: double.infinity,
-          ),
-          Center(
-            child: ElevatedButton.icon(
-              onPressed: () => _pickImage(ImageSource.gallery),
-              icon: Icon(Icons.photo_library),
-              label: Text('تغير الصورة'),
-            ),
-          ),
-        ]);
-      }
-    }
-    return Center(
-      child: ElevatedButton.icon(
-        onPressed: () => _pickImage(ImageSource.gallery),
-        icon: Icon(Icons.photo_library),
-        label: Text('تغير الصورة'),
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Container(
+        width: screenWidth * 0.95,
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.blue, width: 1.5),
+          borderRadius: BorderRadius.circular(10),
+          color: Colors.grey[200],
+        ),
+        child: (widget.initialValue != null && widget.initialValue is List<String>)
+    ? _buildImagesFromInitialValue(widget.initialValue)
+    : _selectedImages.isNotEmpty
+        ? Column(
+                children: [
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _selectedImages.map((image) {
+                      return Stack(
+                        children: [
+                          Image.file(
+                            File(image.path),
+                            width: 100,
+                            height: 100,
+                            fit: BoxFit.cover,
+                          ),
+                          Positioned(
+                            top: 0,
+                            right: 0,
+                            child: IconButton(
+                              icon: Icon(Icons.close, color: Colors.red),
+                              onPressed: () {
+                                setState(() {
+                                  _selectedImages.remove(image);
+                                });
+                              },
+                            ),
+                          ),
+                        ],
+                      );
+                    }).toList(),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: _pickImages,
+                    icon: Icon(Icons.photo_library),
+                    label: Text('إضافة المزيد من الصور'),
+                  ),
+                ],
+              )
+            : ElevatedButton.icon(
+                onPressed: _pickImages,
+                icon: Icon(Icons.photo_library),
+                label: Text('إضافة صور من ألبوم الكاميرا'),
+              ),
       ),
-    );
-  }
+      SizedBox(height: 10),
+      if (widget.required == true &&
+          _selectedImages.isEmpty &&
+          widget.initialValue == null)
+        Padding(
+          padding: const EdgeInsets.only(top: 5),
+          child: Text(
+            'الصورة مطلوبة',
+            style: TextStyle(color: Colors.red, fontSize: 12),
+          ),
+        ),
+    ],
+  );
+}
+
+
+  Widget _buildImagesFromInitialValue(List<String> initialValues) {
+  return Column(
+    children: [
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: initialValues.map((path) {
+          return Stack(
+            children: [
+              path.startsWith('http')
+                  ? Image.network(path, width: 100, height: 100, fit: BoxFit.cover)
+                  : Image.file(File(path), width: 100, height: 100, fit: BoxFit.cover),
+              Positioned(
+                top: 0,
+                right: 0,
+                child: IconButton(
+                  icon: Icon(Icons.delete, color: Colors.red),
+                  onPressed: () {
+                    // ترسل الصورة المحذوفة إلى الـ onChanged لحذفها من الواجهة
+                    setState(() {
+                      final updatedList = List<String>.from(initialValues)..remove(path);
+                      widget.onChanged?.call(updatedList);
+                    });
+                  },
+                ),
+              ),
+            ],
+          );
+        }).toList(),
+      ),
+      ElevatedButton.icon(
+        onPressed: _pickImages,
+        icon: Icon(Icons.photo_library),
+        label: Text('إضافة المزيد من الصور'),
+      ),
+    ],
+  );
+}
+
+
 }
