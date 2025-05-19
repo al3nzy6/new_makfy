@@ -241,7 +241,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
         orderLimitPerDay,
         deliveryFee,
         _profileImage,
-
       );
 
       setState(() {

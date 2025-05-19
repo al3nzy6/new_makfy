@@ -79,7 +79,6 @@ class _userServicesPageState extends State<userServicesPage> {
       cart = null;
     }
     if (_hasBeenLoaded == false) {
-      print("${categoryId} sssss");
       _getUserServices();
       checkTime(id, date!, time!);
     }
@@ -106,7 +105,6 @@ class _userServicesPageState extends State<userServicesPage> {
   }
 
   Future<void> _getUserServices() async {
-    print("${categoryId}  jjjj");
     user = await ApiConfig.getUserProfile(id, categoryId);
     current_user = await ApiConfig.getUserId();
     try {
@@ -228,7 +226,6 @@ class _userServicesPageState extends State<userServicesPage> {
   }
 
   Widget build(BuildContext context) {
-    print(cart?.choosenTime);
     return MainScreenWidget(
       isLoading: isLoading,
       onRefresh: _getUserServices,

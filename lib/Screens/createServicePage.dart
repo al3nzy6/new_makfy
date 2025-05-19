@@ -346,7 +346,7 @@ class _createServicePageState extends State<createServicePage> {
                               selectedTimeType;
                         });
                         fieldResults.forEach((key, value) {
-  print("$key => ${value is List<File> ? '✅ List<File> with ${value.length} files' : value}");
+  // print("$key => ${value is List<File> ? '✅ List<File> with ${value.length} files' : value}");
 });
                         print(toDate);
                         _submitFunction(fieldResults);

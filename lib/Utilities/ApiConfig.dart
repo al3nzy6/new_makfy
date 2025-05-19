@@ -15,8 +15,9 @@ import 'package:geolocator/geolocator.dart';
 
 class ApiConfig {
   // static const String apiUrl = 'https://assume-cats-kitty-de.trycloudflare.com/api';
-  static const String apiUrl = 'http://makfy.test/api';
-  // static const String apiUrl = 'https://makfy.sa/api';
+  // static const String apiUrl = 'http://makfy.test/api';
+  // static const String apiUrl = 'https://test.makfy.sa/api';
+  static const String apiUrl = 'https://makfy.sa/api';
   static Future<Map<String, String>> getAuthHeaders() async {
     final token = await ApiConfig().getToken();
     return {
@@ -137,7 +138,21 @@ class ApiConfig {
       throw Exception('Failed to load category. Error: $e');
     }
   }
+  static Future<bool> checkMembershipStatus() async {
+    final authHeader = await ApiConfig.getAuthHeaders();
+    final response = await http.get(
+      
+      Uri.parse('$apiUrl/user/check-membership'),
+      headers: authHeader,
+  );
 
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body);
+    return data['is_active'] == true;
+  } else {
+    throw Exception('فشل في جلب حالة العضوية');
+  }
+}
   static Future<Service> getService(int id) async {
     final url = Uri.parse('${apiUrl}/service/$id');
     final authHeader = await ApiConfig.getAuthHeaders();

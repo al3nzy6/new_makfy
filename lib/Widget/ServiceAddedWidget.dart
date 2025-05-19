@@ -76,15 +76,14 @@ class _ServiceAddedWidgetState extends State<ServiceAddedWidget> {
 
     final bool hasNotes = true;
     final double imageHeight = (widget.imageUrl!.isNotEmpty) ? 150 : 0;
-    final double forNotes = (widget.initialNote != null || widget.isPaid == null) ? 100 : 0;
-    // print(widget.service?.is_available);
+    final double forNotes = (widget.isPaid == false || widget.isPaid == null || widget.initialNote != null) ? 120 : 0;
     return ShadowBoxWidget(
       height: (widget.currentUserIsTheProvider != null &&
               widget.currentUserIsTheProvider == false && widget.isPaid == null)
-          ? 140 + imageHeight + forNotes + 60
+          ? 140 + imageHeight + forNotes
           : (widget.isPaid != null && widget.isPaid == true)
-              ? 140 + imageHeight + forNotes
-              : 140 + imageHeight + forNotes + 120,
+              ? 140 + imageHeight + forNotes 
+              : 140 + imageHeight + forNotes ,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

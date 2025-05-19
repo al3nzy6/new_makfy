@@ -64,7 +64,8 @@ class serviceProviderWidget extends StatelessWidget {
           color: Colors.grey[200],
         ),
   child: (profileImage == null || profileImage!.isEmpty)
-      ? const Icon(Icons.person, size: 40, color: Colors.grey)
+      ?  Image.asset('images/logo.png', height: 40)
+      // ? const Icon(Icons.person, size: 40, color: Colors.green)
       : null,
 ),
             Row(

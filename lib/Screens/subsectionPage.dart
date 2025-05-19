@@ -301,7 +301,6 @@ class _SubsectionpageState extends State<Subsectionpage> {
         //     }).toList() ??
         //     [];
         serviceProviders = category.service_providers?.map((service_provider) {
-          print('ssssssssssssssssssssssssssssssssss;ssssssssssssssssssssss');
               return serviceProviderWidget(
                 // title: "ssss",
                 title: service_provider.name,
@@ -433,17 +432,42 @@ class _SubsectionpageState extends State<Subsectionpage> {
   }
 
   Widget _floatingButton() {
-    return FloatingActionButton.extended(
-      onPressed: () {
-        Navigator.pushNamed(context, '/create_service', arguments: [id, name]);
-      },
-      label: H1text(
-        text: 'اضافة خدمة +',
-        textColor: Colors.white,
-      ),
-      backgroundColor: Colors.orange[900],
-    );
-  }
+  return FloatingActionButton.extended(
+    onPressed: () async {
+      final isActive = await ApiConfig.checkMembershipStatus();
+      if (!isActive) {
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text('تنبيه'),
+              content: Text('عضويتك غير مفعّلة حتى الآن.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('حسناً'),
+                ),
+              ],
+            );
+          },
+        );
+        return;
+      }
+
+      Navigator.pushNamed(
+        context,
+        '/create_service',
+        arguments: [id, name],
+      );
+    },
+    label: H1text(
+      text: 'اضافة خدمة +',
+      textColor: Colors.white,
+    ),
+    backgroundColor: Colors.orange[900],
+  );
+}
+
 
   Widget build(BuildContext context) {
     return MainScreenWidget(
