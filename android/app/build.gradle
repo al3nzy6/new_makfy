@@ -28,7 +28,7 @@ android {
 
     // تحميل ملف key.properties
     def keyProperties = new Properties()
-    def keyPropertiesFile = file("../key.properties")
+    def keyPropertiesFile = file("key.properties")
     if (keyPropertiesFile.exists()) {
         keyProperties.load(new FileInputStream(keyPropertiesFile))
     }
