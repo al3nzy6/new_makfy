@@ -116,7 +116,7 @@ class __bodyState extends State<_body> {
               padding: const EdgeInsets.only(
                 right: 10,
                 left: 10,
-                bottom: 20,
+                bottom: 70,
               ),
               child: (widget.isLoading ?? true)
                   ? Center(

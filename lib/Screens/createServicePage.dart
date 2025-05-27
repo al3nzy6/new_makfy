@@ -6,7 +6,8 @@ import 'package:makfy_new/Widget/FieldWidget.dart';
 import 'package:makfy_new/Widget/H1textWidget.dart';
 import 'package:makfy_new/Widget/H2Text.dart';
 import 'package:makfy_new/Widget/MainScreenWidget.dart';
-
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 class createServicePage extends StatefulWidget {
   createServicePage({Key? key}) : super(key: key);
 
@@ -45,6 +46,7 @@ class _createServicePageState extends State<createServicePage> {
       if (serviceId != null) {
         // تأجيل استدعاء setState()
         WidgetsBinding.instance.addPostFrameCallback((_) {
+          
           _getServiceData(serviceId!);
         });
       } else {
@@ -103,6 +105,7 @@ class _createServicePageState extends State<createServicePage> {
           'time_to_beready_type': fetchedServiceData.time_to_beready_type,
           'available_from': fetchedServiceData.available_from,
           'available_to': fetchedServiceData.available_to,
+          'image_urls': fetchedServiceData.imageUrls ?? [],
         };
         // تخزين القيم الافتراضية في fieldResults
         fieldResults['title'] = serviceData?['title'] ?? '';
@@ -126,13 +129,23 @@ class _createServicePageState extends State<createServicePage> {
                 width: 0.9,
 
                 required: (field.type != 'File') ? field.required : null,
-                initialValue:
-                    (field.insertedValue != null && field.type == 'Select')
-                        ? field.insertedValue
-                        : field.value, // تعيين القيمة الأولية
-                onChanged: (fieldValue) {
-                  fieldResults[field.name] = fieldValue;
-                },
+                initialValue: (field.type == 'File' && field.value is List<String>)
+    ? field.value
+    : (field.insertedValue != null && field.type == 'Select')
+        ? field.insertedValue
+        : field.value,
+                    onChanged: (value) {
+  if (field.type == 'File' && value is List<XFile>) {
+    fieldResults["fields[${field.id}][value]"] =
+        value.map((xfile) => File(xfile.path)).toList();
+  } else {
+    fieldResults[field.name] = value;
+  }
+},
+                // onChanged: (fieldValue) {
+
+                //   fieldResults[field.name] = fieldValue;
+                // },
                 options: options,
               );
             }).toList() ??
@@ -163,8 +176,13 @@ class _createServicePageState extends State<createServicePage> {
                 required: field.required,
                 width: 0.9,
                 onChanged: (value) {
+                if (field.type == 'File' && value is List<XFile>) {
+                  fieldResults["fields[${field.id}][value]"] =
+                      value.map((xfile) => File(xfile.path)).toList();
+                } else {
                   fieldResults[field.name] = value;
-                },
+                }
+              },
                 options: options,
               );
             }).toList() ??
@@ -229,6 +247,12 @@ class _createServicePageState extends State<createServicePage> {
                 fieldResults['description'] = value;
               },
             ),
+            if (serviceId != null &&
+    serviceData != null &&
+    serviceData!['image_urls'] != null &&
+    serviceData!['image_urls'] is List<String> &&
+    serviceData!['image_urls'].isNotEmpty)
+  _buildServiceImagesPreview(serviceData!['image_urls']),
             H2Text(
                 lines: 4,
                 text:
@@ -321,6 +345,9 @@ class _createServicePageState extends State<createServicePage> {
                           fieldResults['time_to_beready_type'] =
                               selectedTimeType;
                         });
+                        fieldResults.forEach((key, value) {
+  // print("$key => ${value is List<File> ? '✅ List<File> with ${value.length} files' : value}");
+});
                         print(toDate);
                         _submitFunction(fieldResults);
                       }
@@ -360,4 +387,61 @@ class _createServicePageState extends State<createServicePage> {
       ),
     );
   }
+
+  Widget _buildServiceImagesPreview(List<String> imageUrls) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text("صور الخدمة الحالية:", style: TextStyle(fontSize: 16)),
+      SizedBox(height: 10),
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: imageUrls.map((url) {
+          return Stack(
+            children: [
+              Image.network(url, width: 100, height: 100, fit: BoxFit.cover),
+              Positioned(
+                top: 0,
+                right: 0,
+                child: IconButton(
+                  icon: Icon(Icons.delete, color: Colors.red),
+                  onPressed: () {
+                    _deleteImage(url);
+                  },
+                ),
+              ),
+            ],
+          );
+        }).toList(),
+      ),
+      SizedBox(height: 10),
+    ],
+  );
+}
+
+Future<void> _deleteImage(String imageUrl) async {
+  try {
+    final response = await ApiConfig.deleteServiceImage(
+      serviceId: serviceId!,
+      imageUrl: imageUrl,
+    );
+
+    if (response) {
+      setState(() {
+        serviceData!['image_urls']!.remove(imageUrl);
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('فشل حذف الصورة')),
+      );
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('خطأ أثناء الحذف: $e')),
+    );
+  }
+}
+
+
 }

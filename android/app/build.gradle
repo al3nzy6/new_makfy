@@ -7,7 +7,8 @@ plugins {
 android {
     namespace = "sa.makfy.app"
     compileSdk = 34
-    ndkVersion = flutter.ndkVersion
+    // ndkVersion = flutter.ndkVersion
+    ndkVersion "25.2.9519653"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -33,22 +34,22 @@ android {
         keyProperties.load(new FileInputStream(keyPropertiesFile))
     }
 
-    signingConfigs {  // ✅ تعريف signingConfigs أولًا
-        release {
-            storeFile file(keyProperties['storeFile'])
-            storePassword keyProperties['storePassword']
-            keyAlias keyProperties['keyAlias']
-            keyPassword keyProperties['keyPassword']
-        }
-    }
+    // signingConfigs {  // ✅ تعريف signingConfigs أولًا
+    //     release {
+    //         storeFile file( keyProperties['storeFile'])
+    //         storePassword keyProperties['storePassword']
+    //         keyAlias keyProperties['keyAlias']
+    //         keyPassword keyProperties['keyPassword']
+    //     }
+    // }
 
-    buildTypes {
-        release {
-            signingConfig signingConfigs.release  // ✅ الآن هذا سيعمل بدون مشاكل
-            minifyEnabled true
-            shrinkResources true
-        }
-    }
+    // buildTypes {
+    //     release {
+    //         signingConfig signingConfigs.release  // ✅ الآن هذا سيعمل بدون مشاكل
+    //         minifyEnabled true
+    //         shrinkResources true
+    //     }
+    // }
 }
 
 flutter {

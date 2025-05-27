@@ -5,7 +5,6 @@ import 'package:makfy_new/Utilities/ApiConfig.dart';
 import 'package:makfy_new/Widget/H1textWidget.dart';
 import 'package:makfy_new/Widget/H2Text.dart';
 import 'package:makfy_new/Widget/MainScreenWidget.dart';
-import 'package:makfy_new/Widget/appHeadWidget.dart';
 import 'package:makfy_new/Widget/boxWidget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -74,7 +73,7 @@ class _ProfilepageState extends State<Profilepage> {
               ],
             ),
           ),
-          SizedBox(
+          const SizedBox(
             height: 20,
           ),
           Wrap(
@@ -83,11 +82,11 @@ class _ProfilepageState extends State<Profilepage> {
             children: (userID != null) ? _NormalUserprofileSections() : [],
           ),
           if (isServiceProvider == 1) ...[
-            SizedBox(
+            const SizedBox(
               height: 10,
             ),
             H1text(text: "قسم موفري الخدمات"),
-            SizedBox(
+            const SizedBox(
               height: 10,
             ),
             Wrap(

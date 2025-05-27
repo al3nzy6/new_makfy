@@ -14,7 +14,9 @@ import 'package:path/path.dart';
 import 'package:geolocator/geolocator.dart';
 
 class ApiConfig {
+  // static const String apiUrl = 'https://assume-cats-kitty-de.trycloudflare.com/api';
   // static const String apiUrl = 'http://makfy.test/api';
+  // static const String apiUrl = 'https://test.makfy.sa/api';
   static const String apiUrl = 'https://makfy.sa/api';
   static Future<Map<String, String>> getAuthHeaders() async {
     final token = await ApiConfig().getToken();
@@ -102,12 +104,11 @@ class ApiConfig {
     }
   }
 
-  static Future<User> getUserProfile(int id) async {
-    final url = Uri.parse("${apiUrl}/user/$id/profile");
+  static Future<User> getUserProfile(int id, int? category_id) async {
+    final url = Uri.parse("${apiUrl}/user/$id/profile/${category_id}");
     try {
       // final authHeader = await ApiConfig.getAuthHeaders();
       final response = await http.get(url);
-
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
 
@@ -137,11 +138,25 @@ class ApiConfig {
       throw Exception('Failed to load category. Error: $e');
     }
   }
+  static Future<bool> checkMembershipStatus() async {
+    final authHeader = await ApiConfig.getAuthHeaders();
+    final response = await http.get(
+      
+      Uri.parse('$apiUrl/user/check-membership'),
+      headers: authHeader,
+  );
 
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body);
+    return data['is_active'] == true;
+  } else {
+    throw Exception('فشل في جلب حالة العضوية');
+  }
+}
   static Future<Service> getService(int id) async {
     final url = Uri.parse('${apiUrl}/service/$id');
     final authHeader = await ApiConfig.getAuthHeaders();
-
+    print('ddd');
     try {
       final response = await http.get(url, headers: authHeader);
 
@@ -286,6 +301,8 @@ class ApiConfig {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('user_name', userData['name']);
     await prefs.setString('user_email', userData['email']);
+    await prefs.setString('user_phone', userData['phone']);
+    await prefs.setString('user_registered_at', userData['created_at']);
     await prefs.setInt('user_id', userData['id']);
     if (userData['id_number'] != null || userData['id_number'] != '') {
       await prefs.setInt('isServiceProvider', 1);
@@ -316,198 +333,260 @@ class ApiConfig {
 
   // services
 
-  Future<List> createService(Map<String, dynamic> data) async {
-    final url = Uri.parse("${apiUrl}/service/create");
-    final authHeader = await ApiConfig.getAuthHeaders();
+Future<List> createService(Map<String, dynamic> data) async {
+  final url = Uri.parse("${apiUrl}/service/create");
+  final authHeader = await ApiConfig.getAuthHeaders();
 
-    // قم بإنشاء MultipartRequest لرفع الملفات
-    final request = http.MultipartRequest('POST', url)
-      ..headers.addAll(authHeader);
+  // إنشاء MultipartRequest
+  final request = http.MultipartRequest('POST', url)
+    ..headers.addAll(authHeader);
 
-    // قم بإضافة البيانات النصية (غير الصور)
-    data.forEach((key, value) {
-      if (value is! File) {
-        request.fields[key] = value.toString();
-      }
-    });
+  // أضف الحقول النصية العادية
+  data.forEach((key, value) {
+    if (value is! File && value is! List<File>) {
+      request.fields[key] = value.toString();
+    }
+  });
 
-    // قم بإضافة الملفات إلى الطلب
-    for (var entry in data.entries) {
-      if (entry.value is File) {
-        final file = entry.value as File;
+  // أضف الملفات إلى MultipartRequest
+  for (var entry in data.entries) {
+    final key = entry.key;
+    final value = entry.value;
+
+    if (value is File) {
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          key,
+          value.path,
+          filename: basename(value.path),
+        ),
+      );
+    } else if (value is List<File>) {
+      for (int i = 0; i < value.length; i++) {
+        final file = value[i];
         request.files.add(
           await http.MultipartFile.fromPath(
-            entry.key, // اسم الحقل
-            file.path,
-            filename: basename(file.path), // اسم الملف
-          ),
-        );
-      }
-    }
-
-    // إرسال الطلب
-    try {
-      final response = await request.send();
-
-      if (response.statusCode == 200) {
-        final responseBody = await response.stream.bytesToString();
-        final id = json.decode(responseBody)['data']['id'];
-        return [id, 'تم إنشاء الخدمة'];
-      } else {
-        final responseBody = await response.stream.bytesToString();
-        final decodedBody = json.decode(responseBody);
-        if (response.statusCode == 422) {
-          final errors = decodedBody['errors'] as Map<String, dynamic>;
-          String errorMessages = errors.entries
-              .map((e) =>
-                  "${e.value.join(", ")}") // تحويل قائمة الأخطاء إلى نصوص مفصولة بفاصلة
-              .join("\n");
-          return [null, 'يوجد أخطاء:\n$errorMessages'];
-        } else {
-          return [null, 'يوجد خلل لم يتم إنشاء الخدمة ${response.statusCode}'];
-        }
-      }
-    } catch (e) {
-      throw Exception("خطأ أثناء إرسال البيانات: $e");
-    }
-  }
-
-  Future<List> updateService(Map<String, dynamic> data, int serviceId) async {
-    final url = Uri.parse("${apiUrl}/service/$serviceId/update");
-    final authHeader = await ApiConfig.getAuthHeaders();
-
-    final request = http.MultipartRequest('POST', url)
-      ..headers.addAll(authHeader);
-
-    data.forEach((key, value) {
-      if (value is! File) {
-        request.fields[key] = value.toString();
-      }
-    });
-
-    for (var entry in data.entries) {
-      if (entry.value is File) {
-        final file = entry.value as File;
-        request.files.add(
-          await http.MultipartFile.fromPath(
-            entry.key,
+            "$key[]", // 🔥 مهم: للسماح بإرسال أكثر من صورة
             file.path,
             filename: basename(file.path),
           ),
         );
       }
     }
+  }
 
-    try {
-      final response = await request.send();
-      if (response.statusCode == 200) {
-        final responseBody = await response.stream.bytesToString();
-        return [
-          json.decode(responseBody)['data']['id'],
-          'تم تحديث الخدمة بنجاح'
-        ];
+  // إرسال الطلب
+  try {
+    final response = await request.send();
+
+    if (response.statusCode == 200) {
+      final responseBody = await response.stream.bytesToString();
+      final id = json.decode(responseBody)['data']['id'];
+      return [id, 'تم إنشاء الخدمة بنجاح'];
+    } else {
+      final responseBody = await response.stream.bytesToString();
+      final decodedBody = json.decode(responseBody);
+      if (response.statusCode == 422) {
+        final errors = decodedBody['errors'] as Map<String, dynamic>;
+        String errorMessages = errors.entries
+            .map((e) => "${e.value.join(", ")}")
+            .join("\n");
+        return [null, 'يوجد أخطاء:\n$errorMessages'];
       } else {
-        return [null, 'يوجد خلل لم يتم تحديث الخدمة ${response.statusCode}'];
+        return [null, 'لم يتم إنشاء الخدمة. كود: ${response.statusCode}'];
       }
-    } catch (e) {
-      throw Exception("خطأ أثناء إرسال البيانات: $e");
+    }
+  } catch (e) {
+    throw Exception("خطأ أثناء إرسال البيانات: $e");
+  }
+}
+
+static Future<bool> deleteServiceImage({
+  required int serviceId,
+  required String imageUrl,
+}) async {
+  final uri = Uri.parse("$apiUrl/service/$serviceId/delete-image");
+  final headers = await getAuthHeaders();
+  headers['Content-Type'] = 'application/json'; // تأكيد نوع المحتوى
+
+  final response = await http.post(
+    uri,
+    headers: headers,
+    body: json.encode({
+      "image_url": imageUrl,
+    }),
+  );
+
+  return response.statusCode == 200;
+}
+  Future<List> updateService(Map<String, dynamic> data, int serviceId) async {
+  final url = Uri.parse("${apiUrl}/service/$serviceId/update");
+  final authHeader = await ApiConfig.getAuthHeaders();
+
+  final request = http.MultipartRequest('POST', url)
+    ..headers.addAll(authHeader);
+
+  // أضف الحقول النصية (غير الملفات)
+  data.forEach((key, value) {
+    if (value is! File && value is! List<File>) {
+      request.fields[key] = value.toString();
+    }
+  });
+
+  // أضف الملفات
+  for (var entry in data.entries) {
+    final key = entry.key;
+    final value = entry.value;
+
+    if (value is File) {
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          key,
+          value.path,
+          filename: basename(value.path),
+        ),
+      );
+    } else if (value is List<File>) {
+      for (int i = 0; i < value.length; i++) {
+        final file = value[i];
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            "$key[]", // مثل: fields[4][value][]
+            file.path,
+            filename: basename(file.path),
+          ),
+        );
+      }
     }
   }
+
+  try {
+    final response = await request.send();
+    if (response.statusCode == 200) {
+      final responseBody = await response.stream.bytesToString();
+      return [
+        json.decode(responseBody)['data']['id'],
+        'تم تحديث الخدمة بنجاح'
+      ];
+    } else {
+      final body = await response.stream.bytesToString();
+      return [null, 'لم يتم تحديث الخدمة (${response.statusCode})\n$body'];
+    }
+  } catch (e) {
+    throw Exception("خطأ أثناء إرسال البيانات: $e");
+  }
+}
 
   Future<List> register(
-      String name,
-      String phone,
-      String email,
-      String password,
-      String passwordConfirmation,
-      bool? isServiceProvider,
-      String? idnumber,
-      String? nationality,
-      String? bank,
-      String? iban,
-      String? order_limit_per_day,
-      int? deliveryFee) async {
-    final url = Uri.parse('$apiUrl/register');
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'name': name,
-        'email': email,
-        'phone': phone,
-        'password_confirmation': passwordConfirmation,
-        'password': password,
-        'is_service_provider': isServiceProvider ?? null,
-        'id_number': idnumber ?? null,
-        'nationality': nationality ?? null,
-        'bank': bank ?? null,
-        'iban': iban ?? null,
-        'order_limit_per_day': order_limit_per_day ?? null,
-        'delivery_fee': deliveryFee ?? null,
-      }),
-    );
+  String name,
+  String phone,
+  String email,
+  String password,
+  String passwordConfirmation,
+  bool? isServiceProvider,
+  String? idnumber,
+  String? nationality,
+  String? bank,
+  String? iban,
+  String? order_limit_per_day,
+  int? deliveryFee,
+  File? profileImage, // أضف ملف الصورة
+) async {
+  final url = Uri.parse('$apiUrl/register');
+  var request = http.MultipartRequest('POST', url);
 
-    if (response.statusCode == 200) {
-      // التسجيل ناجح، قم بمعالجة الاستجابة حسب احتياجاتك
-      final data = jsonDecode(response.body);
-      // يمكنك تخزين التوكن أو معلومات المستخدم هنا إذا لزم الأمر
-      if (data['access_token'] != null) {
-        await saveToken(data['access_token']);
-        await saveUserData(data['user']); // S
-      }
-      return [true, 'Registration completed'];
-    } else {
-      // التسجيل فشل، قم بعرض رسالة خطأ أو معالجة الخطأ
-      print('Registration failed: ${response.body}');
-      return [false, jsonDecode(response.body)];
-    }
+  request.fields.addAll({
+    'name': name,
+    'email': email,
+    'phone': phone,
+    'password': password,
+    'password_confirmation': passwordConfirmation,
+    'is_service_provider': isServiceProvider?.toString() ?? '',
+    'id_number': idnumber ?? '',
+    'nationality': nationality ?? '',
+    'bank': bank ?? '',
+    'iban': iban ?? '',
+    'order_limit_per_day': order_limit_per_day ?? '',
+    'delivery_fee': deliveryFee?.toString() ?? '',
+  });
+
+  if (profileImage != null) {
+    request.files.add(await http.MultipartFile.fromPath(
+      'profile_image',
+      profileImage.path,
+    ));
   }
+
+  final streamedResponse = await request.send();
+  final response = await http.Response.fromStream(streamedResponse);
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    if (data['access_token'] != null) {
+      await saveToken(data['access_token']);
+      await saveUserData(data['user']);
+    }
+    return [true, 'تم التسجيل بنجاح'];
+  } else {
+    print('Registration failed: ${response.body}');
+    return [false, jsonDecode(response.body)];
+  }
+}
 
   Future<List> updateProfile(
-      String name,
-      String phone,
-      String email,
-      bool? isServiceProvider,
-      String? idnumber,
-      String? nationality,
-      String? bank,
-      String? iban,
-      String? order_limit_per_day,
-      int? deliveryFee) async {
-    final url = Uri.parse('$apiUrl/profile/update');
-    final response = await http.put(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${await getToken()}' // جلب التوكن للمصادقة
-      },
-      body: jsonEncode({
-        'name': name,
-        'email': email,
-        'phone': phone,
-        'is_service_provider': isServiceProvider,
-        'id_number': idnumber,
-        'nationality': nationality,
-        'bank': bank,
-        'iban': iban,
-        'order_limit_per_day': order_limit_per_day,
-        'delivery_fee': deliveryFee,
-      }),
-    );
+  String name,
+  String phone,
+  String email,
+  bool? isServiceProvider,
+  String? idnumber,
+  String? nationality,
+  String? bank,
+  String? iban,
+  String? order_limit_per_day,
+  int? deliveryFee,
+  File? profileImage,
+) async {
+  final url = Uri.parse('$apiUrl/profile/update');
+  final token = await getToken();
+  var request = http.MultipartRequest('POST', url);
 
-    if (response.statusCode == 200) {
-      // التحديث ناجح، معالجة الاستجابة حسب الحاجة
-      final data = jsonDecode(response.body);
-      await saveUserData(data['user']); // تحديث بيانات المستخدم
-      return [true, 'Profile updated successfully'];
-    } else {
-      // فشل التحديث، عرض رسالة خطأ
-      print('Profile update failed: ${response.body}');
-      return [false, jsonDecode(response.body)];
-    }
+  request.headers['Authorization'] = 'Bearer $token';
+
+  request.fields.addAll({
+    'name': name,
+    'email': email,
+    'phone': phone,
+    'is_service_provider': isServiceProvider?.toString() ?? '',
+    'id_number': idnumber ?? '',
+    'nationality': nationality ?? '',
+    'bank': bank ?? '',
+    'iban': iban ?? '',
+    'order_limit_per_day': order_limit_per_day ?? '',
+    'delivery_fee': deliveryFee?.toString() ?? '',
+    '_method': 'PUT', // Laravel يحتاج هذا ليعتبره PUT
+  });
+
+  if (profileImage != null) {
+    request.files.add(await http.MultipartFile.fromPath(
+      'profile_image',
+      profileImage.path,
+    ));
   }
 
-  static Future<Map<String, dynamic>> updateCart(Map<int, dynamic> data,
+  final streamedResponse = await request.send();
+  final response = await http.Response.fromStream(streamedResponse);
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    await saveUserData(data['user']);
+    return [true, 'تم التحديث بنجاح'];
+  } else {
+    print('Update failed: ${response.body}');
+    return [false, jsonDecode(response.body)];
+  }
+}
+
+  static Future<Map<String, dynamic>> updateCart(Map<String, dynamic> data,
       Cart? cart, String datatimestamp, bool? delivery_is_required) async {
     final url = (cart != null)
         ? Uri.parse('$apiUrl/cart/update')
@@ -932,7 +1011,19 @@ class ApiConfig {
     // تحقق من أن خدمات الموقع مفعلة
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      throw Exception('خدمات الموقع معطلة.');
+      return Position(
+        latitude: 0.0,
+        longitude: 0.0,
+        accuracy: 0.0,
+        altitudeAccuracy: 0.0,
+        altitude: 0.0,
+        headingAccuracy: 0.0,
+        heading: 0.0,
+        speed: 0.0,
+        speedAccuracy: 0.0,
+        timestamp: DateTime.now(),
+      );
+      // throw Exception('خدمات الموقع معطلة.');
     }
 
     // تحقق من أذونات الموقع
@@ -940,12 +1031,36 @@ class ApiConfig {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        throw Exception('تم رفض أذونات الموقع.');
+        return Position(
+          latitude: 0.0,
+          longitude: 0.0,
+          accuracy: 0.0,
+          altitudeAccuracy: 0.0,
+          altitude: 0.0,
+          headingAccuracy: 0.0,
+          heading: 0.0,
+          speed: 0.0,
+          speedAccuracy: 0.0,
+          timestamp: DateTime.now(),
+        );
+        // throw Exception('تم رفض أذونات الموقع.');
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
-      throw Exception('تم رفض أذونات الموقع بشكل دائم.');
+      return Position(
+        latitude: 0.0,
+        longitude: 0.0,
+        accuracy: 0.0,
+        altitudeAccuracy: 0.0,
+        altitude: 0.0,
+        headingAccuracy: 0.0,
+        heading: 0.0,
+        speed: 0.0,
+        speedAccuracy: 0.0,
+        timestamp: DateTime.now(),
+      );
+      // throw Exception('تم رفض أذونات الموقع بشكل دائم.');
     }
 
     // احصل على الموقع الحالي

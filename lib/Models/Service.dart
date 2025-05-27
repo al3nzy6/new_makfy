@@ -19,6 +19,7 @@ class Service {
   final String? available_to;
   final SubCategory? category;
   final int? quantity; // الحقل الجديد، يمكن أن يكون null
+  final String? notes;
 
   Service({
     required this.id,
@@ -37,6 +38,7 @@ class Service {
     required this.user,
     this.category,
     this.quantity, // إضافة الحقل كخيار اختياري
+    this.notes, // إضافة الحقل كخيار اختياري
   });
 
   // Factory constructor لتحويل JSON إلى Service
@@ -66,6 +68,7 @@ class Service {
           ? SubCategory.fromJson(json['category'])
           : null,
       quantity: json['quantity'], // جلب quantity فقط إذا كان موجودًا
+      notes: json['notes'], // جلب notes فقط إذا كان موجودًا
     );
   }
 
@@ -89,6 +92,7 @@ class Service {
       'user': user.toMap(),
       'category': category ?? [],
       'quantity': quantity, // تضمين quantity إذا كان غير null
+      'notes': notes, // تضمين notes إذا كان غير null
     };
   }
 
@@ -112,6 +116,7 @@ class Service {
       'user': user.toMap(),
       'category': category ?? [],
       'quantity': quantity, // تضمين quantity إذا كان غير null
+      'notes': notes, // تضمين notes إذا كان غير null
     };
   }
 
@@ -139,6 +144,7 @@ class Service {
       category:
           map['category'] != null ? SubCategory.fromMap(map['category']) : null,
       quantity: map['quantity']?.toInt(),
+      notes: map['notes'] ?? '',
     );
   }
 }

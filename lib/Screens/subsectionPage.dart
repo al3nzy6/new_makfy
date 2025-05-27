@@ -74,154 +74,177 @@ class _SubsectionpageState extends State<Subsectionpage> {
     }
   }
 
-  Future<void> getCities() async {
-    try {
-      List<City> citiesFromApi = await ApiConfig.getCities();
-      setState(() {
-        cities = citiesFromApi;
-        filteredCities = citiesFromApi;
-      });
-    } catch (e) {
-      print("Error fetching cities: $e");
+  // Future<void> getCities() async {
+  //   try {
+  //     List<City> citiesFromApi = await ApiConfig.getCities();
+  //     setState(() {
+  //       cities = citiesFromApi;
+  //       filteredCities = citiesFromApi;
+  //     });
+  //   } catch (e) {
+  //     print("Error fetching cities: $e");
+  //   }
+  // }
+
+  // Future<List<District>> getDistricts(int cityId) async {
+  //   try {
+  //     City cityFromApi = await ApiConfig.getDistricts(cityId);
+  //     return cityFromApi.districts ?? [];
+  //   } catch (e) {
+  //     print("Error fetching districts: $e");
+  //     return [];
+  //   }
+  // }
+
+  // Future<void> _loadDistricts(int cityId) async {
+  //   setState(() {
+  //     isLoading = true;
+  //   });
+  //   try {
+  //     List<District> districts = await getDistricts(cityId);
+  //     setState(() {
+  //       filteredDistricts = districts;
+  //     });
+  //   } catch (e) {
+  //     print("Error fetching districts: $e");
+  //   } finally {
+  //     setState(() {
+  //       isLoading = false;
+  //     });
+  //   }
+  // }
+
+  // Future<void> _showCityPicker(BuildContext context) async {
+  //   filteredCities = cities;
+  //   await showModalBottomSheet(
+  //     context: context,
+  //     builder: (BuildContext context) {
+  //       return StatefulBuilder(
+  //         builder: (BuildContext context, StateSetter setState) {
+  //           return Container(
+  //             height: MediaQuery.of(context).size.height / 2,
+  //             child: Column(
+  //               children: [
+  //                 Padding(
+  //                   padding: const EdgeInsets.all(8.0),
+  //                   child: TextField(
+  //                     decoration: InputDecoration(
+  //                       labelText: 'ابحث عن مدينة',
+  //                       prefixIcon: Icon(Icons.search),
+  //                     ),
+  //                     onChanged: (value) {
+  //                       setState(() {
+  //                         filteredCities = cities
+  //                             .where((city) => city.name.contains(value))
+  //                             .toList();
+  //                       });
+  //                     },
+  //                   ),
+  //                 ),
+  //                 Expanded(
+  //                   child: ListView.builder(
+  //                     itemCount: filteredCities.length,
+  //                     itemBuilder: (context, index) {
+  //                       return ListTile(
+  //                         title: Text(filteredCities[index].name),
+  //                         onTap: () {
+  //                           setState(() {
+  //                             selectedCity = filteredCities[index];
+  //                             selectedDistrict = null;
+  //                             _loadDistricts(selectedCity!.id);
+  //                           });
+  //                           Navigator.pop(context);
+  //                         },
+  //                       );
+  //                     },
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           );
+  //         },
+  //       );
+  //     },
+  //   );
+  // }
+
+  // Future<void> _showDistrictPicker(BuildContext context) async {
+  //   await showModalBottomSheet(
+  //     context: context,
+  //     builder: (BuildContext context) {
+  //       return StatefulBuilder(
+  //         builder: (BuildContext context, StateSetter setState) {
+  //           return Container(
+  //             height: MediaQuery.of(context).size.height / 2,
+  //             child: Column(
+  //               children: [
+  //                 Padding(
+  //                   padding: const EdgeInsets.all(8.0),
+  //                   child: TextField(
+  //                     decoration: InputDecoration(
+  //                       labelText: 'ابحث عن حي',
+  //                       prefixIcon: Icon(Icons.search),
+  //                     ),
+  //                     onChanged: (value) {
+  //                       setState(() {
+  //                         filteredDistricts = filteredDistricts
+  //                             .where(
+  //                                 (district) => district.name.contains(value))
+  //                             .toList();
+  //                       });
+  //                     },
+  //                   ),
+  //                 ),
+  //                 Expanded(
+  //                   child: ListView.builder(
+  //                     itemCount: filteredDistricts.length,
+  //                     itemBuilder: (context, index) {
+  //                       return ListTile(
+  //                         title: Text(filteredDistricts[index].name),
+  //                         onTap: () {
+  //                           setState(() {
+  //                             selectedDistrict = filteredDistricts[index];
+  //                           });
+  //                           Navigator.pop(context);
+  //                           Future.delayed(Duration(milliseconds: 100), () {
+  //                             setState(
+  //                                 () {}); // تأكيد التحديث بعد إغلاق القائمة
+  //                           });
+  //                         },
+  //                       );
+  //                     },
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           );
+  //         },
+  //       );
+  //     },
+  //   );
+  // }
+  Future<void> _requestLocation(BuildContext context) async {
+    LocationPermission permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
     }
-  }
 
-  Future<List<District>> getDistricts(int cityId) async {
-    try {
-      City cityFromApi = await ApiConfig.getDistricts(cityId);
-      return cityFromApi.districts ?? [];
-    } catch (e) {
-      print("Error fetching districts: $e");
-      return [];
+    if (permission == LocationPermission.deniedForever) {
+      // فتح الإعدادات إذا تم رفض الإذن نهائيًا
+      await Geolocator.openAppSettings();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text("تم رفض الإذن نهائيًا، قم بتفعيله من الإعدادات")),
+      );
+    } else if (permission == LocationPermission.whileInUse ||
+        permission == LocationPermission.always) {
+      // setState(() {});
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("تم منح إذن الموقع بنجاح!")),
+      );
     }
-  }
-
-  Future<void> _loadDistricts(int cityId) async {
-    setState(() {
-      isLoading = true;
-    });
-    try {
-      List<District> districts = await getDistricts(cityId);
-      setState(() {
-        filteredDistricts = districts;
-      });
-    } catch (e) {
-      print("Error fetching districts: $e");
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _showCityPicker(BuildContext context) async {
-    filteredCities = cities;
-    await showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            return Container(
-              height: MediaQuery.of(context).size.height / 2,
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: TextField(
-                      decoration: InputDecoration(
-                        labelText: 'ابحث عن مدينة',
-                        prefixIcon: Icon(Icons.search),
-                      ),
-                      onChanged: (value) {
-                        setState(() {
-                          filteredCities = cities
-                              .where((city) => city.name.contains(value))
-                              .toList();
-                        });
-                      },
-                    ),
-                  ),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: filteredCities.length,
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          title: Text(filteredCities[index].name),
-                          onTap: () {
-                            setState(() {
-                              selectedCity = filteredCities[index];
-                              selectedDistrict = null;
-                              _loadDistricts(selectedCity!.id);
-                            });
-                            Navigator.pop(context);
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Future<void> _showDistrictPicker(BuildContext context) async {
-    await showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            return Container(
-              height: MediaQuery.of(context).size.height / 2,
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: TextField(
-                      decoration: InputDecoration(
-                        labelText: 'ابحث عن حي',
-                        prefixIcon: Icon(Icons.search),
-                      ),
-                      onChanged: (value) {
-                        setState(() {
-                          filteredDistricts = filteredDistricts
-                              .where(
-                                  (district) => district.name.contains(value))
-                              .toList();
-                        });
-                      },
-                    ),
-                  ),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: filteredDistricts.length,
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          title: Text(filteredDistricts[index].name),
-                          onTap: () {
-                            setState(() {
-                              selectedDistrict = filteredDistricts[index];
-                            });
-                            Navigator.pop(context);
-                            Future.delayed(Duration(milliseconds: 100), () {
-                              setState(
-                                  () {}); // تأكيد التحديث بعد إغلاق القائمة
-                            });
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
   }
 
   Future<void> _searchServices() async {
@@ -263,28 +286,29 @@ class _SubsectionpageState extends State<Subsectionpage> {
               );
             }).toList() ??
             [];
-        services = category.services?.map((service) {
-              print("${date} tttt");
-              return ServiceAddedWidget(
-                title: service.title,
-                fields: service.insertedValues?.split(','),
-                serviceProvider: service.user.name,
-                price: service.price,
-                id: service.id,
-                count: 0,
-                date: date ?? null,
-                time: time ?? null,
-              );
-            }).toList() ??
-            [];
+        // services = category.services?.map((service) {
+        //       print("${date} tttt");
+        //       return ServiceAddedWidget(
+        //         title: service.title,
+        //         fields: service.insertedValues?.split(','),
+        //         serviceProvider: service.user.name,
+        //         price: service.price,
+        //         id: service.id,
+        //         count: 0,
+        //         date: date ?? null,
+        //         time: time ?? null,
+        //       );
+        //     }).toList() ??
+        //     [];
         serviceProviders = category.service_providers?.map((service_provider) {
-              print("${date} tttt");
-
               return serviceProviderWidget(
+                // title: "ssss",
                 title: service_provider.name,
                 id: service_provider.id,
                 date: date ?? null,
                 time: time ?? null,
+                categoryId: id,
+                profileImage: service_provider.profileImageUrl,
                 averageRating: service_provider.averageRating,
                 countRating: service_provider.countRating,
               );
@@ -300,22 +324,22 @@ class _SubsectionpageState extends State<Subsectionpage> {
     }
   }
 
-  Future<void> _getDistrict(int district) async {
-    List<Map<String, dynamic>> getDistrictOption =
-        (await ApiConfig.getDistricts(district!))
-            .districts!
-            .map((district) => {'id': district.id, 'name': district.name})
-            .toList();
-    try {
-      if (mounted) {
-        setState(() {
-          isLoading = true;
-          districts = getDistrictOption;
-          isLoading = false;
-        });
-      }
-    } catch (e) {}
-  }
+  // Future<void> _getDistrict(int district) async {
+  //   List<Map<String, dynamic>> getDistrictOption =
+  //       (await ApiConfig.getDistricts(district!))
+  //           .districts!
+  //           .map((district) => {'id': district.id, 'name': district.name})
+  //           .toList();
+  //   try {
+  //     if (mounted) {
+  //       setState(() {
+  //         isLoading = true;
+  //         districts = getDistrictOption;
+  //         isLoading = false;
+  //       });
+  //     }
+  //   } catch (e) {}
+  // }
 
   void getAreaFromCoordinates(double latitude, double longitude) async {
     try {
@@ -342,10 +366,11 @@ class _SubsectionpageState extends State<Subsectionpage> {
     final getPosition = await ApiConfig().getCurrentLocation();
     final latitude = getPosition.latitude;
     final longitude = getPosition.longitude;
+    position = getPosition;
     Category category = await ApiConfig.getCategory(id, latitude, longitude);
-    List<Map<String, dynamic>> getCityOptions = (await ApiConfig.getCities())
-        .map((city) => {'id': city.id, 'name': city.name})
-        .toList();
+    // List<Map<String, dynamic>> getCityOptions = (await ApiConfig.getCities())
+    //     .map((city) => {'id': city.id, 'name': city.name})
+    //     .toList();
     isServiceProvider = (prefs.getInt('isServiceProvider') == 1) ? true : false;
     try {
       // getCities();
@@ -370,26 +395,30 @@ class _SubsectionpageState extends State<Subsectionpage> {
               );
             }).toList() ??
             [];
-        services = category.services?.map((service) {
-              print(date);
-              return ServiceAddedWidget(
-                title: service.title,
-                fields: service.insertedValues?.split(','),
-                serviceProvider: service.user.name,
-                price: service.price,
-                id: service.id,
-                count: 0,
-                date: date ?? null,
-                time: time ?? null,
-              );
-            }).toList() ??
-            [];
+        // services = category.services?.map((service) {
+        //       print(date);
+        //       return ServiceAddedWidget(
+        //         title: service.title,
+        //         fields: service.insertedValues?.split(','),
+        //         serviceProvider: service.user.name,
+        //         price: service.price,
+        //         id: service.id,
+        //         count: 0,
+        //         date: date ?? null,
+        //         time: time ?? null,
+        //       );
+        //     }).toList() ??
+        //     [];
         serviceProviders = category.service_providers?.map((service_provider) {
+          print(service_provider.profileImageUrl);
               return serviceProviderWidget(
                 title: service_provider.name,
+                // title: "qq",
                 id: service_provider.id,
                 date: date ?? null,
                 time: time ?? null,
+                categoryId: id,
+                profileImage: service_provider.profileImageUrl,
                 averageRating: service_provider.averageRating,
                 countRating: service_provider.countRating,
               );
@@ -403,17 +432,42 @@ class _SubsectionpageState extends State<Subsectionpage> {
   }
 
   Widget _floatingButton() {
-    return FloatingActionButton.extended(
-      onPressed: () {
-        Navigator.pushNamed(context, '/create_service', arguments: [id, name]);
-      },
-      label: H1text(
-        text: 'اضافة خدمة +',
-        textColor: Colors.white,
-      ),
-      backgroundColor: Colors.orange[900],
-    );
-  }
+  return FloatingActionButton.extended(
+    onPressed: () async {
+      final isActive = await ApiConfig.checkMembershipStatus();
+      if (!isActive) {
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text('تنبيه'),
+              content: Text('عضويتك غير مفعّلة حتى الآن.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('حسناً'),
+                ),
+              ],
+            );
+          },
+        );
+        return;
+      }
+
+      Navigator.pushNamed(
+        context,
+        '/create_service',
+        arguments: [id, name],
+      );
+    },
+    label: H1text(
+      text: 'اضافة خدمة +',
+      textColor: Colors.white,
+    ),
+    backgroundColor: Colors.orange[900],
+  );
+}
+
 
   Widget build(BuildContext context) {
     return MainScreenWidget(
@@ -585,16 +639,13 @@ class _SubsectionpageState extends State<Subsectionpage> {
                   onTap: () {
                     fieldResults['category_id'] = id;
                     _searchServices();
-                    print(date);
-                    print(time);
-                    print(fieldResults);
                   },
                   child: Container(
                     alignment: Alignment.topRight,
-                    padding: EdgeInsets.only(top: 10, bottom: 10),
+                    padding: const EdgeInsets.only(top: 10, bottom: 10),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Color(0XFFEF5B2C),
+                        color: const Color(0XFFEF5B2C),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       height: 40,
@@ -625,10 +676,10 @@ class _SubsectionpageState extends State<Subsectionpage> {
                   },
                   child: Container(
                     alignment: Alignment.topRight,
-                    padding: EdgeInsets.only(top: 10, bottom: 10),
+                    padding: const EdgeInsets.only(top: 10, bottom: 10),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Color(0XFFEF5B2C),
+                        color: const Color(0XFFEF5B2C),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       height: 40,
@@ -656,7 +707,7 @@ class _SubsectionpageState extends State<Subsectionpage> {
               Container(
                 margin: EdgeInsets.all(30),
                 child: Center(
-                  child: Text("لا يوجد موفري خدمات بالقرب منك"),
+                  child: getErrorMessage(),
                 ),
               ),
             ...serviceProviders,
@@ -665,5 +716,30 @@ class _SubsectionpageState extends State<Subsectionpage> {
         ],
       ),
     );
+  }
+
+  Widget getErrorMessage() {
+    if (position != null &&
+        position!.latitude != 0.0 &&
+        position!.longitude != 0.0) {
+      return const Text("لا يوجد موفري خدمات بالقرب منك");
+    } else {
+      return Column(
+        children: [
+          const Text(
+            'يجب تمكين خدمات الموقع للوصول لموفري الخدمات بمنطقتك',
+            style: TextStyle(color: Colors.red),
+          ),
+          ElevatedButton(
+            onPressed: () => _requestLocation(context),
+            child: const Text("طلب إذن الموقع"),
+          ),
+          const Text(
+            'بعد السماح يرجى تحديث الصفحه بسحبها للاسفل',
+            style: TextStyle(color: Colors.red),
+          ),
+        ],
+      );
+    }
   }
 }
