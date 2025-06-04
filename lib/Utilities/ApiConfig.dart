@@ -12,65 +12,35 @@ import 'package:makfy_new/Models/Vacation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path/path.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:crypto/crypto.dart';
-
 
 class ApiConfig {
   // static const String apiUrl = 'https://assume-cats-kitty-de.trycloudflare.com/api';
-  static const String apiUrl = 'http://makfy.test/api';
+  // static const String apiUrl = 'http://makfy.test/api';
   // static const String apiUrl = 'https://test.makfy.sa/api';
-  // static const String apiUrl = 'https://makfy.sa/api';
-  static Future<Map<String, String>> getAuthHeaders({
-  String? body,
-  String? path,
-  bool? isAuth = false,
-  // bool? isAuth = false,
-}) async {
-  final token = await ApiConfig().getToken();
-  final headers = {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json',
-  };
-  if (isAuth == true) {
-    headers['Authorization'] = 'Bearer $token';
+  static const String apiUrl = 'https://makfy.sa/api';
+  static Future<Map<String, String>> getAuthHeaders() async {
+    final token = await ApiConfig().getToken();
+    return {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json', // Set the Accept header to expect JSON
+      'Authorization': "Bearer ${token}",
+    };
   }
-
-  final secretKey = utf8.encode("Abotrki!993");
-  final timestamp = DateTime.now().toUtc().toIso8601String();
-
-  String contentToSign;
-
-  if (body != null) {
-    // لطلبات POST/PUT/DELETE: نوقع على البودي
-    contentToSign = body;
-  } else if (path != null) {
-    // لطلبات GET: نوقع على path + timestamp
-    contentToSign = '$path|$timestamp';
-    headers['X-Path'] = path;
-  } else {
-    // بدون محتوى ولا مسار؟ ما نقدر نحسب توقيع
-    throw Exception('Must provide either body or path to sign');
-  }
-
-  final hmacSha256 = Hmac(sha256, secretKey);
-  final digest = hmacSha256.convert(utf8.encode(contentToSign));
-
-  headers['X-Signature'] = digest.toString();
-  headers['X-Timestamp'] = timestamp;
-  return headers;
-}
 
   // Function to get the categories from the API
   static Future<List<Category>> getCategories() async {
     print(apiUrl);
     final url = Uri.parse("$apiUrl/categories");
     final token = await ApiConfig().getToken();
-    final headers = await getAuthHeaders(path: 'api/categories');
+
     try {
       // Make an HTTP GET request
       final response = await http.get(
         url,
-        headers: headers
+        headers: {
+          'Accept': 'application/json', // Set the Accept header to expect JSON
+          'Authorization': 'Bearer $token',
+        },
       );
 
       if (response.statusCode == 200) {
@@ -97,12 +67,11 @@ class ApiConfig {
   static Future<Category> getCategory(
       int id, double? latitude, double? longtitude) async {
     // Position position = await ApiConfig().getCurrentLocation();
-    final urlString  = (latitude == null)
-        ? "${apiUrl}/category/${id}"
-        : "${apiUrl}/category/${id}/${latitude}/${longtitude}";
-    final url = Uri.parse(urlString);
+    final url = (latitude == null)
+        ? Uri.parse("${apiUrl}/category/${id}")
+        : Uri.parse("${apiUrl}/category/${id}/${latitude}/${longtitude}");
     try {
-      final authHeader = await ApiConfig.getAuthHeaders(path: urlString);
+      final authHeader = await ApiConfig.getAuthHeaders();
       final response = await http.get(url, headers: authHeader);
 
       if (response.statusCode == 200) {
@@ -136,12 +105,10 @@ class ApiConfig {
   }
 
   static Future<User> getUserProfile(int id, int? category_id) async {
-    final urlString = "${apiUrl}/user/$id/profile/${category_id}";
-    final url = Uri.parse(urlString);
+    final url = Uri.parse("${apiUrl}/user/$id/profile/${category_id}");
     try {
       // final authHeader = await ApiConfig.getAuthHeaders();
-      final authHeader = await ApiConfig.getAuthHeaders(path: urlString);
-      final response = await http.get(url, headers: authHeader);
+      final response = await http.get(url);
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
 
@@ -188,7 +155,8 @@ class ApiConfig {
 }
   static Future<Service> getService(int id) async {
     final url = Uri.parse('${apiUrl}/service/$id');
-    final authHeader = await ApiConfig.getAuthHeaders(path: '${apiUrl}/service/$id');
+    final authHeader = await ApiConfig.getAuthHeaders();
+    print('ddd');
     try {
       final response = await http.get(url, headers: authHeader);
 
@@ -238,7 +206,7 @@ class ApiConfig {
     final url = Uri.parse("${apiUrl}/cart/customer/non-paid");
     final token = await ApiConfig().getToken();
     try {
-      final authHeader = await ApiConfig.getAuthHeaders(path: "${apiUrl}/cart/customer/non-paid");
+      final authHeader = await ApiConfig.getAuthHeaders();
       final response = await http.get(url, headers: authHeader);
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
@@ -258,7 +226,7 @@ class ApiConfig {
     final url = Uri.parse("${apiUrl}/cart/service_provider");
     final token = await ApiConfig().getToken();
     try {
-      final authHeader = await ApiConfig.getAuthHeaders(path: "${apiUrl}/cart/service_provider");
+      final authHeader = await ApiConfig.getAuthHeaders();
       final response = await http.get(url, headers: authHeader);
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
@@ -278,7 +246,7 @@ class ApiConfig {
     final url = Uri.parse("${apiUrl}/cart/customer/paid");
     final token = await ApiConfig().getToken();
     try {
-      final authHeader = await ApiConfig.getAuthHeaders(path : "${apiUrl}/cart/customer/paid");
+      final authHeader = await ApiConfig.getAuthHeaders();
       final response = await http.get(url, headers: authHeader);
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
@@ -295,13 +263,10 @@ class ApiConfig {
   }
 
   Future<List> login(String email, String password) async {
-    final bodyString = jsonEncode({'email': email, 'password': password});
-    final headers = await getAuthHeaders(
-      body: bodyString,);
     final response = await http.post(
       Uri.parse('$apiUrl/login'), // Ensure this endpoint is correct
-      headers: headers,
-      body: bodyString,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email, 'password': password}),
     );
 
     if (response.statusCode == 200) {
@@ -960,12 +925,10 @@ static Future<bool> deleteServiceImage({
         '$apiUrl/user/checkTime/$userID'); // استبدل المسار حسب API الخاص بك
     // final headers = await getAuthHeaders();
     print('$apiUrl/user/checkTime/$userID');
-    final body = jsonEncode({"date": date, "time": time});
-    final authHeader = await ApiConfig.getAuthHeaders(body :body);
     try {
       final response = await http.post(url,
-          headers: authHeader,
-          body: body);
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({"date": date, "time": time}));
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
