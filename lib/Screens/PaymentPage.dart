@@ -218,8 +218,8 @@ TabbyWebView.showWebView(
       throw Exception("Price must be greater than 0.");
     }
     return PaymentConfig(
-      publishableApiKey: 'pk_test_sJyfiRuo4P9VDRqoMcB9TEwm5tBcg6GjWL1PrqWw',
-      // publishableApiKey: 'pk_live_rxvsa8sxcFa6ujt7Ghqv8NnyMwgB4kd2E83eUVco',
+      // publishableApiKey: 'pk_test_sJyfiRuo4P9VDRqoMcB9TEwm5tBcg6GjWL1PrqWw',
+      publishableApiKey: 'pk_live_rxvsa8sxcFa6ujt7Ghqv8NnyMwgB4kd2E83eUVco',
       amount: (widget.price * 100).round(),
       description: 'order #${widget.cart_id}',
       metadata: {

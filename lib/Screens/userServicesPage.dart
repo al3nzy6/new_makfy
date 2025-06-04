@@ -732,7 +732,14 @@ class _userServicesPageState extends State<userServicesPage> {
     try {
       Map<String, dynamic> result = await ApiConfig.updateCart(
           cartData, cart, dateTimeStamp!, hasDelivery);
-      
+      if (result['data'] is Map<String, dynamic> &&
+        result['data']['error'] != null) {
+      final serverMsg = result['data']['error'].toString();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(serverMsg)),
+      );
+      return;
+    }
       if (OnlySaveAsCart == false) {
         Navigator.pushNamed(context, '/payment_page', arguments: [
           result['data']['id'],

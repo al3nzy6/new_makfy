@@ -29,27 +29,27 @@ android {
 
     // تحميل ملف key.properties
     def keyProperties = new Properties()
-    def keyPropertiesFile = file("../key.properties")
+    def keyPropertiesFile = file("key.properties")
     if (keyPropertiesFile.exists()) {
         keyProperties.load(new FileInputStream(keyPropertiesFile))
     }
 
-    // signingConfigs {  // ✅ تعريف signingConfigs أولًا
-    //     release {
-    //         storeFile file( keyProperties['storeFile'])
-    //         storePassword keyProperties['storePassword']
-    //         keyAlias keyProperties['keyAlias']
-    //         keyPassword keyProperties['keyPassword']
-    //     }
-    // }
+    signingConfigs {  
+        release {
+            storeFile file( keyProperties['storeFile'])
+            storePassword keyProperties['storePassword']
+            keyAlias keyProperties['keyAlias']
+            keyPassword keyProperties['keyPassword']
+        }
+    }
 
-    // buildTypes {
-    //     release {
-    //         signingConfig signingConfigs.release  // ✅ الآن هذا سيعمل بدون مشاكل
-    //         minifyEnabled true
-    //         shrinkResources true
-    //     }
-    // }
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release  
+            minifyEnabled true
+            shrinkResources true
+        }
+    }
 }
 
 flutter {

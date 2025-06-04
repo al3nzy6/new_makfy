@@ -9,7 +9,7 @@ import 'package:tabby_flutter_inapp_sdk/tabby_flutter_inapp_sdk.dart';
 void main() {
     WidgetsFlutterBinding.ensureInitialized(); // ضروري قبل أي async
    TabbySDK().setup(
-    withApiKey: 'pk_test_0196535c-5b48-f8f0-a61c-348d25dbcee5', // Put here your Api key, given by the Tabby integrations team
+    withApiKey: 'pk_0196535c-5b48-f8f0-a61c-348c3189d99b',
   );
   runApp(const MakfyApp());
 }
