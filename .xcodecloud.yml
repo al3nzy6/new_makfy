@@ -1,0 +1,41 @@
+version: 1.0
+identifier: makfy-ios-build
+
+environment:
+  flutter: stable
+  xcode: latest
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - '*'
+
+steps:
+  - name: Install Flutter SDK
+    run: |
+      git clone https://github.com/flutter/flutter.git -b stable
+      export PATH="$PATH:`pwd`/flutter/bin"
+      flutter doctor
+
+  - name: Precache iOS artifacts
+    run: |
+      export PATH="$PATH:`pwd`/flutter/bin"
+      flutter precache --ios
+
+  - name: Install Flutter packages
+    run: |
+      export PATH="$PATH:`pwd`/flutter/bin"
+      flutter pub get
+      cd ios
+      rm -rf Pods Podfile.lock
+      flutter pub get  # إعادة داخل ios لتوليد Generated.xcconfig
+      pod install
+      cd ..
+
+  - name: Build iOS IPA
+    run: |
+      export PATH="$PATH:`pwd`/flutter/bin"
+      flutter build ipa --release --export-options-plist=ios/ExportOptions.plist

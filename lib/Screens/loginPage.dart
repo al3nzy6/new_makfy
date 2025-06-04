@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:makfy_new/Utilities/ApiConfig.dart';
 import 'package:makfy_new/Widget/MainScreenWidget.dart';
+import 'package:makfy_new/Widget/lib/utils/MyRouteObserver.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -38,8 +39,21 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     if (success[0]) {
-      // Navigate to home page if login is successful
-      Navigator.pushReplacementNamed(context, '/');
+      if (routeObserver.lastRoute != null) {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          routeObserver.lastRoute!,
+          (route) => false, // إزالة جميع الصفحات السابقة
+          arguments: routeObserver.lastRouteArguments,
+        );
+      } else {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/', // الصفحة الرئيسية
+          (route) => false, // إزالة جميع الصفحات السابقة
+        );
+      }
+      // Navigator.pushReplacementNamed(context, '/');
     } else {
       // Show error message if login fails
       setState(() {

@@ -12,6 +12,7 @@ import 'package:makfy_new/Widget/H2Text.dart';
 import 'package:makfy_new/Widget/ServiceAddedWidget.dart';
 import 'package:makfy_new/Widget/boxWidget.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:decimal/decimal.dart';
 
 class userServicesPage extends StatefulWidget {
   userServicesPage({super.key});
@@ -28,7 +29,7 @@ class _userServicesPageState extends State<userServicesPage> {
   late String? date = DateTime.now().toLocal().toString().split(' ')[0];
   late String? time = TimeOfDay.now().format(context).toString();
   List<Widget> services = [];
-  Map<int, dynamic> finalresults = {};
+  Map<String, dynamic> finalresults = {};
   User? user;
   bool hasDelivery = true; // لتخزين حالة الاختيار
   int? current_user;
@@ -43,6 +44,9 @@ class _userServicesPageState extends State<userServicesPage> {
   String? choosenTime;
   String? timeisNotAvailableText;
   bool _hasBeenLoaded = false;
+  int? categoryId;
+  
+
 
   @override
   void didChangeDependencies() {
@@ -54,6 +58,7 @@ class _userServicesPageState extends State<userServicesPage> {
       id = arguments["id"];
       name = arguments["title"];
       cart = arguments["cart"];
+      categoryId = arguments["categoryId"];
       submitType = arguments['submitType'];
       if (_hasBeenLoaded == false) {
         if (arguments['date'] != null) {
@@ -74,7 +79,6 @@ class _userServicesPageState extends State<userServicesPage> {
       cart = null;
     }
     if (_hasBeenLoaded == false) {
-      print("${id} sssss");
       _getUserServices();
       checkTime(id, date!, time!);
     }
@@ -101,7 +105,7 @@ class _userServicesPageState extends State<userServicesPage> {
   }
 
   Future<void> _getUserServices() async {
-    user = await ApiConfig.getUserProfile(id);
+    user = await ApiConfig.getUserProfile(id, categoryId);
     current_user = await ApiConfig.getUserId();
     try {
       if (!mounted) return; // تأكد من أن الـ widget ما زالت موجودة
@@ -111,7 +115,7 @@ class _userServicesPageState extends State<userServicesPage> {
           submitType = null;
           _showSaveDialog(context); // إظهار المودال عند نجاح الحفظ
         }
-        finalresults[0] = id;
+        finalresults[0.toString()] = id;
         isPaid = (cart != null && cart?.status != 1) ? true : false;
         if (cart != null) {
           hasDelivery = cart!.delivery_fee! > 0 ? true : false;
@@ -126,7 +130,7 @@ class _userServicesPageState extends State<userServicesPage> {
                 : false;
         services = (cart != null)
             ? cart?.services?.map((service) {
-                  finalresults[service.id] = service.quantity;
+                  finalresults[service.id.toString()] = service.quantity;
                   return ServiceAddedWidget(
                     title: service.title,
                     fields: service.insertedValues?.split(','),
@@ -139,16 +143,24 @@ class _userServicesPageState extends State<userServicesPage> {
                     isLogin: (current_user != null) ? true : false,
                     currentUserIsTheProvider:
                         (user?.id == current_user) ? true : false,
-                    onChanged: (value) {
+                    onNotesChanged: (note) {
                       if (mounted) {
                         setState(() {
-                          finalresults[service.id] = value;
+                          finalresults['note_${service.id}'] = note;
                         });
                       }
                     },
-                    count: (finalresults.containsKey(service.id))
-                        ? finalresults[service.id]
-                        : 0,
+                    initialNote: cart?.getServiceNote(service.id), // يجب توفر دالة getServiceNote
+                    onChanged: (value) {
+                      if (mounted) {
+                        setState(() {
+                          finalresults[service.id.toString()] = value;
+                        });
+                      }
+                    },
+                    count: (finalresults.containsKey(service.id.toString()))
+    ? finalresults[service.id.toString()]
+    : 0,
                   );
                 }).toList() ??
                 []
@@ -164,10 +176,18 @@ class _userServicesPageState extends State<userServicesPage> {
                     isLogin: (current_user != null) ? true : false,
                     currentUserIsTheProvider:
                         (user?.id == current_user) ? true : false,
+                    onNotesChanged: (note) {
+                      if (mounted) {
+                        setState(() {
+                          finalresults['note_${service.id}'] = note;
+                        });
+                      }
+                    },
+                    initialNote: cart?.getServiceNote(service.id), // يجب توفر دالة getServiceNote
                     onChanged: (value) {
                       if (mounted) {
                         setState(() {
-                          finalresults[service.id] = value;
+                          finalresults[service.id.toString()] = value;
                         });
                       }
                     },
@@ -189,22 +209,23 @@ class _userServicesPageState extends State<userServicesPage> {
     String response =
         await ApiConfig.checkAvailableTime(serviceProviderID, date, time);
     try {
-      setState(() {
-        if (response != 'Not Available') {
-          timeIsAvailable = true;
-          dateTimeStamp = response;
-          checkTimePressed = false;
-        } else {
-          timeIsAvailable = false;
-          checkTimePressed = false;
-          timeisNotAvailableText = "الوقت الذي اخترته غير متاح";
-        }
-      });
+      if (mounted) {
+        setState(() {
+          if (response != 'Not Available') {
+            timeIsAvailable = true;
+            dateTimeStamp = response;
+            checkTimePressed = false;
+          } else {
+            timeIsAvailable = false;
+            checkTimePressed = false;
+            timeisNotAvailableText = "الوقت الذي اخترته غير متاح";
+          }
+        });
+      }
     } catch (e) {}
   }
 
   Widget build(BuildContext context) {
-    print(cart?.choosenTime);
     return MainScreenWidget(
       isLoading: isLoading,
       onRefresh: _getUserServices,
@@ -291,7 +312,7 @@ class _userServicesPageState extends State<userServicesPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              H1text(text: name),
+              H1text(text: name, size: 20, maxWords: 4,),
               if (isServiceProvider != true) ...[
                 RatingWidget(
                   stars: user?.averageRating ?? 0,
@@ -683,11 +704,42 @@ class _userServicesPageState extends State<userServicesPage> {
                 'يجب تسجيل الدخول او التسجيل للاستفادة من كامل خدمات التطبيق')),
       );
       Navigator.pushReplacementNamed(context, '/login');
+      return;
     }
-    Map<String, dynamic> result = await ApiConfig.updateCart(
-        finalresults, cart, dateTimeStamp!, hasDelivery);
+
+    // Create a copy of finalresults to avoid modifying the state directly
+    Map<String, dynamic> cartData = {};
+    
+    // Add service provider ID
+    cartData['0'] = id.toString();
+    
+    // Add service quantities and notes
+    finalresults.forEach((key, value) {
+      if (key == '0') {
+        return; // Skip service provider ID as we've already added it
+      }
+      
+      // If this is a note (key starts with 'note_')
+      if (key.toString().startsWith('note_')) {
+        cartData[key.toString()] = value.toString();
+      } 
+      // If this is a quantity (key is just the service ID)
+      else {
+        cartData[key.toString()] = value.toString();
+      }
+    });
+
     try {
-      // print(double.tryParse(result['data']['total']));
+      Map<String, dynamic> result = await ApiConfig.updateCart(
+          cartData, cart, dateTimeStamp!, hasDelivery);
+      if (result['data'] is Map<String, dynamic> &&
+        result['data']['error'] != null) {
+      final serverMsg = result['data']['error'].toString();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(serverMsg)),
+      );
+      return;
+    }
       if (OnlySaveAsCart == false) {
         Navigator.pushNamed(context, '/payment_page', arguments: [
           result['data']['id'],
@@ -702,7 +754,12 @@ class _userServicesPageState extends State<userServicesPage> {
           "submitType": "update"
         });
       }
-    } catch (e) {}
+    } catch (e) {
+      print('Error saving cart: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('حدث خطأ أثناء حفظ السلة')),
+      );
+    }
   }
 
   void _openRatingModal(BuildContext context) {

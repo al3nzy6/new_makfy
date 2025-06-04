@@ -177,4 +177,13 @@ class Cart extends Equatable {
       services ?? [],
     ];
   }
+
+  String? getServiceNote(int serviceId) {
+  try {
+    final service = services?.firstWhere((s) => s.id == serviceId);
+    return service?.notes;
+  } catch (e) {
+    return null;
+  }
+}
 }

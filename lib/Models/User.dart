@@ -18,6 +18,7 @@ class User extends Equatable {
   String? end_time;
   String? order_limit_per_day;
   double? delivery_fee;
+  String? profileImageUrl;
 
   List<Service>? services;
   User({
@@ -36,6 +37,7 @@ class User extends Equatable {
     this.services,
     this.order_limit_per_day,
     this.delivery_fee,
+    this.profileImageUrl
   });
 
   User copyWith({
@@ -60,6 +62,7 @@ class User extends Equatable {
       averageRating: averageRating ?? this.averageRating,
       countRating: countRating ?? this.countRating,
       services: services ?? this.services,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
     );
   }
 
@@ -80,6 +83,7 @@ class User extends Equatable {
     result.addAll({'start_time': start_time});
     result.addAll({'end_time': end_time});
     result.addAll({'order_limit_per_day': order_limit_per_day});
+    result.addAll({'profileImageUrl': profileImageUrl});
 
     return result;
   }
@@ -100,6 +104,7 @@ class User extends Equatable {
       start_time: map['start_time'] ?? '',
       averageRating: map['averageRating']?.toInt() ?? 0,
       countRating: map['countRating'] ?? '',
+      profileImageUrl: map['profileImageUrl'] ?? '',
     );
   }
 
@@ -121,6 +126,7 @@ class User extends Equatable {
       order_limit_per_day: json['order_limit_per_day'],
       averageRating: json['averageRating'],
       countRating: json['countRating'],
+      profileImageUrl: json['profileImageUrl'],
       services: json['services'] != null
           ? (json['services'] as List)
               .map((servicesJson) => Service.fromJson(servicesJson))

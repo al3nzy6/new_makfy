@@ -57,7 +57,7 @@ class _VacationScreenState extends State<VacationScreen> {
   Future<void> _createVacation() async {
     if (vacation_from == null || vacation_to == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('الرجاء إدخال جميع البيانات')),
+        const SnackBar(content: Text('الرجاء إدخال جميع البيانات')),
       );
       return;
     }
@@ -77,7 +77,7 @@ class _VacationScreenState extends State<VacationScreen> {
       await ApiConfig.createVacation(newVacation);
       _fetchVacations();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('تم إنشاء الإجازة بنجاح!')),
+        const SnackBar(content: Text('تم إنشاء الإجازة بنجاح!')),
       );
     } catch (e) {
       setState(() {
@@ -101,7 +101,7 @@ class _VacationScreenState extends State<VacationScreen> {
       await ApiConfig.deleteVacation(vacationId);
       _fetchVacations();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('تم حذف الإجازة بنجاح!')),
+        const SnackBar(content: Text('تم حذف الإجازة بنجاح!')),
       );
     } catch (e) {
       setState(() {
@@ -148,10 +148,10 @@ class _VacationScreenState extends State<VacationScreen> {
           ),
           ElevatedButton(
             onPressed: _createVacation,
-            child: Text("إنشاء إجازة"),
+            child: const Text("إنشاء إجازة"),
           ),
-          Divider(),
-          Text(
+          const Divider(),
+          const Text(
             "الإجازات المسجلة:",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
@@ -167,7 +167,7 @@ class _VacationScreenState extends State<VacationScreen> {
                         title: Text(
                             "من ${vacation.vacation_from} إلى ${vacation.vacation_to}"),
                         trailing: IconButton(
-                          icon: Icon(Icons.delete, color: Colors.red),
+                          icon: const Icon(Icons.delete, color: Colors.red),
                           onPressed: () => _deleteVacation(vacation.id),
                         ),
                       );
@@ -180,7 +180,7 @@ class _VacationScreenState extends State<VacationScreen> {
               style: TextStyle(fontSize: 16, color: Colors.blueGrey),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
           ],
         ],
       ),

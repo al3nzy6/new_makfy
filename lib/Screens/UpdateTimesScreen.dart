@@ -3,6 +3,7 @@ import 'package:makfy_new/Utilities/ApiConfig.dart';
 import 'package:makfy_new/Widget/FieldWidget.dart';
 import 'package:makfy_new/Widget/H2Text.dart';
 import 'package:makfy_new/Widget/MainScreenWidget.dart';
+import 'package:makfy_new/Widget/lib/utils/MyRouteObserver.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class UpdateTimesScreen extends StatefulWidget {
@@ -77,7 +78,20 @@ class _UpdateTimesScreenState extends State<UpdateTimesScreen> {
           const SnackBar(content: Text('تم التعديل بنجاح!')),
         );
         // يمكن الانتقال إلى صفحة أخرى إذا لزم الأمر
-        Navigator.pushReplacementNamed(context, '/');
+        if (routeObserver.lastRoute != null) {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            routeObserver.lastRoute!,
+            (route) => false, // إزالة جميع الصفحات السابقة
+            arguments: routeObserver.lastRouteArguments,
+          );
+        } else {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/', // الصفحة الرئيسية
+            (route) => false, // إزالة جميع الصفحات السابقة
+          );
+        }
       }
     } catch (e) {
       setState(() {
@@ -128,11 +142,11 @@ class _UpdateTimesScreenState extends State<UpdateTimesScreen> {
               style: TextStyle(fontSize: 18),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
           ],
           ElevatedButton(
             onPressed: _updateTime,
-            child: Text("تحديث الوقت"),
+            child: const Text("تحديث الوقت"),
           ),
         ],
       ),

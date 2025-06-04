@@ -1,0 +1,39 @@
+name: Build & Upload iOS to TestFlight (Preview)
+
+on:
+  push:
+    branches:
+      - features
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.2'
+          architecture: x64
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Precache iOS
+        run: flutter precache --ios
+
+      - name: Install Fastlane
+        run: sudo gem install fastlane -NV
+
+      - name: Upload to TestFlight (Preview)
+        run: fastlane upload_testflight
+        working-directory: ios
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APP_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
+          APPSTORE_API_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          APPSTORE_API_PRIVATE_KEY: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}

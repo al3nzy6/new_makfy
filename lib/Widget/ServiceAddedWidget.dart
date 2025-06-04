@@ -17,6 +17,8 @@ class ServiceAddedWidget extends StatefulWidget {
   final List? imageUrl;
   final Service? service;
   final bool? isLogin;
+  final Function(String)? onNotesChanged;
+  final String? initialNote;
   int? count;
   bool? isPaid;
   final Function(dynamic)? onChanged;
@@ -36,6 +38,8 @@ class ServiceAddedWidget extends StatefulWidget {
     this.onChanged,
     this.currentUserIsTheProvider,
     this.isLogin,
+    this.onNotesChanged,
+    this.initialNote,
   });
 
   @override
@@ -43,17 +47,43 @@ class ServiceAddedWidget extends StatefulWidget {
 }
 
 class _ServiceAddedWidgetState extends State<ServiceAddedWidget> {
+  TextEditingController? _notesController;
+
+  @override
+  void initState() {
+    super.initState();
+    _notesController = TextEditingController(text: widget.initialNote ?? '');
+  }
+
+  @override
+  void dispose() {
+    _notesController?.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(ServiceAddedWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialNote != oldWidget.initialNote) {
+      _notesController?.text = widget.initialNote ?? '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Ensure controller is initialized
+    _notesController ??= TextEditingController(text: widget.initialNote ?? '');
+
+    final bool hasNotes = true;
     final double imageHeight = (widget.imageUrl!.isNotEmpty) ? 150 : 0;
-    // print(widget.service?.is_available);
+    final double forNotes = (widget.isPaid == false || widget.isPaid == null || widget.initialNote != null) ? 120 : 0;
     return ShadowBoxWidget(
       height: (widget.currentUserIsTheProvider != null &&
-              widget.currentUserIsTheProvider == false)
-          ? 140 + imageHeight
+              widget.currentUserIsTheProvider == false && widget.isPaid == null)
+          ? 140 + imageHeight + forNotes
           : (widget.isPaid != null && widget.isPaid == true)
-              ? 140 + imageHeight
-              : 90 + imageHeight,
+              ? 140 + imageHeight + forNotes 
+              : 140 + imageHeight + forNotes ,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -63,7 +93,7 @@ class _ServiceAddedWidgetState extends State<ServiceAddedWidget> {
               Navigator.pushNamed(context, '/service_page', arguments: [
                 widget.id,
                 widget.date ?? null,
-                widget.time ?? null
+                widget.time ?? null,
               ]);
             },
             child: Padding(
@@ -114,6 +144,7 @@ class _ServiceAddedWidgetState extends State<ServiceAddedWidget> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
+                              
                               (widget.imageUrl!.isEmpty &&
                                       widget.service!.is_available == false)
                                   ? "${StringUtils.limitWords(widget.title, 3)} (غير متوفر)"
@@ -217,6 +248,29 @@ class _ServiceAddedWidgetState extends State<ServiceAddedWidget> {
               ],
             )
           ],
+          if (widget.isPaid == null || widget.isPaid == false) ...[
+            TextField(
+              decoration: InputDecoration(
+                labelText: 'ملاحظات للخدمة',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
+              maxLength: 100,
+              controller: _notesController,
+              onChanged: widget.onNotesChanged,
+            ),
+          ],
+          if (widget.isPaid == true && widget.initialNote != null) ...[
+            Container(
+              padding: const EdgeInsets.all(8.0),
+              child: Center(
+                child: H2Text(
+                  text: widget.initialNote ?? '', 
+                  size: 18,
+                  lines: 3,
+                )),
+            )
+          ]
         ],
       ),
     );
