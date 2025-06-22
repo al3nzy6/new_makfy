@@ -1,0 +1,30 @@
+desc "Build and upload to TestFlight (for features branch)"
+lane :upload_testflight do
+  api_key = fetch_app_store_connect_api_key(
+    key_id: ENV["APPSTORE_API_KEY_ID"],
+    issuer_id: ENV["APPSTORE_ISSUER_ID"],
+    key_content: ENV["APPSTORE_API_PRIVATE_KEY"],
+    duration: 1200,
+    in_house: false
+  )
+
+  gym(
+    scheme: "Runner",
+    workspace: "Runner.xcworkspace",
+    export_method: "app-store",
+    export_options: {
+      method: "app-store",
+      signingStyle: "automatic",
+      compileBitcode: true,
+      stripSwiftSymbols: true
+    },
+    xcargs: "-allowProvisioningUpdates",
+    output_directory: "../build/ios/ipa",
+    output_name: "new_makfy.ipa"
+  )
+
+  upload_to_testflight(
+    ipa: "../build/ios/ipa/new_makfy.ipa",
+    skip_waiting_for_build_processing: true
+  )
+end

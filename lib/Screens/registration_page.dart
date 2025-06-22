@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:makfy_new/Models/User.dart';
 import 'package:makfy_new/Utilities/ApiConfig.dart';
@@ -5,8 +7,11 @@ import 'package:makfy_new/Widget/H1textWidget.dart';
 import 'package:makfy_new/Widget/H2Text.dart';
 import 'package:makfy_new/Widget/MainScreenWidget.dart';
 import 'package:makfy_new/Widget/boxWidget.dart';
+import 'package:makfy_new/Widget/lib/utils/MyRouteObserver.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:image_picker/image_picker.dart';
+
 
 class RegistrationPage extends StatefulWidget {
   const RegistrationPage({super.key});
@@ -23,7 +28,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController passwordConfirmationController =
       TextEditingController();
-
+  File? _profileImage;
+  final ImagePicker _picker = ImagePicker();
   final TextEditingController idnumberController = TextEditingController();
   String? nationality;
   final TextEditingController ibanController = TextEditingController();
@@ -37,8 +43,19 @@ class _RegistrationPageState extends State<RegistrationPage> {
     "البنك الأهلي",
     "بنك الرياض",
     "بنك الإنماء",
-    "بنك البلاد"
+    "بنك البلاد",
+    "البنك السعودي للاستثمار",
+    "بنك الجزيرة",
+    "بنك ساب (البنك السعودي البريطاني)",
+    "البنك العربي الوطني",
+    "البنك السعودي الفرنسي",
+    "بنك الخليج الدولي – السعودية",
+    "بنك إس تي سي (STC Bank)",
+    "البنك السعودي الرقمي (Vision Bank)",
+    "بنك دال ثلاثمائة وستون (D360 Bank)",
+    "بنك برق (Barq Bank)"
   ];
+
   final List<String> nationalities = [
     "سعودي",
     "مصري",
@@ -90,7 +107,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
       final user_id =
           (prefs.getInt('user_id') != null) ? prefs.getInt('user_id') : 0;
       if (user_id != null && user_id != 0) {
-        user = await ApiConfig.getUserProfile(user_id!);
+        user = await ApiConfig.getUserProfile(user_id!, null);
         setState(() {
           isEdit = true;
           isServiceProvider =
@@ -168,7 +185,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
           bankController,
           iban,
           orderLimitPerDay,
-          deliveryFee);
+          deliveryFee,
+          _profileImage,
+          );
 
       setState(() {
         isLoading = false;
@@ -221,6 +240,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
         iban,
         orderLimitPerDay,
         deliveryFee,
+        _profileImage,
       );
 
       setState(() {
@@ -233,9 +253,25 @@ class _RegistrationPageState extends State<RegistrationPage> {
           const SnackBar(content: Text('تم التسجيل بنجاح!')),
         );
         // يمكن الانتقال إلى صفحة أخرى إذا لزم الأمر
-        (isServiceProvider == true)
-            ? Navigator.pushReplacementNamed(context, '/update_location')
-            : Navigator.pushReplacementNamed(context, '/');
+        if (isServiceProvider == true) {
+          Navigator.pushReplacementNamed(context, '/update_location');
+        } else {
+          if (routeObserver.lastRoute != null) {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              routeObserver.lastRoute!,
+              (route) => false, // إزالة جميع الصفحات السابقة
+              arguments: routeObserver.lastRouteArguments,
+            );
+          } else {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/', // الصفحة الرئيسية
+              (route) => false, // إزالة جميع الصفحات السابقة
+            );
+          }
+        }
+        ;
       } else {
         // عرض رسالة خطأ إذا فشل التسجيل
         setState(() {
@@ -307,6 +343,38 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   )
                 ],
                 if (isServiceProvider != null) ...[
+                  Column(
+                    children: [
+                      if (_profileImage != null)
+                        CircleAvatar(
+                          radius: 100,
+                          backgroundImage: FileImage(_profileImage!),
+                        )
+                      else if (user?.profileImageUrl != null)
+                        CircleAvatar(
+                          radius: 100,
+                          backgroundImage: NetworkImage(user!.profileImageUrl!),
+                        )
+                      else
+                        const CircleAvatar(
+                          radius: 100,
+                          child: Icon(Icons.person, size: 100),
+                        ),
+                      TextButton.icon(
+                        onPressed: () async {
+                          final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+                          if (pickedFile != null) {
+                            setState(() {
+                              _profileImage = File(pickedFile.path);
+                            });
+                          }
+                        },
+                        icon: Icon(Icons.camera_alt),
+                        label: Text("اختيار صورة"),
+                      ),
+                    ],
+                  ),
+
                   TextFormField(
                     controller: nameController,
                     decoration: const InputDecoration(
@@ -399,12 +467,12 @@ class _RegistrationPageState extends State<RegistrationPage> {
                       readOnly:
                           (isEdit != null && isEdit == true) ? true : false,
                       decoration: const InputDecoration(
-                        labelText: 'رقم الهوية/الاقامة',
+                        labelText: 'رقم الهوية/السجل التجاري',
                         border: OutlineInputBorder(),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'يرجى إدخال رقم الهوية/الاقامة ';
+                          return 'يرجى إدخال رقم الهوية/السجل التجاري ';
                         }
                         return null;
                       },

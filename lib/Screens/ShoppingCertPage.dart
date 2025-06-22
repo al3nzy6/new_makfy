@@ -186,6 +186,15 @@ class _ShoppingCertPageState extends State<ShoppingCertPage> {
               text: "طلبات تحت التجهيز",
               size: 20,
             ),
+            const SizedBox(
+              height: 4,
+            ),
+            Container(
+              width: MediaQuery.of(context).size.width * 0.7,
+              child: const Divider(
+                height: 10,
+              ),
+            ),
             ...uncompletedCartsWidget,
             if (uncompletedCartsWidget.length == 0)
               H2Text(
@@ -193,12 +202,19 @@ class _ShoppingCertPageState extends State<ShoppingCertPage> {
                 size: 20,
                 textColor: Colors.grey,
               ),
-            Divider(
-              height: 10,
+            const SizedBox(
+              height: 4,
+              width: double.infinity,
             ),
             H2Text(
               text: "طلبات مكتملة",
               size: 20,
+            ),
+            Container(
+              width: MediaQuery.of(context).size.width * 0.7,
+              child: const Divider(
+                height: 10,
+              ),
             ),
           ],
           ...cartsWidget,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:makfy_new/Widget/H2Text.dart';
+import 'package:makfy_new/Widget/lib/utils/MyRouteObserver.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class appHeadWidget extends StatefulWidget {
@@ -19,6 +20,7 @@ class _appHeadWidgetState extends State<appHeadWidget> {
 
   int? isServiceProvider = 0;
   String? user_email;
+  String? redirectToPage;
 
   @override
   @override
@@ -29,13 +31,16 @@ class _appHeadWidgetState extends State<appHeadWidget> {
 
   Future<void> _loadSharedPreferences() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      isServiceProvider = prefs.getInt('isServiceProvider');
-      user_email = prefs.getString('user_email');
-    });
+    if (mounted) {
+      setState(() {
+        isServiceProvider = prefs.getInt('isServiceProvider');
+        user_email = prefs.getString('user_email');
+      });
+    }
   }
 
   Widget build(BuildContext context) {
+    final args = ModalRoute.of(context)?.settings.arguments;
     return Container(
       decoration: BoxDecoration(
           border: Border(
@@ -51,6 +56,26 @@ class _appHeadWidgetState extends State<appHeadWidget> {
             'images/logo.png',
             height: 100,
           ),
+          if (user_email == null)
+            if (ModalRoute.of(context)?.settings.name != '/login' &&
+                ModalRoute.of(context)?.settings.name != '/register')
+              InkWell(
+                onTap: () {
+                  routeObserver.lastRouteArguments = args;
+                  Navigator.pushNamed(context, '/login');
+                },
+                child: Container(
+                    height: 50,
+                    padding: const EdgeInsets.all(1),
+                    decoration: const BoxDecoration(
+                      borderRadius: const BorderRadius.all(Radius.circular(5)),
+                      color: Color(0XFFEF5B2C),
+                    ),
+                    child: H2Text(
+                      text: "تسجيل الدخول",
+                      textColor: Colors.white,
+                    )),
+              ),
           if (user_email != null)
             (isServiceProvider == 1)
                 ? Expanded(
@@ -61,7 +86,7 @@ class _appHeadWidgetState extends State<appHeadWidget> {
                         },
                         child: Container(
                           height: 50,
-                          margin: EdgeInsets.only(left: 15, right: 15),
+                          margin: const EdgeInsets.only(left: 15, right: 15),
                           alignment: Alignment.centerLeft,
                           decoration: const BoxDecoration(
                               color: Color(0XFFEF5B2C),
@@ -81,7 +106,7 @@ class _appHeadWidgetState extends State<appHeadWidget> {
                         },
                         child: Container(
                           height: 50,
-                          margin: EdgeInsets.only(left: 15, right: 15),
+                          margin: const EdgeInsets.only(left: 15, right: 15),
                           alignment: Alignment.centerLeft,
                           decoration: const BoxDecoration(
                               color: Color(0XFFEF5B2C),
@@ -101,7 +126,12 @@ class _appHeadWidgetState extends State<appHeadWidget> {
                   ModalRoute.of(context)?.settings.name == '/') {
                 Navigator.pushNamed(context, '/profile');
               } else {
-                Navigator.pop(context);
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context); // الرجوع للصفحة السابقة
+                } else {
+                  Navigator.pushReplacementNamed(context,
+                      '/home'); // لا يوجد صفحة سابقة، الذهاب للصفحة الرئيسية
+                }
               }
             },
             child: Container(

@@ -16,6 +16,8 @@ class serviceProviderWidget extends StatelessWidget {
   final int? servicesCount;
   final String? time;
   final Cart? cart;
+  final int? categoryId;
+  final String? profileImage;
 
   serviceProviderWidget({
     required this.title,
@@ -27,6 +29,8 @@ class serviceProviderWidget extends StatelessWidget {
     this.total,
     this.servicesCount,
     this.cart,
+    this.categoryId,
+    this.profileImage,
   });
 
   @override
@@ -38,15 +42,34 @@ class serviceProviderWidget extends StatelessWidget {
           "title": title,
           "cart": cart ?? null,
           "date": date ?? null,
-          "time": time ?? null
+          "time": time ?? null,
+          "categoryId": categoryId,
         })
       },
       child: ShadowBoxWidget(
-        height: (total == null) ? 70 : 120,
+        height: (total == null) ? 190 : 244,
         child: Column(
           children: [
+            Container(
+  width: double.infinity,
+  height: 120,
+  decoration: (profileImage != null && profileImage!.isNotEmpty)
+      ? BoxDecoration(
+          image: DecorationImage(
+            image: NetworkImage(profileImage!),
+            fit: BoxFit.cover,
+          ),
+        )
+      : BoxDecoration(
+          color: Colors.grey[200],
+        ),
+  child: (profileImage == null || profileImage!.isEmpty)
+      ?  Image.asset('images/logo.png', height: 40)
+      // ? const Icon(Icons.person, size: 40, color: Colors.green)
+      : null,
+),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
@@ -57,15 +80,16 @@ class serviceProviderWidget extends StatelessWidget {
                     maxWords: 2,
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 20),
-                  child: RatingWidget(
-                    stars: averageRating ?? 0,
-                    ratingCount: countRating ?? "0",
-                    userId: id,
-                  ),
-                ),
-                Padding(
+                // if this enables I should change mainAxisAlignment: MainAxisAlignment.spaceBetween, to mainAxisAlignment: MainAxisAlignment.spaceAround
+                // Padding(
+                //   padding: const EdgeInsets.only(top: 10),
+                //   child: RatingWidget(
+                //     stars: averageRating ?? 0,
+                //     ratingCount: countRating ?? "0",
+                //     userId: id,
+                //   ),
+                // ),
+                const Padding(
                   padding: const EdgeInsets.only(top: 15),
                   child: Icon(
                     Icons.arrow_forward_ios,
