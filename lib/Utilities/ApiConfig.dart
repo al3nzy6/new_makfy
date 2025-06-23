@@ -14,7 +14,7 @@ import 'package:path/path.dart';
 import 'package:geolocator/geolocator.dart';
 
 class ApiConfig {
-  // static const String apiUrl = 'https://assume-cats-kitty-de.trycloudflare.com/api';
+  // static const String apiUrl = 'https://phd-actor-dean-surge.trycloudflare.com/api';
   // static const String apiUrl = 'http://makfy.test/api';
   // static const String apiUrl = 'https://test.makfy.sa/api';
   static const String apiUrl = 'https://makfy.sa/api';

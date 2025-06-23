@@ -69,7 +69,7 @@ class serviceProviderWidget extends StatelessWidget {
       : null,
 ),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
@@ -80,14 +80,15 @@ class serviceProviderWidget extends StatelessWidget {
                     maxWords: 2,
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 10),
-                  child: RatingWidget(
-                    stars: averageRating ?? 0,
-                    ratingCount: countRating ?? "0",
-                    userId: id,
-                  ),
-                ),
+                // if this enables I should change mainAxisAlignment: MainAxisAlignment.spaceBetween, to mainAxisAlignment: MainAxisAlignment.spaceAround
+                // Padding(
+                //   padding: const EdgeInsets.only(top: 10),
+                //   child: RatingWidget(
+                //     stars: averageRating ?? 0,
+                //     ratingCount: countRating ?? "0",
+                //     userId: id,
+                //   ),
+                // ),
                 const Padding(
                   padding: const EdgeInsets.only(top: 15),
                   child: Icon(

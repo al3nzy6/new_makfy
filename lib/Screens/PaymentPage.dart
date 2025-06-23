@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:makfy_new/Utilities/ApiConfig.dart';
+import 'package:makfy_new/Widget/tabby_payment_webview_page.dart' show TabbyPaymentWebViewPage;
 import 'package:moyasar/moyasar.dart';
 import 'package:tabby_flutter_inapp_sdk/tabby_flutter_inapp_sdk.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -57,10 +58,12 @@ class PaymentWidget extends StatefulWidget {
 
 class _PaymentWidgetState extends State<PaymentWidget> {
   Future<PaymentConfig>? paymentConfigFuture;
-  final GlobalKey applePayKey = GlobalKey();
-  final GlobalKey creditCardKey = GlobalKey();
+  final Key applePayKey = UniqueKey();
+  final Key creditCardKey = UniqueKey(); 
   bool isApplePayVisible = false;
   bool isCreditCardVisible = false;
+  bool _isTabbyOpen = false;
+
 
   @override
   void initState() {
@@ -106,8 +109,11 @@ class _PaymentWidgetState extends State<PaymentWidget> {
               leading: Image.asset('images/Tabby.png', width: 40),
               title: const Text("تابي"),
               onTap: () {
+                if (_isTabbyOpen) return;
+                _isTabbyOpen = true;
                 Navigator.of(context).pop();
                 initiateTabbyPayment();
+                _isTabbyOpen = false;
               },
             ),
           ],
@@ -185,26 +191,14 @@ if (webUrl == null) {
 }
 await Future.delayed(Duration(milliseconds: 200)); // delay بسيط
 
-TabbyWebView.showWebView(
-  context: context,
-  webUrl: webUrl,
-  onResult: (WebViewResult resultCode) {
-    switch (resultCode) {
-      case WebViewResult.authorized:
-        showToast(context, "تمت الموافقة على العملية");
-        checkPayment(paymentUUID);
-        break;
-      case WebViewResult.close:
-        showToast(context, "تم إغلاق نافذة الدفع");
-        break;
-      case WebViewResult.expired:
-        showToast(context, "انتهت صلاحية الجلسة");
-        break;
-      case WebViewResult.rejected:
-        showToast(context, "تم رفض العملية من Tabby");
-        break;
-    }
-  },
+Navigator.push(
+  context,
+  MaterialPageRoute(
+    builder: (context) => TabbyPaymentWebViewPage(
+      webUrl: webUrl!,
+      paymentUUID: paymentUUID,
+    ),
+  ),
 );
   } catch (e) {
     print("خطأ أثناء بدء جلسة Tabby: $e");
@@ -218,8 +212,8 @@ TabbyWebView.showWebView(
       throw Exception("Price must be greater than 0.");
     }
     return PaymentConfig(
-      // publishableApiKey: 'pk_test_sJyfiRuo4P9VDRqoMcB9TEwm5tBcg6GjWL1PrqWw',
-      publishableApiKey: 'pk_live_rxvsa8sxcFa6ujt7Ghqv8NnyMwgB4kd2E83eUVco',
+      publishableApiKey: 'pk_test_sJyfiRuo4P9VDRqoMcB9TEwm5tBcg6GjWL1PrqWw',
+      // publishableApiKey: 'pk_live_rxvsa8sxcFa6ujt7Ghqv8NnyMwgB4kd2E83eUVco',
       amount: (widget.price * 100).round(),
       description: 'order #${widget.cart_id}',
       metadata: {
